@@ -3,7 +3,8 @@ from robodk.robomath import *  # basic matrix operations
 import numpy as np
 import time
 import create_ref as cr
-import keyboard
+
+# import keyboard
 import rot_pos as rp
 
 
@@ -57,6 +58,31 @@ def changeJoint(rf_camera2base, rf_surface2base):
     return
 
 
+def convertCoordinates(focal_length, res_height, res_width, pixel_x, pixel_y, distance):
+
+    sensor_height = res_height * 3.45 / 1000
+    sensor_width = res_width * 3.45 / 1000
+    sensor_size = np.array([sensor_height, sensor_width])
+    print("sensor_size:", sensor_size, "\n")
+
+    hFOV = (distance * sensor_size[0]) / focal_length
+    vFOV = (distance * sensor_size[1]) / focal_length
+    print("hFOV:", hFOV, "\n", "vFOV:", vFOV, "\n")
+
+    # spatial_x = []
+    # spatial_y = []
+    # for i in range (len(pixel_x)):
+    #     spatial_x = pixel_x[i] * hFOV / res_width
+    #     spatial_y = pixel_y[i] * vFOV / res_height
+    #     print("spatial_x:", spatial_x, "\n", "spatial_y:", spatial_y, "\n")
+
+    spatial_x = pixel_x * hFOV / res_width
+    spatial_y = pixel_y * vFOV / res_height
+    print("spatial_x:", spatial_x, "\n", "spatial_y:", spatial_y, "\n")
+
+    return spatial_x, spatial_y, hFOV, vFOV
+
+
 def sleep_seconds(seconds):
     print(f"Sleeping for {seconds} seconds...")
     time.sleep(seconds)
@@ -64,94 +90,43 @@ def sleep_seconds(seconds):
 
 
 def createPoint(x_st, y_st, z_st):
-    
+
     x_axis = x_st
     y_axis = y_st
     z_axis = z_st
 
     target_points = [x_axis, y_axis, z_axis]
-    count_i = i = j = 0
-    # for i in range(10):
-    #     count_i = i
-    #     if i == 0:
-    #         x_axis = x_axis
-    #         for j in range(20):
-    #             y_axis = y_axis - 10
-    #             z_axis = z_axis
-    #             target_points = [[x_axis, y_axis, z_axis]]
-    #             j = j + 1
 
-    #     elif i > 0 and i % 2 != 0:
-    #         x_axis = x_axis + 10
-    #         target_points.append([x_axis, y_axis, z_axis])
-    #         for j in range(20):
-    #             y_axis = y_axis + 10
-    #             z_axis = z_axis
-    #             target_points.append([x_axis, y_axis, z_axis])
-    #             j = j + 1
+    target_pose = intialTarget(target_points[0], target_points[1], target_points[2])
 
-    #     elif i > 0 and i % 2 == 0:
-    #         x_axis = x_axis + 10
-    #         target_points.append([x_axis, y_axis, z_axis])
-    #         for j in range(20):
-    #             y_axis = y_axis - 10
-    #             z_axis = z_axis
-    #             target_points.append([x_axis, y_axis, z_axis])
-    #             j = j + 1
+    target2sur = np.dot(rf_img2sur, target_pose)
 
-    #     i = i + 1
+    rf_target2camera = np.dot(rf_surface2camera, target2sur)
 
-    target_pose = []
-    print(
-        "len(target_points):", len(target_points), "\n", "count_i:", str(count_i), "\n"
-    )
-    for i in range(len(target_points)):
+    rf_target2base = np.dot(rf_camera2base, rf_target2camera)
+    # print("target_ref_base:", rf_target2base, "\n")
+    rot_target, pos_target = rp.rotPos(rf_target2base)
 
-        # print("target_points:", target_points[i], "\n")
-        target_posei = intialTarget(
-            target_points[i][0], target_points[i][1], target_points[i][2]
-        )
-        target_pose.append(target_posei)
-        # print("target_posei]:", target_pose, "\n", "len(target_pose):", len(target_pose), "\n")
+    # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
 
-    # create an empty 2D array
-    all_pos_target = np.empty((0, 3))
-    all_target_matrix = []
-    # all_pos_target = []
-    for i in range(len(target_pose)):
+    target_none_matrix = np.concatenate((pos_target, rot_target), axis=0)
+    # print("target_none_matrix:", target_none_matrix, "\n")
 
-        target2sur = np.dot(rf_img2sur, target_pose[i])
+    # convert to pose
+    target_matrix = TxyzRxyz_2_Pose(target_none_matrix)
+    # all_target_matrix.append(target_matrix)
 
-        rf_target2camera = np.dot(rf_surface2camera, target2sur)
+    # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
 
-        rf_target2base = np.dot(rf_camera2base, rf_target2camera)
-        # print("target_ref_base:", rf_target2base, "\n")
-        rot_target, pos_target = rp.rotPos(rf_target2base)
-
-        # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
-
-        target_none_matrix = np.concatenate((pos_target, rot_target), axis=0)
-        # print("target_none_matrix:", target_none_matrix, "\n")
-
-        # convert to pose
-        target_matrix = TxyzRxyz_2_Pose(target_none_matrix)
-        all_target_matrix.append(target_matrix)
-
-        # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
-        pos_target = np.array([pos_target])
-        all_pos_target = np.concatenate((all_pos_target, pos_target), axis=0)
-        all_pos_target = all_pos_target.tolist()
-        # print("type of all_pos_target:", type(all_pos_target), "\n")
+    # print("type of all_pos_target:", type(all_pos_target), "\n")
 
     # print("pos_target:", all_pos_target, "\n")
-    print("all_target_matrix:", len(all_target_matrix), "\n")
-    # RDK.AddCurve(all_pos_target)
+    # print("all_target_matrix:", len(all_target_matrix), "\n")
 
     speeds = [100, 50]
     count = 0
-    first_target_point = all_target_matrix[0]
     robot.setSpeed(speeds[1])
-    robot.MoveL(first_target_point)
+    robot.MoveL(target_matrix)
     # for i in range(1, len(all_target_matrix)):
     #     if count % 20 == 0:
     #         group_index = count // 20
@@ -165,7 +140,7 @@ def createPoint(x_st, y_st, z_st):
     #     current_joint_values = robot.Joints()
     #     print(f"current_joint_values{i}:{current_joint_values}", "\n")
 
-    return all_pos_target, all_target_matrix
+    return
 
 
 """ # forward kinematics
@@ -229,7 +204,7 @@ theta6 = np.radians(90)
 """
 RDK = Robolink()
 
-# robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
+robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
 robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 if not robot.Valid():
     raise Exception("No robot selected or available")
@@ -293,7 +268,9 @@ rot_surface2camera = [0, 0, 0]  # Rotation angles [Rx, Ry, Rz] in radians
 rf_surface2camera = cr.createRef(pos_surface2camera, rot_surface2camera)
 print("rf_surface2camera:", rf_surface2camera, "\n")
 
-pos_img2sur = [118, 141, 0]
+# reference frame image to surface
+x_target, y_target, h, w = convertCoordinates(16, 2048, 2048, 750, 1280, 480)
+pos_img2sur = [int(w / 2), int(h / 2), 0]
 rot_img2sur = [0, 0, 0]
 
 rf_img2sur = cr.createRef(pos_img2sur, rot_img2sur)
@@ -311,33 +288,6 @@ rot_camera2base_non_matrix = np.concatenate((pos_camera2base, rot_camera2base))
 print("rot_camera2base_non_matrix:", rot_camera2base_non_matrix, "\n")
 rf_camera2base_matrix = TxyzRxyz_2_Pose(rot_camera2base_non_matrix)
 
-rf_surface2base = np.dot(rf_camera2base, rf_surface2camera)
-print("ref_surface2base:", rf_surface2base, "\n")
-
-rf_img2base = np.dot(rf_surface2base, rf_img2sur)
-print("rf_img2base", rf_img2base, "\n")
-
-# initial begin position robot
-# target_pose = intialTarget(0, -50, 0)
-# print("target_pose:", target_pose, "\n")
-# print("rf_surface2camera:", rf_surface2camera, "\n")
-
-# rf_target2camera = np.dot(rf_surface2camera, target_pose)
-# print("rf_target2camera:", rf_target2camera, "\n")
-
-# Apply the transformation to the target point
-# rf_target2base = np.dot(rf_camera2base, rf_target2camera)
-# print("target_ref_base:", rf_target2base, "\n")
-# rot_target, pos_target = rp.rotPos(rf_target2base)
-
-# combine position and rotation
-# target_none_matrix = np.concatenate((pos_target, rot_target))
-# print("target_none_matrix:", target_none_matrix, "\n")
-
-# convert to pose
-# target_matrix = TxyzRxyz_2_Pose(target_none_matrix)
-# print("target_matrix:", target_matrix, "\n")
-
 robot.setPoseFrame(robot.PoseFrame())
 # print(f"robot.PoseFrame():{robot.PoseFrame()}")
 robot.setPoseTool(rf_camera2flange_matrix)
@@ -348,25 +298,17 @@ robot.setSpeedJoints(10)
 
 robot.MoveJ(rf_camera2base_matrix)
 
-# start = time.time()
-# drawPolygon(rf_camera2base_matrix, 200, 0)
-# end = time.time()
-# print("time:", end - start)
-
 sleep_seconds(10)
 
 # robot.MoveJ(target_matrix)
 # print("target_matrix:", target_matrix, "\n")
 
-target_points, all_target_matrix = createPoint(81, 22, 0)
+createPoint(x_target, y_target, 0)
 
 # robot.MoveJ(fixed_target_matrix)
-
-## draw the polygon
 
 # robot.MoveJ(rf_camera2base_matrix)
 current_joint_values = robot.Joints()
 print("current_joint_values:", current_joint_values, "\n")
 
 # robot.setJoints([0, 0, 0, 0, -90, 0])
-
