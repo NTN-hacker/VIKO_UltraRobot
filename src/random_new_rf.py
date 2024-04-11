@@ -57,7 +57,7 @@ def intialTarget(x, y, z):
     )
     return target_pose
 
-
+""" Invertible matrix
 def changeJoint(rf_camera2base, rf_surface2base):
 
     rf_base2camera = np.linalg.inv(rf_camera2base)
@@ -70,9 +70,10 @@ def changeJoint(rf_camera2base, rf_surface2base):
     print("rot:", rot, "\n", "pos:", pos, "\n")
 
     return
+"""
+    
 
-# sai so
-def convertCoordinates(focal_length, res_height, res_width, pixel_x, pixel_y, distance):
+def convertCoordinates(focal_length, res_height, res_width, pixel_x, pixel_y, distance):                    
 
     sensor_height = res_height * CFG.PIXEL_SIZE / 1000 #cfg
     sensor_width = res_width * CFG.PIXEL_SIZE / 1000 #cfg
@@ -113,9 +114,7 @@ def createPoint(x_st, y_st, z_st):
 
     target_pose = intialTarget(target_points[0], target_points[1], target_points[2])
 
-    target2sur = np.dot(rf_img2sur, target_pose)
-
-    rf_target2camera = np.dot(rf_surface2camera, target2sur)
+    rf_target2camera = np.dot(rf_surface2camera, target_pose)
 
     rf_target2base = np.dot(rf_camera2base, rf_target2camera)
     # print("target_ref_base:", rf_target2base, "\n")
@@ -124,40 +123,19 @@ def createPoint(x_st, y_st, z_st):
     # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
 
     target_none_matrix = np.concatenate((pos_target, rot_target), axis=0)
-    # print("target_none_matrix:", target_none_matrix, "\n")
+    print("target_none_matrix:", target_none_matrix, "\n")
 
     # convert to pose
     target_matrix = TxyzRxyz_2_Pose(target_none_matrix)
-    # all_target_matrix.append(target_matrix)
-
-    # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
-
-    # print("type of all_pos_target:", type(all_pos_target), "\n")
-
-    # print("pos_target:", all_pos_target, "\n")
-    # print("all_target_matrix:", len(all_target_matrix), "\n")
 
     speeds = CFG.SPEEDS #cfg - TEST
-    count = 0
     robot.setSpeed(speeds[1])
     robot.MoveL(target_matrix)
-    # for i in range(1, len(all_target_matrix)):
-    #     if count % 20 == 0:
-    #         group_index = count // 20
-    #         if group_index % 2 == 0:
-    #             robot.setSpeed(speeds[0])
-    #         else:
-    #             robot.setSpeed(speeds[1])
 
-    #     robot.MoveL(all_target_matrix[i])
-    #     count += 1
-    #     current_joint_values = robot.Joints()
-    #     print(f"current_joint_values{i}:{current_joint_values}", "\n")
-
-    return
+    return 
 
 
-""" # forward kinematics
+""" forward kinematics
 def transformation_matrix(alpha, a, d, theta):
     return np.array([
         [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
@@ -230,6 +208,7 @@ if RDK.RunMode() != RUNMODE_SIMULATE:
     RUN_ON_ROBOT = False
 
 if RUN_ON_ROBOT:
+    
     # Connect to the robot using default IP
     success = robot.Connect()  # Try to connect once
     #success robot.ConnectSafe() # Try to connect multiple times
@@ -277,27 +256,6 @@ rf_camera2flange_non_matrix = np.concatenate((pos_camera2flange, rot_camera2flan
 rf_camera2flange_matrix = TxyzRxyz_2_Pose(rf_camera2flange_non_matrix)
 print("ref_camera2flange_test:", rf_camera2flange_matrix, "\n")
 
-# reference frame surface to base
-pos_surface2camera = [0, 0, 480]  # Translation vector [Tx, Ty, Tz]
-rot_surface2camera = [0, 0, 0]  # Rotation angles [Rx, Ry, Rz] in radians
-
-# Create the transformation matrix for the new rf surface to base
-rf_surface2camera = cr.createRef(pos_surface2camera, rot_surface2camera)
-print("rf_surface2camera:", rf_surface2camera, "\n")
-
-# reference frame image to surface
-
-coordinate_pixel = getCoordinates(True)
-
-x_target, y_target, h, w = convertCoordinates(CFG.FOCAL_LENGTH, CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coordinate_pixel[-1],\
-                                                                                                    coordinate_pixel[0], CFG.DISTANCE_2OBJECT) #cfg
-
-pos_img2sur = [-int(w / 2), -int(h / 2), 0] # sai so
-rot_img2sur = [0, 0, 0]
-
-rf_img2sur = cr.createRef(pos_img2sur, rot_img2sur)
-print("rf_img2sur:", rf_img2sur, "\n")
-
 # reference frame camera to base
 rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
 print("ref_camera2base:", rf_camera2base, "\n")
@@ -323,8 +281,24 @@ robot.MoveJ(rf_camera2base_matrix)
 
 sleep_seconds(10)
 
-# robot.MoveJ(target_matrix)
-# print("target_matrix:", target_matrix, "\n")
+coordinate_pixel = getCoordinates(True)
+
+x_target, y_target, h, w = convertCoordinates(CFG.FOCAL_LENGTH, CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coordinate_pixel[-1],\
+                                                                                                    coordinate_pixel[0], CFG.DISTANCE_2OBJECT) #cfg
+
+# pos_img2sur = [-(w / 2), -(h / 2), 0] # sai so
+# rot_img2sur = [0, 0, 0]
+
+# rf_img2sur = cr.createRef(pos_img2sur, rot_img2sur)
+# print("rf_img2sur:", rf_img2sur, "\n")
+
+# reference frame surface to base
+pos_surface2camera = [-(h / 2), -(w / 2), 480]  # Translation vector [Tx, Ty, Tz]
+rot_surface2camera = [0, 0, 0]  # Rotation angles [Rx, Ry, Rz] in radians
+
+# Create the transformation matrix for the new rf surface to base
+rf_surface2camera = cr.createRef(pos_surface2camera, rot_surface2camera)
+print("rf_surface2camera:", rf_surface2camera, "\n")
 
 createPoint(x_target, y_target, 0)
 #TEST FLOW

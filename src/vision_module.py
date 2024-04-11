@@ -1,8 +1,16 @@
+'''
+Vision Modules Python extension loader (Camera and Robotic)
+Some function:
+- Connect Camera
+- Load data
+- Process data
+'''
+############################## IMPORT LIBRARY #####################################
 import os
 import os.path as osp
 import importlib
 import sys
-from config import config as CFG
+
 
 
 try:
@@ -28,27 +36,35 @@ except ImportError:
 
 # TODO
 
+class CFG:
+    "Class for AI model to segment object (instance segmentation)"
+
+    weight = 'D:\\nhan\\viko\src\sam_vit_h_4b8939.pth' #Path of your checkpoint
+    model_type = 'vit_h'
+    device = 'cuda'
+
+
 class VisionModule():
     def __init__(self) -> None:
         #Init Transform Layer instance
         tl_factory = py.TlFactory.GetInstance()
-        devices    = tl_factory.EnumerateDevices()
+        devices = tl_factory.EnumerateDevices()
         for device in devices:
             print(device.GetModelName(), device.GetSerialNumber())
             self.model_name = device.GetModelName()
         
         self.camera = py.InstantCamera()
         self.camera.Attach(tl_factory.CreateDevice(devices[0]))
-        self.runningStatus       = False
-        self.thread              = None
-        self.image_list          = list()
+        self.runningStatus = False
+        self.thread = None
+        self.image_list = list()
         self.countImagesIntoGrab = 2
-        self.model               = None
-        self.PATH_OUTPUT         = f'Record_{str(datetime.now())[:10]}'
+        self.model = None
+        self.PATH_OUTPUT = f'Record_{str(datetime.now())[:10]}'
         if not osp.exists(self.PATH_OUTPUT):
             os.mkdir(self.PATH_OUTPUT)
-        self.outputDir   = self.PATH_OUTPUT
-        self.filename    = None
+        self.outputDir = self.PATH_OUTPUT
+
     def _start_(self):
         self.camera.Open()
         self.settingParameter()
@@ -106,10 +122,10 @@ class VisionModule():
             else:
                 imageDict = self.image_list.pop(0)
                 img = imageDict['image'] 
-                self.filename = imageDict['filename']
-                startTime = time.time()  
+                filename = imageDict['filename']
+                startTime = time.time()
                 im = Image.fromarray(img)
-                im.save('%s/%s' % (self.outputDir, self.filename))
+                im.save('%s/%s' % (self.outputDir, filename))
                 totalTime = totalTime + (time.time() - startTime)
         print('Total time for saving: %f' % totalTime)
     
@@ -121,31 +137,36 @@ class VisionModule():
         This function to get bounding box
         """
 
-        sam = sam_model_registry[CFG.MODEL_TYPE](checkpoint= CFG.WEIGHT)
-        sam.to(device= CFG.DEVICE)        
+        sam = sam_model_registry[CFG.model_type](checkpoint= CFG.weight)
+        sam.to(device= CFG.device)        
         self.model = SamAutomaticMaskGenerator(sam)
 
     
     def _getCoordinate_(self):
         image_arr = self.image_list[-1]['image']
-
-        # assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
+        assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
         coordinate = marks[0]['bbox']
-
-        #display image after segment
-        x, y, w, h = coordinate
-        img_cvt_draw = img_cvt.copy()
-        cv2.circle(img_cvt, (x, y), color = (255, 0, 0), radius = 50, thickness = 20)
-        text = f'({x}, {y})'
-        cv2.putText(img = img_cvt, org = (x, y), fontFace = 1, fontScale = 5, text = text, color = (125, 255, 255), thickness = 10)
-        cv2.rectangle(img_cvt, (x, y), (x + w, y + h), (0, 255, 125), thickness = 20)
-
-        fig = plt.imshow(img_cvt)
-        plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
         return coordinate
-    
-
                 
+    
+def main():
+
+    obj = VisionModule()
+    obj._start_()
+    obj._getImage_()
+    obj.load_model()
+    coordinate = obj._getCoordinate_()
+    print(coordinate)
+    # obj.save_image()
+    obj._end_()
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
