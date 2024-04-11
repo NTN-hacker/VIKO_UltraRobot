@@ -136,7 +136,6 @@ class VisionModule():
     
     def _getCoordinate_(self):
         image_arr = self.image_list[-1]['image']
-
         # assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
