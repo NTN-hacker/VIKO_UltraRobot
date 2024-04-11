@@ -4,21 +4,21 @@ import numpy as np
 import time
 import create_ref as cr
 import sys
-sys.path.append('../')
-import config as CFG
-
-
+sys.path.append('D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot')
+from config import config as CFG
+from datetime import datetime
+import pandas as pd
 # import keyboard
 import rot_pos as rp
-import vision as vis#temp
+import lib.vision as vis#temp
 
 def getCoordinates(flag: bool):
     obj = vis.VisionModule()
     obj._start_()
     obj._getImage_()
     obj.load_model()
+    # obj.save_image()
     coordinate = obj._getCoordinate_()
-    obj.save_image()
     obj._end_()
     return coordinate
 
@@ -71,7 +71,7 @@ def changeJoint(rf_camera2base, rf_surface2base):
 
     return
 
-
+# sai so
 def convertCoordinates(focal_length, res_height, res_width, pixel_x, pixel_y, distance):
 
     sensor_height = res_height * CFG.PIXEL_SIZE / 1000 #cfg
@@ -234,6 +234,8 @@ if RUN_ON_ROBOT:
     success = robot.Connect()  # Try to connect once
     #success robot.ConnectSafe() # Try to connect multiple times
     status, status_msg = robot.ConnectedState()
+    print(status)
+    print(status_msg)
     if status != ROBOTCOM_READY:
         # Stop if the connection did not succeed
         print(status_msg)
@@ -258,8 +260,9 @@ rot_flange2base = [
 rf_flage2base = cr.createRef(pos_flange2base, rot_flange2base)
 print("rf_flage2base:", rf_flage2base, "\n")
 
+
 # reference frame camera to flange
-pos_camera2flange = [0, 0, 200]  # Translation vector [Tx, Ty, Tz]
+pos_camera2flange = [0, -30, 200]  # Translation vector [Tx, Ty, Tz] ## sai so
 rot_camera2flange = [
     np.radians(0),
     np.radians(0),
@@ -289,7 +292,7 @@ coordinate_pixel = getCoordinates(True)
 x_target, y_target, h, w = convertCoordinates(CFG.FOCAL_LENGTH, CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coordinate_pixel[-1],\
                                                                                                     coordinate_pixel[0], CFG.DISTANCE_2OBJECT) #cfg
 
-pos_img2sur = [int(w / 2), int(h / 2), 0]
+pos_img2sur = [-int(w / 2), -int(h / 2), 0] # sai so
 rot_img2sur = [0, 0, 0]
 
 rf_img2sur = cr.createRef(pos_img2sur, rot_img2sur)
@@ -315,6 +318,7 @@ robot.setRounding(5)  # Set the rounding parameter
 robot.setSpeed(10, 10)  # Set linear speed in mm/s
 robot.setSpeedJoints(10)
 
+print("rf_camera2base_matrix:", rf_camera2base_matrix)
 robot.MoveJ(rf_camera2base_matrix)
 
 sleep_seconds(10)
@@ -326,7 +330,7 @@ createPoint(x_target, y_target, 0)
 #TEST FLOW
 x_target_02, y_target_02, h, w = convertCoordinates(CFG.FOCAL_LENGTH, CFG.RESOLUTION_X, CFG.RESOLUTION_Y, list(coordinate_pixel)[-1] + 800,\
                                                                                                     list(coordinate_pixel)[0], CFG.DISTANCE_2OBJECT)
-# createPoint(x_target_02, y_target_02, 0)
+createPoint(x_target_02, y_target_02, 0)
 
 # robot.MoveJ(fixed_target_matrix)
 
@@ -335,3 +339,16 @@ current_joint_values = robot.Joints()
 print("current_joint_values:", current_joint_values, "\n")
 
 # robot.setJoints([0, 0, 0, 0, -90, 0])
+
+def export_csv(data: dict):
+    """
+    Export to excel or csv
+    """
+    time = str(datetime.now())
+    data = {'id':  time, 
+            'Current Joint Values': current_joint_values,
+            #### add if need
+            }
+
+    dataframe = pd.DataFrame(data)
+    dataframe.to_csv(f'Test_{time[:10]}.csv')
