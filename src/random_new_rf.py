@@ -22,6 +22,9 @@ def getCoordinates(flag: bool):
     obj._end_()
     return coordinate
 
+
+
+
 def drawPolygon(target_rf, n_sides, R):
 
     for i in range(n_sides + 1):
@@ -65,7 +68,6 @@ def changeJoint(rf_camera2base, rf_surface2base):
     print("ref_surface2base:", rf_surface2base, "\n")
     rf_surface2camera = np.dot(rf_base2camera, rf_surface2base)
     print("ref_surface2camera:", rf_surface2camera, "\n")
-
     rot, pos = rp.rotPos(rf_surface2camera)
     print("rot:", rot, "\n", "pos:", pos, "\n")
 
@@ -101,7 +103,6 @@ def sleep_seconds(seconds):
     print(f"Sleeping for {seconds} seconds...")
     time.sleep(seconds)
     print("Awake now!")
-
 
 def createPoint(x_st, y_st, z_st):
 
@@ -245,7 +246,6 @@ if RUN_ON_ROBOT:
 robot.ConnectedState()
 print("ConnectedState:", robot.ConnectedState(), "\n")
 
-
 # reference frame from flange to base
 pos_flange2base = [380, 0, 305]  # Translation vector [Tx, Ty, Tz]
 rot_flange2base = [
@@ -255,7 +255,9 @@ rot_flange2base = [
 ]  # Rotation angles [Rx, Ry, Rz] in radians
 
 # Create the transformation matrix for the new rf flange to base
+
 rf_flage2base = cr.createRef(pos_flange2base, rot_flange2base)
+
 print("rf_flage2base:", rf_flage2base, "\n")
 
 # reference frame camera to flange
@@ -267,7 +269,9 @@ rot_camera2flange = [
 ]  # Rotation angles [Rx, Ry, Rz] in radians
 
 # Create the transformation matrix for the new rf camera to flange
+
 rf_camera2flange = cr.createRef(pos_camera2flange, rot_camera2flange)
+
 print("ref_camera2flange:", rf_camera2flange, "\n")
 
 rf_camera2flange_non_matrix = np.concatenate((pos_camera2flange, rot_camera2flange))
@@ -275,6 +279,7 @@ rf_camera2flange_matrix = TxyzRxyz_2_Pose(rf_camera2flange_non_matrix)
 print("ref_camera2flange_test:", rf_camera2flange_matrix, "\n")
 
 # reference frame surface to base
+
 pos_surface2camera = [0, 0, 480]  # Translation vector [Tx, Ty, Tz]
 rot_surface2camera = [0, 0, 0]  # Rotation angles [Rx, Ry, Rz] in radians
 
@@ -295,11 +300,14 @@ rot_img2sur = [0, 0, 0]
 rf_img2sur = cr.createRef(pos_img2sur, rot_img2sur)
 print("rf_img2sur:", rf_img2sur, "\n")
 
+
 # reference frame camera to base
 rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
 print("ref_camera2base:", rf_camera2base, "\n")
 
+
 rot_camera2base, pos_camera2base = rp.rotPos(rf_camera2base)
+
 # print(
 #     "rot_camera2base:", rot_camera2base, "\n", "pos_camera2base:", pos_camera2base, "\n"
 # )
@@ -316,6 +324,7 @@ robot.setSpeed(10, 10)  # Set linear speed in mm/s
 robot.setSpeedJoints(10)
 
 robot.MoveJ(rf_camera2base_matrix)
+
 
 sleep_seconds(10)
 
@@ -335,3 +344,4 @@ current_joint_values = robot.Joints()
 print("current_joint_values:", current_joint_values, "\n")
 
 # robot.setJoints([0, 0, 0, 0, -90, 0])
+

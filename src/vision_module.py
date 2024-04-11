@@ -1,3 +1,11 @@
+'''
+Vision Modules Python extension loader (Camera and Robotic)
+Some function:
+- Connect Camera
+- Load data
+- Process data
+'''
+############################## IMPORT LIBRARY #####################################
 import os
 import os.path as osp
 import importlib
@@ -136,11 +144,29 @@ class VisionModule():
     
     def _getCoordinate_(self):
         image_arr = self.image_list[-1]['image']
-
-        # assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
+        assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
         coordinate = marks[0]['bbox']
         return coordinate
                 
+    
+def main():
+
+    obj = VisionModule()
+    obj._start_()
+    obj._getImage_()
+    obj.load_model()
+    coordinate = obj._getCoordinate_()
+    print(coordinate)
+    # obj.save_image()
+    obj._end_()
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
