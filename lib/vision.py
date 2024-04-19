@@ -17,12 +17,16 @@ try:
     from datetime import datetime
     from PIL import Image
     from  segment_anything import sam_model_registry, SamPredictor, SamAutomaticMaskGenerator
+    from  mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+    from roboflow import Roboflow
+    import supervision as sv
 except ImportError:
     print('Vision module bindings requires "numpy", "cv2", "torch", "matplotlib.pyplot", "pypylon", "threading", "time", "pillow", "sam", "datetime" package.')
     print('Install it via command:')
-    print('    pip install numpy/cv2/matplotlib/pypylon/threading/time/pillow/datetime')
+    print('    pip install numpy/cv2/matplotlib/pypylon/threading/time/pillow/datetime/roboflow/supervision')
     print('Depend on with your cuda version, this case: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121')
     print('To install model, we nees install from repo and checkpoint: pip install git+https://github.com/facebookresearch/segment-anything.git')
+    print('                                                         or pip install git+https://github.com/ChaoningZhang/MobileSAM.git')
     raise
 
 
@@ -44,6 +48,7 @@ class VisionModule():
         self.image_list          = list()
         self.countImagesIntoGrab = 2
         self.model               = None
+        self.MODEL_CONFIG        = CFG.MODEL['SAM']
         self.PATH_OUTPUT         = f'Record_{str(datetime.now())[:10]}'
         if not osp.exists(self.PATH_OUTPUT):
             os.mkdir(self.PATH_OUTPUT)
@@ -96,22 +101,23 @@ class VisionModule():
     
     def save_image(self):
         totalTime = 0
-        while not self.runningStatus:
-            time.sleep(0.001)
-        while True:
-            if not self.runningStatus and len(self.image_list) == 0:
-                break
-            if len(self.image_list) == 0:
-                continue
-            else:
-                imageDict = self.image_list.pop(0)
-                img = imageDict['image'] 
-                self.filename = imageDict['filename']
-                startTime = time.time()  
-                im = Image.fromarray(img)
-                im.save('%s/%s' % (self.outputDir, self.filename))
-                totalTime = totalTime + (time.time() - startTime)
+        # while not self.runningStatus:
+        #     time.sleep(0.001)
+        # while True:
+        #     if not self.runningStatus and len(self.image_list) == 0:
+        #         break
+        #     if len(self.image_list) == 0:
+        #         continue
+        #     else:
+        imageDict = self.image_list.pop(0)
+        img = imageDict['image'] 
+        self.filename = imageDict['filename']
+        startTime = time.time()  
+        im = Image.fromarray(img)
+        im.save('%s/%s' % (self.outputDir, self.filename))
+        totalTime = totalTime + (time.time() - startTime)
         print('Total time for saving: %f' % totalTime)
+        return im
     
     def _end_(self):
         self.camera.Close()
@@ -121,7 +127,7 @@ class VisionModule():
         This function to get bounding box
         """
 
-        sam = sam_model_registry[CFG.MODEL_TYPE](checkpoint= CFG.WEIGHT)
+        sam = sam_model_registry[self.MODEL_CONFIG['MODEL_TYPE']](checkpoint= self.MODEL_CONFIG['WEIGHT'])
         sam.to(device= CFG.DEVICE)        
         self.model = SamAutomaticMaskGenerator(sam)
 
@@ -134,9 +140,11 @@ class VisionModule():
         marks = self.model.generate(img_cvt)
         #example
         coordinate = marks[0]['bbox']
-
-        #display image after segment
+        print(len(marks))
         x, y, w, h = coordinate
+        # img_crop = img_cvt[y: y+h, x:x+w,  :]
+        
+        #display image after segment
         img_cvt_draw = img_cvt.copy()
         cv2.circle(img_cvt, (x, y), color = (255, 0, 0), radius = 50, thickness = 20)
         text = f'({x}, {y})'
@@ -145,7 +153,29 @@ class VisionModule():
 
         fig = plt.imshow(img_cvt)
         plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
+        return marks
+    
+    def _getCoordinateWeld_(self, img) -> tuple:
+        rf = Roboflow(api_key="JtRFLNmuxFdQiNLXfFJj")
+        project = rf.workspace().project("weld-detection-slz4d")
+        model = project.version(1).model
+
+        image = img.copy()
+
+        result = model.predict(img, confidence=50, overlap=50).json()
+
+        detections = sv.Detections.from_roboflow(result)
+
+        coordinate = detections.xyxy[0]
+
+        x, y, x2, y2 = coordinate
+
+        cv2.rectangle(img = image, pt1= (int(x), int(y)), pt2= (int(x2), int(y2)), color= (0, 255, 0), thickness= 1)
+
+        cv2.imwrite(f'{self.outputDir}/Weld_{self.filename}', image)
+        
         return coordinate
     
+
 
                 
