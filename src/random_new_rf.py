@@ -75,25 +75,6 @@ def changeJoint(rf_camera2base, rf_surface2base):
 
 # def convertCoordinates(focal_length, res_height, res_width, pixel_x, pixel_y, distance):                    
 def convertCoordinates(res_height, res_width, pixel_x, pixel_y, distance, focal_length):
-    # sensor_height = res_height * CFG.PIXEL_SIZE / 1000 #cfg
-    # sensor_width = res_width * CFG.PIXEL_SIZE / 1000 #cfg
-    # sensor_size = np.array([sensor_height, sensor_width])
-    # print("sensor_size:", sensor_size, "\n")
-
-    # hFOV = (distance * sensor_size[0]) / focal_length
-    # vFOV = (distance * sensor_size[1]) / focal_length
-    # print("hFOV:", hFOV, "\n", "vFOV:", vFOV, "\n")
-
-    # spatial_x = []
-    # spatial_y = []
-    # for i in range (len(pixel_x)):
-    #     spatial_x = pixel_x[i] * hFOV / res_width
-    #     spatial_y = pixel_y[i] * vFOV / res_height
-    #     print("spatial_x:", spatial_x, "\n", "spatial_y:", spatial_y, "\n")
-
-    # spatial_x = pixel_x * hFOV / res_width
-    # spatial_y = pixel_y * vFOV / res_height
-    # print("spatial_x:", spatial_x, "\n", "spatial_y:", spatial_y, "\n")
 
     sensor_height = res_height * 3.5 / 1000 #cfg
     sensor_width = res_width * 3.5 / 1000 #cfg
@@ -130,11 +111,6 @@ def sleep_seconds(seconds):
 
 def createPoint(x_st, y_st, z_st):
 
-    # x_axis = x_st
-    # y_axis = y_st
-    # z_axis = z_st
-    # target_points = [x_axis, y_axis, z_axis]
-
     target = [x_st, y_st, z_st]
     # target_pose = intialTarget(target_points[0], target_points[1], target_points[2])
 
@@ -165,7 +141,15 @@ def createPoint(x_st, y_st, z_st):
 
     speeds = CFG.SPEEDS #cfg - TEST
     robot.setSpeed(speeds[1])
-    robot.MoveL(target_matrix)
+
+    try:
+        robot.MoveL(target_matrix)
+        get_joint = robot.Joints()
+        pass
+    except Exception as e:
+        print('Error:', e)
+        get_joint = robot.Joints()
+    return target_none_matrix, get_joint
 
 
 """ forward kinematics
@@ -321,10 +305,10 @@ robot.setSpeedJoints(10)
 print("rf_camera2base_matrix:", rf_camera2base_matrix)
 robot.MoveJ(rf_camera2base_matrix)
 
-sleep_seconds(5)
+# sleep_seconds(5)
 
 # coordinate_pixel = getCoordinates(True)
-coordinate_pixel = [957, 108, 877, 1735]
+coordinate_pixel = [899, 67, 883, 1737]
 
 x_target, y_target = convertCoordinates(CFG.RESOLUTION_Y, CFG.RESOLUTION_X, coordinate_pixel[0],\
                                                                                                     coordinate_pixel[1], CFG.DISTANCE_2OBJECT, CFG.FOCAL_LENGTH) #cfg
@@ -338,32 +322,68 @@ x_target, y_target = convertCoordinates(CFG.RESOLUTION_Y, CFG.RESOLUTION_X, coor
 # rf_surface2camera = cr.createRef(pos_surface2camera, rot_surface2camera)
 # print("rf_surface2camera:", rf_surface2camera, "\n")
 
-createPoint(x_target, y_target, CFG.DISTANCE_2OBJECT) #fix
+target01, joint1 = createPoint(x_target, y_target, CFG.DISTANCE_2OBJECT) #fix
 
 # sleep_seconds(20)
 coordinate_pixel = [920, 184, 896, 1733]
 #TEST FLOW
 x_target_02, y_target_02 = convertCoordinates(CFG.RESOLUTION_Y, CFG.RESOLUTION_X, coordinate_pixel[0] + coordinate_pixel[2],\
                                                                                                     coordinate_pixel[1] + coordinate_pixel[3], CFG.DISTANCE_2OBJECT, CFG.FOCAL_LENGTH)
-createPoint(x_target_02, y_target_02, CFG.DISTANCE_2OBJECT)
+
+def trajectory(x, y):
+    ## create the y = ax + b
+    pass
+
+target02, joint2 = createPoint(x_target_02, y_target_02, CFG.DISTANCE_2OBJECT)
 
 # robot.MoveJ(fixed_target_matrix)
 
-robot.MoveJ(rf_camera2base_matrix)
-current_joint_values = robot.Joints()
-print("current_joint_values:", current_joint_values, "\n")
+# robot.MoveJ(rf_camera2base_matrix)
 
-# robot.setJoints([0, 0, 0, 0, -90, 0])
+current_joint_values = robot.Joints()
+target01 = np.array2string(target01)
+target02 = np.array2string(target02)
+limit = robot.JointLimits()
+
+print(f'limit:{limit}')
+
 
 def export_csv(data: dict):
     """
     Export to excel or csv
     """
     time = str(datetime.now())
-    data = {'id':  time, 
-            'Current Joint Values': current_joint_values,
-            #### add if need
-            }
+    # dataframe = pd.DataFrame(data)
+    # dataframe.to_csv(f'Test_{time[:10]}.csv')
+    filename = f'Test_{time[:10]}.csv'
 
-    dataframe = pd.DataFrame(data)
-    dataframe.to_csv(f'Test_{time[:10]}.csv')
+    try:
+        # Read the existing CSV file into a DataFrame
+        existing_dataframe = pd.read_csv(filename)
+    except FileNotFoundError:
+        # If the file doesn't exist, create a new DataFrame
+        existing_dataframe = pd.DataFrame()
+
+    # Create a DataFrame from the new data
+    new_dataframe = pd.DataFrame(data)
+
+    # Concatenate the existing and new dataframes
+    updated_dataframe = pd.concat([existing_dataframe, new_dataframe], ignore_index=True)
+
+    # Save the updated DataFrame to the CSV file
+    updated_dataframe.to_csv(filename, index=False)
+
+data_export = {'id': str(datetime.now()), 
+    'target01': target01,
+    'joint1': joint1,
+    'target02': target02,
+    'joint2': joint2,
+    'limit_lower': limit[0],
+    'limit_upper': limit[1]
+
+
+    #### add if need
+    }
+
+export_csv(data_export)
+
