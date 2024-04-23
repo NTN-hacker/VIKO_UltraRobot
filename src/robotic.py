@@ -22,27 +22,6 @@ def getCoordinates(flag: bool):
     obj._end_()
     return coordinate
 
-def drawPolygon(target_rf, n_sides, R):
-
-    for i in range(n_sides + 1):
-        ang = i * 2 * pi / n_sides  # angle: 0, 60, 120, ...
-        # target_matrix = TxyzRxyz_2_Pose(pos_i)
-        # -----------------------------
-        # Movement relative to the reference frame
-        # Create a copy of the target
-        target_draw_1 = Mat(target_rf)
-        print(f"target_i: {target_draw_1}")
-        pos_draw_i = target_draw_1.Pos()
-        pos_draw_i[0] = pos_draw_i[0] + R * cos(ang)
-        pos_draw_i[1] = pos_draw_i[1] + R * sin(ang)
-        target_draw_1.setPos(pos_draw_i)
-        print("Moving to target %i: angle %.1f" % (i, ang * 180 / pi))
-        # print(str(Pose_2_TxyzRxyz(target_i)))
-        robot.setSpeed(0)
-        robot.MoveL(target_draw_1)
-    return
-
-
 def intialTarget(x, y, z):
     # target_pos_initial = np.array([200, 200, 200, 1])
     target_pos_initial = np.array([x, y, z, 1])
@@ -109,14 +88,13 @@ def sleep_seconds(seconds):
     print("Awake now!")
 
 
-def createPoint(x_st, y_st, z_st):
+def createPoint(x_st, y_st, z_st, count):
 
     target = [x_st, y_st, z_st]
-    # target_pose = intialTarget(target_points[0], target_points[1], target_points[2])
 
     target2camera = intialTarget(target[0], target[1], target[2])
     target2_newcamera = np.dot(rf_camera2camera, target2camera)
-    print(f'target2_newcamera:{target2_newcamera}')
+    # print(f'target2_newcamera:{target2_newcamera}')
     # rf_target2camera = np.dot(rf_surface2camera, target_pose)
 
     rf_target2base = np.dot(rf_camera2base, target2_newcamera)
@@ -126,15 +104,12 @@ def createPoint(x_st, y_st, z_st):
     # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
 
     target_none_matrix = np.concatenate((pos_target, rot_target), axis=0)
-    print("target_none_matrix:", target_none_matrix, "\n")
+    print(f"target_none_matrix {count}:{target_none_matrix}", "\n")
 
     if abs(target_none_matrix[2]) > 300:
         print('out of limit')
-        target_none_matrix[2] = -300
+        target_none_matrix[2] = -330
         # robot.Disconnect()
-        
-    else:
-        pass
 
     # convert to pose
     target_matrix = TxyzRxyz_2_Pose(target_none_matrix)
@@ -143,7 +118,7 @@ def createPoint(x_st, y_st, z_st):
     robot.setSpeed(speeds[1])
 
     try:
-        robot.MoveL(target_matrix)
+        # robot.MoveL(target_matrix)
         get_joint = robot.Joints()
         pass
     except Exception as e:
@@ -151,66 +126,6 @@ def createPoint(x_st, y_st, z_st):
         get_joint = robot.Joints()
     return target_none_matrix, get_joint
 
-
-""" forward kinematics
-def transformation_matrix(alpha, a, d, theta):
-    return np.array([
-        [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
-        [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
-        [0, np.sin(alpha), np.cos(alpha), d],
-        [0, 0, 0, 1]
-    ])
-
-# Các góc xoay của các khớp (radian)
-theta1 = 0
-theta2 = 0
-theta3 = 0
-theta4 = 0
-theta5 = np.radians(-90)
-theta6 = np.radians(90)
-
-# Tạo ma trận biến đổi cho từng khớp
-T1 = transformation_matrix(0, 0, 0, theta1)
-T2 = transformation_matrix(0, 0, 0, theta2)
-T3 = transformation_matrix(0, 0, 0, theta3)
-T4 = transformation_matrix(0, 0, 0, theta4)
-T5 = transformation_matrix(0, 0, 0, theta5)
-T6 = transformation_matrix(0, 0, 0, theta6)
-
-# Tích các ma trận biến đổi
-T_final = np.dot(np.dot(np.dot(np.dot(np.dot(T1, T2), T3), T4), T5), T6)
-
-# Trục hệ tọa độ của mỗi khớp
-axes = {
-    'Khớp 1': T1[:3, :3],
-    'Khớp 2': T2[:3, :3],
-    'Khớp 3': T3[:3, :3],
-    'Khớp 4': T4[:3, :3],
-    'Khớp 5': T5[:3, :3],
-    'Khớp 6': T6[:3, :3]
-}
-
-for k, v in axes.items():
-    print(k + ':')
-    print(v)
-    print()
-
-# Vị trí của khâu tác động cuối cùng (cột 4 của ma trận biến đổi)
-position = T_final[:3, 3]
-# Hướng của khâu tác động cuối cùng (các phần tử của cột 1, 2, 3 của ba cột đầu tiên)
-orientation = T_final[:3, :3]
-
-print("Vị trí của khâu tác động cuối cùng:", position)
-print("Hướng của khâu tác động cuối cùng:", orientation)
-
-# Các góc xoay của các khớp (radian)
-theta1 = 0
-theta2 = 0
-theta3 = 0
-theta4 = 0
-theta5 = np.radians(-90)
-theta6 = np.radians(90)
-"""
 RDK = Robolink()
 
 # robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
@@ -227,7 +142,7 @@ if RDK.RunMode() != RUNMODE_SIMULATE:
 if RUN_ON_ROBOT:
     
     # Connect to the robot using default IP
-    success = robot.Connect()  # Try to connect once
+    # success = robot.Connect()  # Try to connect once
     #success robot.ConnectSafe() # Try to connect multiple times
     status, status_msg = robot.ConnectedState()
     print(status)
@@ -293,11 +208,19 @@ rot_camera2camera = [
 ]
 rf_camera2camera = cr.createRef(pos_camera2camera, rot_camera2camera)
 
+pos_setFrame= [0, 0, 0]  # Translation vector [Tx, Ty, Tz] ## sai so
+rot_setFramee = [
+    np.radians(0),
+    np.radians(0),
+    np.radians(0),
+]  # Rotation angles [Rx, Ry, Rz] in radians
+rf_setFrame = np.concatenate((pos_setFrame, rot_setFramee))
+setFrame = TxyzRxyz_2_Pose(rf_setFrame)
 
-robot.setPoseFrame(robot.PoseFrame())
+robot.setPoseFrame(setFrame)
 # print(f"robot.PoseFrame():{robot.PoseFrame()}")
 robot.setPoseTool(rf_camera2flange_matrix)
-print(f"robot.PoseTool():{robot.PoseTool()}")
+# print(f"robot.PoseTool():{robot.PoseTool()}")
 robot.setRounding(5)  # Set the rounding parameter
 robot.setSpeed(10, 10)  # Set linear speed in mm/s
 robot.setSpeedJoints(10)
@@ -314,38 +237,24 @@ x_target, y_target = convertCoordinates(CFG.RESOLUTION_Y, CFG.RESOLUTION_X, coor
                                                                                                     coordinate_pixel[1], CFG.DISTANCE_2OBJECT, CFG.FOCAL_LENGTH) #cfg
 
 
-# # reference frame surface to base
-# pos_surface2camera = [-(h / 2), -(w / 2), 480]  # Translation vector [Tx, Ty, Tz]
-# rot_surface2camera = [0, 0, 0]  # Rotation angles [Rx, Ry, Rz] in radians
+target01, joint1 = createPoint(x_target, y_target, CFG.DISTANCE_2OBJECT, None) #fix
 
-# Create the transformation matrix for the new rf surface to base
-# rf_surface2camera = cr.createRef(pos_surface2camera, rot_surface2camera)
-# print("rf_surface2camera:", rf_surface2camera, "\n")
-
-target01, joint1 = createPoint(x_target, y_target, CFG.DISTANCE_2OBJECT) #fix
-
-# sleep_seconds(20)
 coordinate_pixel = [920, 184, 896, 1733]
 #TEST FLOW
 x_target_02, y_target_02 = convertCoordinates(CFG.RESOLUTION_Y, CFG.RESOLUTION_X, coordinate_pixel[0] + coordinate_pixel[2],\
                                                                                                     coordinate_pixel[1] + coordinate_pixel[3], CFG.DISTANCE_2OBJECT, CFG.FOCAL_LENGTH)
 
-def trajectory(x, y):
-    ## create the y = ax + b
-    pass
 
-target02, joint2 = createPoint(x_target_02, y_target_02, CFG.DISTANCE_2OBJECT)
+target02, joint2 = createPoint(x_target_02, y_target_02, CFG.DISTANCE_2OBJECT, None)
 
-# robot.MoveJ(fixed_target_matrix)
-
-# robot.MoveJ(rf_camera2base_matrix)
+robot.MoveJ(rf_camera2base_matrix)
 
 current_joint_values = robot.Joints()
-target01 = np.array2string(target01)
+# target01 = np.array2string(target01)
 target02 = np.array2string(target02)
 limit = robot.JointLimits()
 
-print(f'limit:{limit}')
+# print(f'limit:{limit}')
 
 
 def export_csv(data: dict):
@@ -374,13 +283,12 @@ def export_csv(data: dict):
     updated_dataframe.to_csv(filename, index=False)
 
 data_export = {'id': str(datetime.now()), 
-    'target01': target01,
-    'joint1': joint1,
+    # 'target01': target01,
+    # 'joint1': joint1,
     'target02': target02,
     'joint2': joint2,
     'limit_lower': limit[0],
     'limit_upper': limit[1]
-
 
     #### add if need
     }
