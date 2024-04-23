@@ -78,12 +78,15 @@ def boudingBox(fg_cropImageRoi, fgMask):
         h = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
 
-        # if (0.3*MAX_AREA < area < MAX_AREA)  and (w < fg.shape[0]) and (h < fg.shape[1]):
-        cv2.rectangle(fg, (x, y), (x + w, y + h), (0, 255, 0), 10)
-        cordinate = [x, y, w, h]
-        text = f'({x}, {y})'
-        cv2.putText(fg, text, color = (0, 255, 125), org = (x, y-50), fontFace= 1, fontScale= 3, thickness= 5, lineType= 1)
-        area_get = area
+        if (0.3*MAX_AREA < area < MAX_AREA)  and (w < fg.shape[0]) and (h < fg.shape[1]):
+            cv2.rectangle(fg, (x, y), (x + w, y + h), (0, 255, 0), 10)
+            cordinate = [x, y, w, h]
+            text = f'({x}, {y})'
+            cv2.putText(fg, text, color = (0, 255, 125), org = (x, y-50), fontFace= 1, fontScale= 3, thickness= 5, lineType= 1)
+
+            text2 = f'({x+w}, {y+h})'
+            cv2.putText(fg, text2, color = (0, 255, 125), org = (x+w, y+h+50), fontFace= 1, fontScale= 3, thickness= 5, lineType= 1)
+            area_get = area
     
     # cv2.imshow('Roi Image 2' , fg)
     # time = datetime.datetime.now()
@@ -96,7 +99,7 @@ if __name__ == '__main__':
     # Background
     img_bg = cv2.imread('data\\data_2024_04_20\\9.png', cv2.IMREAD_COLOR)
     # Object
-    obj_path = 'data\\data_2024_04_20\\3_45.png'
+    obj_path = 'data\\data_2024_04_20\\1_vertical.png'
     img_obj = cv2.imread(obj_path , cv2.IMREAD_COLOR)
     # Mask
     fmask = main(img_obj, img_bg)
