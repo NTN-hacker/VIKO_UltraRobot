@@ -139,7 +139,7 @@ class VisionModule():
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
-        coordinate = marks[0]['bbox']
+        coordinate = marks[1]['bbox']
         print(len(marks))
         x, y, w, h = coordinate
         # img_crop = img_cvt[y: y+h, x:x+w,  :]
@@ -175,6 +175,37 @@ class VisionModule():
         cv2.imwrite(f'{self.outputDir}/Weld_{self.filename}', image)
         
         return coordinate
+    
+    def backgroundSubtraction(self) -> list:
+        #Background Image
+        img_bg = cv2.imread('lib/BackGround.png', cv2.IMREAD_COLOR)
+
+        #Foreground Image
+        imageDict = self.image_list.pop(0)
+        img_fg = imageDict['image'] 
+        self.filename = imageDict['filename']
+        img_fg = Image.fromarray(img_fg)
+
+
+
+
+        #Background Subtraction
+
+
+
+
+
+
+        #Post Processing
+
+
+
+
+        #Get coordinates 
+        coordinates = list([])
+
+
+        return coordinates
     
 
 

@@ -12,7 +12,7 @@ SPEEDS = [100, 50]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448 #DEFAULT RESOLUTION
 RESOLUTION_Y = 2048 #DEFAULT RESOLUTION
-DISTANCE_2OBJECT = 490
+DISTANCE_O1O2 = 60
 ########################################################## AI MODEL ###################################################################
 
 
