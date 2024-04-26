@@ -2,7 +2,7 @@ import numpy as np
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
 import rot_pos as rp
-
+from config import config as CFG
 
 RDK = Robolink()
 # robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
@@ -12,7 +12,7 @@ def cameraPosLeft(matcamera2base):
     
     ## move the left position to capture
     camera2base_posLeft = matcamera2base.copy()
-    camera2base_posLeft = camera2base_posLeft[1] + 30
+    camera2base_posLeft = camera2base_posLeft[1] + (CFG.DISTANCE_O1O2)/2
     rot, pos = rp.rotPos(camera2base_posLeft)
     camera2base_left_nonmat = np.concatenate(pos, rot)
     camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
@@ -23,7 +23,7 @@ def cameraPosRight(matcamera2base):
     
     ## move the right position to capture
     camera2base_posLeft = matcamera2base.copy() 
-    camera2base_posLeft = camera2base_posLeft[1] - 30
+    camera2base_posLeft = camera2base_posLeft[1] - (CFG.DISTANCE_O1O2)/2
     rot, pos = rp.rotPos(camera2base_posLeft)
     camera2base_right_nonmat = np.concatenate(pos, rot)
     camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
@@ -52,20 +52,26 @@ def convertCoordinates(res_width, res_height, pixel_x, pixel_y):
 
     return x_to_camera, y_to_camera
 
-def realTarget(x1, y1, x2, y2, o1o2, focal_length):
+
+def distanceCameraToObject(x1_dis, x2_dis, focal_length):
     
-    dis_cameraToObject = o1o2 * focal_length / (abs(x1) + abs(x2))
-    print("distance:", dis_cameraToObject, "\n")
+    dis_cameraToObject = CFG.DISTANCE_O1O2 * focal_length / (abs(x1_dis) + abs(x2_dis))
+    print(f'dis_cameraToObject:{dis_cameraToObject}')
+    return dis_cameraToObject
+
+
+def realTarget(x1, y1, x2, y2, dis_cameraToObject, focal_length, z_laser_to_camera):
+    
 
     x1_real = x1 * dis_cameraToObject / focal_length
     y1_real = y1 * dis_cameraToObject / focal_length
-    target1 = np.array([x1_real, y1_real, dis_cameraToObject])
+    target1 = np.array([x1_real, y1_real, z_laser_to_camera])
 
     x2_real = x2 * dis_cameraToObject / focal_length
     y2_real = y2* dis_cameraToObject / focal_length
-    target2 = np.array([x2_real, y2_real, dis_cameraToObject ])
+    target2 = np.array([x2_real, y2_real, z_laser_to_camera ])
 
-    return target1, target2, dis_cameraToObject
+    return target1, target2
 
 # small 2
 # (2050.949134397749, 924.6976815317794)
