@@ -237,8 +237,8 @@ x_left_dis, y_left_dis = dis.convertCoordinates(
 x_right_dis, y_right_dis = dis.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
-    dis_pixel[0] + dis_pixel[2],
-    dis_pixel[1] + dis_pixel[3],
+    dis_pixel[2],
+    dis_pixel[3],
     CFG.PIXEL_SIZE,
 )  # x_ at right position
 dis_cameraToObject = dis.distanceCameraToObject(
