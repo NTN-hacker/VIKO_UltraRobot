@@ -232,13 +232,14 @@ dis.cameraPosRight(camera2base_non_matrix)
 dis_pixel = []
 
 x_left_dis, y_left_dis = dis.convertCoordinates(
-    CFG.RESOLUTION_X, CFG.RESOLUTION_Y, dis_pixel[0], dis_pixel[1]
+    CFG.RESOLUTION_X, CFG.RESOLUTION_Y, dis_pixel[0], dis_pixel[1], CFG.PIXEL_SIZE
 )  # x_ at left position
 x_right_dis, y_right_dis = dis.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
     dis_pixel[0] + dis_pixel[2],
     dis_pixel[1] + dis_pixel[3],
+    CFG.PIXEL_SIZE,
 )  # x_ at right position
 dis_cameraToObject = dis.distanceCameraToObject(
     x_left_dis, x_right_dis, CFG.FOCAL_LENGTH
@@ -248,7 +249,11 @@ robot.MoveJ(rf_camera2base_matrix)  # move home position
 
 coordinate_pixel = []
 x_to_camera_01, y_to_camera_01 = dis.convertCoordinates(
-    CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coordinate_pixel[0], coordinate_pixel[1]
+    CFG.RESOLUTION_X,
+    CFG.RESOLUTION_Y,
+    coordinate_pixel[0],
+    coordinate_pixel[1],
+    CFG.PIXEL_SIZE,
 )  # cfg
 
 x_to_camera_02, y_to_camera_02 = dis.convertCoordinates(
@@ -256,6 +261,7 @@ x_to_camera_02, y_to_camera_02 = dis.convertCoordinates(
     CFG.RESOLUTION_Y,
     coordinate_pixel[0] + coordinate_pixel[2],
     coordinate_pixel[1] + coordinate_pixel[3],
+    CFG.PIXEL_SIZE,
 )  # cfg
 
 # TEST FLOW

@@ -31,10 +31,10 @@ def cameraPosRight(matcamera2base):
     print(f'camera2base_posLeft_mat:{camera2base_right}')
 
 
-def convertCoordinates(res_width, res_height, pixel_x, pixel_y):                    
+def convertCoordinates(res_width, res_height, pixel_x, pixel_y, pixel_size):                    
 
-    sensor_height = res_height * 3.45 / 1000 #cfg
-    sensor_width = res_width * 3.45 / 1000 #cfg
+    sensor_height = res_height * pixel_size / 1000 #cfg
+    sensor_width = res_width * pixel_size / 1000 #cfg
     sensor_size = np.array([sensor_height, sensor_width])
     print("sensor_size:", sensor_size, "\n")
 
