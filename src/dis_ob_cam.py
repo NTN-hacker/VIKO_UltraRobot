@@ -7,7 +7,6 @@ import sys
 sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
 from config import config as CFG
 RDK = Robolink()
-# robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
 robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 
 # def cameraForward(matcamera2base):

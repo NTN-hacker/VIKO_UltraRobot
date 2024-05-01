@@ -9,8 +9,6 @@ sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
 from config import config as CFG
 from datetime import datetime
 import pandas as pd
-
-# import keyboard
 import rot_pos as rp
 import lib.vision as vis  # temp
 import dis_ob_cam as dis
@@ -43,29 +41,13 @@ def intialTarget(x, y, z):
     return target_pose
 
 
-""" Invertible matrix
-def changeJoint(rf_camera2base, rf_surface2base):
-
-    rf_base2camera = np.linalg.inv(rf_camera2base)
-    print("ref_base2camera:", rf_base2camera, "\n")
-    print("ref_surface2base:", rf_surface2base, "\n")
-    rf_surface2camera = np.dot(rf_base2camera, rf_surface2base)
-    print("ref_surface2camera:", rf_surface2camera, "\n")
-
-    rot, pos = rp.rotPos(rf_surface2camera)
-    print("rot:", rot, "\n", "pos:", pos, "\n")
-
-    return
-"""
-
-
 def sleep_seconds(seconds):
     print(f"Sleeping for {seconds} seconds...")
     time.sleep(seconds)
     print("Awake now!")
 
 
-def createPoint(arr_target, count, rot_camera2base):
+def createPoint(arr_target, count):
 
     target_to_Camera = intialTarget(arr_target[0], arr_target[1], arr_target[2])
 
@@ -269,8 +251,8 @@ real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 print(f'real_target01:{real_target01}')
 print(f'real_target02:{real_target02}')
 
-target01, pos_laser01 = createPoint(real_target01, 1, rot_camera2base)  # fix
-target02, pos_laser02 = createPoint(real_target02, 2, rot_camera2base)
+target01, pos_laser01 = createPoint(real_target01, 1)  # fix
+target02, pos_laser02 = createPoint(real_target02, 2)
 print(f'target01:{target01}, target02:{target02}')
 
 #     print(f"Target position: {pos_laser[2]}")
@@ -307,8 +289,6 @@ def export_csv(data: dict):
     Export to excel or csv
     """
     time = str(datetime.now())
-    # dataframe = pd.DataFrame(data)
-    # dataframe.to_csv(f'Test_{time[:10]}.csv')
     filename = f"Test_{time[:10]}.csv"
 
     try:
