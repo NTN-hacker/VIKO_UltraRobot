@@ -2,77 +2,95 @@ import numpy as np
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
 import rot_pos as rp
-from config import config as CFG
+import sys
 
+sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
+from config import config as CFG
 RDK = Robolink()
 # robot = RDK.AddFile("E:\\Install-software\\RoboDK\\Library\\Motoman-GP8.robot")
 robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 
+# def cameraForward(matcamera2base):
+    
+#     ## move the left position to capture
+#     camera2base = matcamera2base
+#     rot, pos = rp.rotPos(camera2base)
+#     print(f'rot, pos of left:{rot}, {pos}')
+#     pos = [pos[0] + CFG.FORWARD, pos[1], pos[2]]
+#     print(f'newpos:{pos}')
+
+#     camera2base_Forward_nonmat = np.concatenate((pos, rot))
+#     camera2base_Forward  = TxyzRxyz_2_Pose(camera2base_Forward_nonmat)
+#     robot.MoveJ(camera2base_Forward)
+#     print(f'camera2base_posLeft_mat:{camera2base_Forward_nonmat}')
+
+
 def cameraPosLeft(matcamera2base):
     
     ## move the left position to capture
-    camera2base_posLeft = matcamera2base.copy()
-    camera2base_posLeft = camera2base_posLeft[1] + (CFG.DISTANCE_O1O2)/2
+    camera2base_posLeft = matcamera2base
     rot, pos = rp.rotPos(camera2base_posLeft)
-    camera2base_left_nonmat = np.concatenate(pos, rot)
+    print(f'rot, pos of left:{rot}, {pos}')
+    rot = [rot[0], rot[1], rot[2]]
+    print(f'rot:{rot}')
+    pos = [pos[0], pos[1] + (CFG.HORIZONTAL_BASELINE)/2, pos[2]]
+    # pos = [pos[0] - CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
+    print(f'newpos:{pos}')
+
+    camera2base_left_nonmat = np.concatenate((pos, rot))
     camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
     robot.MoveJ(camera2base_left)
     print(f'camera2base_posLeft_mat:{camera2base_left}')
 
+
 def cameraPosRight(matcamera2base):
     
     ## move the right position to capture
-    camera2base_posLeft = matcamera2base.copy() 
-    camera2base_posLeft = camera2base_posLeft[1] - (CFG.DISTANCE_O1O2)/2
-    rot, pos = rp.rotPos(camera2base_posLeft)
-    camera2base_right_nonmat = np.concatenate(pos, rot)
+    camera2base_posRight = matcamera2base
+    rot, pos = rp.rotPos(camera2base_posRight)
+    # pos = [pos[0] + CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
+    rot = [rot[0], rot[1], rot[2]]
+    print(f'rot:{rot}')
+    pos = [pos[0], pos[1] - (CFG.HORIZONTAL_BASELINE)/2, pos[2]]
+    print(f'newpos:{pos}')
+
+    camera2base_right_nonmat = np.concatenate((pos, rot))
     camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
     robot.MoveJ(camera2base_right)
     print(f'camera2base_posLeft_mat:{camera2base_right}')
 
 
-def convertCoordinates(res_width, res_height, pixel_x, pixel_y, pixel_size):                    
+def convertCoordinates(res_width, res_height, pixel_x, pixel_y, pixel_focalLength, dis_cameraToObject, theta):                    
 
-    sensor_height = res_height * pixel_size / 1000 #cfg
-    sensor_width = res_width * pixel_size / 1000 #cfg
-    sensor_size = np.array([sensor_height, sensor_width])
-    print("sensor_size:", sensor_size, "\n")
+    xpixel_to_center = pixel_x - res_width / 2
+    ypixel_to_center = pixel_y - res_height / 2
 
-    xpixel_center = res_width / 2
-    ypixel_center = res_height / 2
-    xpixel_2center = pixel_x - xpixel_center
-    ypixel_2center = pixel_y - ypixel_center
-    # print("xpixel2center:", xpixel_2center, "\n")
+    pixel_XY = np.array([[xpixel_to_center], [ypixel_to_center], [1]])
 
-    x_to_camera = xpixel_2center * sensor_size[0] / (2 * xpixel_center)
-    y_to_camera = ypixel_2center * sensor_size[1] / (2 * ypixel_center)
+    rot_trans_XY = np.array([[np.cos(np.radians(theta)), -np.sin(np.radians(theta)), 0],\
+                             [np.sin(np.radians(theta)), np.cos(np.radians(theta)), 0],\
+                               [0, 0, 1]] )
 
-    print("xtocamera:", x_to_camera, "\n")
-    print("ytocamera:", y_to_camera, "\n")
+    new_XY = np.dot(rot_trans_XY, pixel_XY)
 
-    return x_to_camera, y_to_camera
+    x1_real = new_XY[0][0]* dis_cameraToObject / pixel_focalLength
+    y1_real = new_XY[1][0]* dis_cameraToObject / pixel_focalLength
+
+    print("xtocamera:", x1_real, "\n")
+    print("ytocamera:", y1_real, "\n")
+
+    return x1_real, y1_real
 
 
-def distanceCameraToObject(x1_dis, x2_dis, focal_length):
+def distanceCameraToObject(x1_dis, x2_dis, focal_length, baseLine):
     
-    dis_cameraToObject = CFG.DISTANCE_O1O2 * focal_length / (abs(x1_dis) + abs(x2_dis))
+    pixel_focalLength = focal_length * 1000 / CFG.PIXEL_SIZE 
+    dis_cameraToObject = baseLine * pixel_focalLength / (abs(x1_dis - x2_dis))
     print(f'dis_cameraToObject:{dis_cameraToObject}')
-    return dis_cameraToObject
+    return dis_cameraToObject, pixel_focalLength
 
 
-def realTarget(x1, y1, x2, y2, dis_cameraToObject, focal_length, z_laser_to_camera):
-    
-
-    x1_real = x1 * dis_cameraToObject / focal_length
-    y1_real = y1 * dis_cameraToObject / focal_length
-    target1 = np.array([x1_real, y1_real, z_laser_to_camera])
-
-    x2_real = x2 * dis_cameraToObject / focal_length
-    y2_real = y2* dis_cameraToObject / focal_length
-    target2 = np.array([x2_real, y2_real, z_laser_to_camera ])
-
-    return target1, target2
-
+# dis_pixel:(269, 733, 271, 202)
 # small 2
 # (2050.949134397749, 924.6976815317794)
 # (1930.690973910225, 1437.2208718198021)
@@ -81,19 +99,18 @@ def realTarget(x1, y1, x2, y2, dis_cameraToObject, focal_length, z_laser_to_came
 # (2050.03096639686, 1439.937362030905)
 # (1931.5211436809227, 922.0008008970045)
 
-# pixel_x1 = 924.6976815317794
-# pixel_y1 = 2050.949134397749
-
-# pixel_x2 = 1439.937362030905
-# pixel_y2 = 2050.03096639686
+# pixel_x1 = 2215
+# pixel_y1 = 2209
+# pixel_x2 = 1702
+# pixel_y2 = 2209
 
 
 # o1o2 = 60
-# res_width = 2448
-# res_height = 2048
+# res_width = 2048
+# res_height = 2448
 # focal_length = 16
-# x1, y1 = convertCoordinates(res_height, res_width, pixel_x1, pixel_y1)
-# x2, y2 = convertCoordinates(res_height, res_width, pixel_x2, pixel_y2)
+# x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, 3.45)
+# x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, 3.45)
 
-# target1, target2 = height(x1, y1, x2, y2, o1o2, focal_length)
+# dis = distanceCameraToObject(x1, x2, focal_length)
 # print(f'target1:{target1}, target2:{target2}')

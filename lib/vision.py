@@ -3,6 +3,7 @@ import os.path as osp
 import importlib
 import sys
 from config import config as CFG
+from lib import viko_lib as lib
 
 
 try:
@@ -48,7 +49,7 @@ class VisionModule():
         self.image_list          = list()
         self.countImagesIntoGrab = 2
         self.model               = None
-        self.MODEL_CONFIG        = CFG.MODEL['SAM']
+        self.MODEL_CONFIG        = CFG.MODEL['LightWeight_SAM']
         self.PATH_OUTPUT         = f'Record_{str(datetime.now())[:10]}'
         if not osp.exists(self.PATH_OUTPUT):
             os.mkdir(self.PATH_OUTPUT)
@@ -134,26 +135,32 @@ class VisionModule():
     
     def _getCoordinate_(self):
         image_arr = self.image_list[-1]['image']
-
+        coordinate = list([])
         # assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
-        coordinate = marks[1]['bbox']
-        print(len(marks))
-        x, y, w, h = coordinate
-        # img_crop = img_cvt[y: y+h, x:x+w,  :]
-        
-        #display image after segment
-        img_cvt_draw = img_cvt.copy()
-        cv2.circle(img_cvt, (x, y), color = (255, 0, 0), radius = 50, thickness = 20)
-        text = f'({x}, {y})'
-        cv2.putText(img = img_cvt, org = (x, y), fontFace = 1, fontScale = 5, text = text, color = (125, 255, 255), thickness = 10)
-        cv2.rectangle(img_cvt, (x, y), (x + w, y + h), (0, 255, 125), thickness = 20)
+        for mark in marks:
+            if 1200000 < mark['area'] < 1700000:
+                coordinate = mark['bbox']
+                print(len(marks))
+                x, y, w, h = coordinate
+                x, y, w, h = int(x), int(y), int(w), int(h)
+                # img_crop = img_cvt[y: y+h, x:x+w,  :]
+                
+                #display image after segment
+                img_cvt_draw = img_cvt.copy()
+                cv2.circle(img_cvt, (x, y), color = (255, 0, 0), radius = 50, thickness = 20)
+                text = f'({x}, {y})'
+                cv2.putText(img = img_cvt, org = (x, y), fontFace = 1, fontScale = 5, text = text, color = (125, 255, 255), thickness = 10)
+                cv2.rectangle(img_cvt, (x, y), (x + w, y + h), (0, 255, 125), thickness = 20)
+                
+                fig = plt.imshow(img_cvt)
+                plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
 
-        fig = plt.imshow(img_cvt)
-        plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
-        return marks
+                coordinate = [x, y, w, h]
+        print(coordinate)
+        return coordinate
     
     def _getCoordinateWeld_(self, img) -> tuple:
         rf = Roboflow(api_key="JtRFLNmuxFdQiNLXfFJj")
@@ -179,33 +186,46 @@ class VisionModule():
     def backgroundSubtraction(self) -> list:
         #Background Image
         img_bg = cv2.imread('lib/BackGround.png', cv2.IMREAD_COLOR)
-
+        img_bg = cv2.cvtColor(img_bg, cv2.COLOR_BGR2RGB)
         #Foreground Image
         imageDict = self.image_list.pop(0)
-        img_fg = imageDict['image'] 
+        img_obj = imageDict['image'] 
         self.filename = imageDict['filename']
-        img_fg = Image.fromarray(img_fg)
-
-
-
-
+        
         #Background Subtraction
-
-
-
-
-
-
+        fmask = lib.main(img_obj, img_bg)
+        cv2.imwrite(osp.join(self.outputDir, f'Mask_{self.filename}'), fmask)
+    
         #Post Processing
-
+        fg, coordinates = lib.boudingBox(img_obj, fgMask= fmask)
+        cv2.imwrite(osp.join(self.outputDir, f'Foreground_{self.filename}'), fg)
+        # print(f'The information of object {coordinate}, {area}')
+        # # Crop Working Space
+        # x, y, w, h = coordinate
+        # img_crop = img_obj[y: y+h, x: x+w]
+        # print(f'Time to process step 1 {datetime.datetime.now() - start_time}')
+        # # Test save
+        # cv2.imwrite(f'data/boudingbox/{osp.basename(obj_path)}', img_crop)
 
 
 
         #Get coordinates 
-        coordinates = list([])
-
+        # coordinates = list([])
+        # print(coordinates)
 
         return coordinates
+    
+    def _getCircle_(self) -> list:
+        imageDict = self.image_list.pop(0)
+        img_obj = imageDict['image'] 
+        self.filename = imageDict['filename']
+
+        x, y = lib.get_point(img_obj)
+        
+        # lib.save_csv(self.filename, x, y)
+
+        lis = [x, y]
+        return lis
     
 
 

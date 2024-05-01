@@ -21,8 +21,9 @@ def getCoordinates(flag: bool):
     obj._start_()
     obj._getImage_()
     obj.load_model()
-    # obj.save_image()
+    obj.save_image()
     coordinate = obj._getCoordinate_()
+    # coordinate = obj._getCircle_()
     obj._end_()
     return coordinate
 
@@ -66,57 +67,25 @@ def sleep_seconds(seconds):
 
 def createPoint(arr_target, count, rot_camera2base):
 
-    target2_newcamera = np.dot(rf_camera2camera, arr_target)
-    # print(f'target2_newcamera:{target2_newcamera}')
+    target_to_Camera = intialTarget(arr_target[0], arr_target[1], arr_target[2])
 
-    rf_target2base = np.dot(rf_camera2base, target2_newcamera)
-    # print("target_ref_base:", rf_target2base, "\n")
+    rf_target2base = np.dot(rf_camera2base, target_to_Camera)
+    print("target_ref_base:", rf_target2base, "\n")
+    
     rot_target, pos_target = rp.rotPos(rf_target2base)
+    print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
+    rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(-90)]
+    # pos_target = [pos_target[0] + 51.44, pos_target[1] + 57, pos_target[2]]
 
-    # print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
-
-    # target_none_matrix = np.concatenate((pos_target, rot_target), axis=0)
-
-    pos_laser_to_object = [pos_target[0] - 450, pos_target[1], pos_target[2]]
     target_laser_none_mat = np.concatenate(
-        (pos_laser_to_object, rot_camera2base), axis=0
+        (pos_target, rot_target), axis=0
     )
-
-    # print(f"target_laser_none_matrix {count}:{target_laser_none_mat}", "\n")
 
     # convert to pose
     target_laser_mat = TxyzRxyz_2_Pose(target_laser_none_mat)
+    print(f'target_laser_mat:{target_laser_mat}')
 
-    return target_laser_mat, pos_laser_to_object
-
-
-def runRobot(target_laser_mat, pos_laser_to_object):
-    speeds = CFG.SPEEDS  # cfg - TEST
-    robot.setSpeed(speeds[1])
-
-    while True:
-        print(f"Target position: {pos_laser_to_object}")
-        choice = input(
-            "Do you want to continue? (yes/no): "
-        ).lower()  # Convert input to lowercase to handle variations
-
-        if choice == "y":
-            try:
-                robot.MoveL(target_laser_mat)
-                get_joint = robot.Joints()
-                print(f"get_joint:{get_joint}")
-                break
-            except Exception as e:
-                print("Error:", e)
-                get_joint = robot.Joints()
-                print(f"get_joint:{get_joint}")
-                break
-        elif choice == "n":
-            get_joint = robot.Joints()
-            print(f"get_joint:{get_joint}")
-            break
-        else:
-            print("Invalid input. Please enter 'y' or 'n'.")
+    return target_laser_mat, pos_target
 
 
 RDK = Robolink()
@@ -151,9 +120,23 @@ if RUN_ON_ROBOT:
 robot.ConnectedState()
 print("ConnectedState:", robot.ConnectedState(), "\n")
 
+def runRobot(target_laser_mat, pos_laser_to_object):
+    speeds = CFG.SPEEDS  # cfg - TEST
+    robot.setSpeed(speeds[1])
+    # try:
+    robot.MoveJ(target_laser_mat)
+    get_joint = robot.Joints()
+    print(f"get_joint:{get_joint}")
+
+    # except Exception as e:
+    #     print("Error:", e)
+    #     get_joint = robot.Joints()
+    #     print(f"get_joint:{get_joint}")
+
+    return 
 
 # reference frame from flange to base
-pos_flange2base = [380, 0, 305]  # Translation vector [Tx, Ty, Tz]
+pos_flange2base = [380, 0, 405]  # Translation vector [Tx, Ty, Tz]
 rot_flange2base = [
     np.radians(-180),
     np.radians(0),
@@ -162,11 +145,10 @@ rot_flange2base = [
 
 # Create the transformation matrix for the new rf flange to base
 rf_flage2base = cr.createRef(pos_flange2base, rot_flange2base)
-print("rf_flage2base:", rf_flage2base, "\n")
-
+# print("rf_flage2base:", rf_flage2base, "\n")
 
 # reference frame camera to flange
-pos_camera2flange = [-15.5, -55.5, 150]  # Translation vector [Tx, Ty, Tz] ## sai so
+pos_camera2flange = [0, 0, 190]  # Translation vector [Tx, Ty, Tz] ## sai so
 rot_camera2flange = [
     np.radians(0),
     np.radians(0),
@@ -175,31 +157,24 @@ rot_camera2flange = [
 
 # Create the transformation matrix for the new rf camera to flange
 rf_camera2flange = cr.createRef(pos_camera2flange, rot_camera2flange)
-print("ref_camera2flange:", rf_camera2flange, "\n")
+# print("ref_camera2flange:", rf_camera2flange, "\n")
 
 rf_camera2flange_non_matrix = np.concatenate((pos_camera2flange, rot_camera2flange))
 rf_camera2flange_matrix = TxyzRxyz_2_Pose(rf_camera2flange_non_matrix)
-print("ref_camera2flange_test:", rf_camera2flange_matrix, "\n")
+# print("ref_camera2flange_test:", rf_camera2flange_matrix, "\n")
 
 # reference frame camera to base
 rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
-print("ref_camera2base:", rf_camera2base, "\n")
+# print("ref_camera2base:", rf_camera2base, "\n")
 
 rot_camera2base, pos_camera2base = rp.rotPos(rf_camera2base)
 # print(
 #     "rot_camera2base:", rot_camera2base, "\n", "pos_camera2base:", pos_camera2base, "\n"
 # )
+# print(f'pos, rot:{type(pos_camera2base)}, {rot_camera2base}')
 camera2base_non_matrix = np.concatenate((pos_camera2base, rot_camera2base))
-print("rot_camera2base_non_matrix:", camera2base_non_matrix, "\n")
+# print("rot_camera2base_non_matrix:", camera2base_non_matrix, "\n")
 rf_camera2base_matrix = TxyzRxyz_2_Pose(camera2base_non_matrix)
-
-pos_camera2camera = [0, 0, 0]
-rot_camera2camera = [
-    np.radians(0),
-    np.radians(0),
-    np.radians(90),
-]
-rf_camera2camera = cr.createRef(pos_camera2camera, rot_camera2camera)
 
 pos_setFrame = [0, 0, 0]  # Translation vector [Tx, Ty, Tz] ## sai so
 rot_setFramee = [
@@ -218,76 +193,110 @@ robot.setRounding(5)  # Set the rounding parameter
 robot.setSpeed(10, 10)  # Set linear speed in mm/s
 robot.setSpeedJoints(10)
 
-print("rf_camera2base_matrix:", rf_camera2base_matrix)
+# print("rf_camera2base_matrix:", rf_camera2base_matrix)
 robot.MoveJ(rf_camera2base_matrix)
 
-dis.cameraPosLeft(camera2base_non_matrix)
+# dis.cameraForward(rf_camera2base)
 
-sleep_seconds(10)
+dis.cameraPosLeft(rf_camera2base)
+#VISION
+coordinate_pixel_Left = getCoordinates(True)
+# print(f'coordinate_pixel_Left:{coordinate_pixel_Left}')
 
-dis.cameraPosRight(camera2base_non_matrix)
+dis.cameraPosRight(rf_camera2base)
+#VISION
+coordinate_pixel_Right = getCoordinates(True)
+# print(f'coordinate_pixel_Right:{coordinate_pixel_Right}')
 
-# coordinate_pixel = getCoordinates(True)
+robot.MoveJ(rf_camera2base_matrix)
 
-dis_pixel = []
+dis_pixel = [coordinate_pixel_Left, coordinate_pixel_Right]
+print(f'dis_pixel:{dis_pixel}')
 
-x_left_dis, y_left_dis = dis.convertCoordinates(
-    CFG.RESOLUTION_X, CFG.RESOLUTION_Y, dis_pixel[0], dis_pixel[1], CFG.PIXEL_SIZE
-)  # x_ at left position
-x_right_dis, y_right_dis = dis.convertCoordinates(
-    CFG.RESOLUTION_X,
-    CFG.RESOLUTION_Y,
-    dis_pixel[2],
-    dis_pixel[3],
-    CFG.PIXEL_SIZE,
-)  # x_ at right position
-dis_cameraToObject = dis.distanceCameraToObject(
-    x_left_dis, x_right_dis, CFG.FOCAL_LENGTH
-)  # distance from camera to object
+# print(f'dis_pixel:{dis_pixel[0][0], dis_pixel[0][1], dis_pixel[1][0], dis_pixel[1][1]}')
 
-robot.MoveJ(rf_camera2base_matrix)  # move home position
+if abs(dis_pixel[0][0] - dis_pixel[1][0]) > 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 10:
+    dis_cameraToObject, pixel_focalLength = dis.distanceCameraToObject(
+        dis_pixel[0][0], dis_pixel[1][0], CFG.FOCAL_LENGTH, CFG.HORIZONTAL_BASELINE
+    )  # distance from camera to object
+    print(f'Distance:{dis_cameraToObject}')
 
-coordinate_pixel = []
+elif abs(dis_pixel[0][0] - dis_pixel[1][0]) < 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 10:
+    dis_cameraToObject, pixel_focalLength = dis.distanceCameraToObject(
+        dis_pixel[0][1], dis_pixel[1][1], CFG.FOCAL_LENGTH, CFG.FORWARD_BASELINE
+    )  # distance from camera to object
+    print(f'Distance:{dis_cameraToObject}')
+
+elif (abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 10) or (abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 10):
+    print(f'check 2 pixels')
+      # distance from camera to object
+else:
+    print('out 5 pixel')
+
+
+#VISION
+coordinate_pixel = getCoordinates(True)
+coordinate_pixel_1 = [coordinate_pixel[0], coordinate_pixel[1]]
+
 x_to_camera_01, y_to_camera_01 = dis.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
-    coordinate_pixel[0],
-    coordinate_pixel[1],
-    CFG.PIXEL_SIZE,
+    coordinate_pixel_1[0],
+    coordinate_pixel_1[1],
+    pixel_focalLength,
+    dis_cameraToObject, 
+    theta = -90   
 )  # cfg
+
+#VISION
+coordinate_pixel_2 = [coordinate_pixel[0] + coordinate_pixel[2], coordinate_pixel[1] + coordinate_pixel[3]]
 
 x_to_camera_02, y_to_camera_02 = dis.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
-    coordinate_pixel[0] + coordinate_pixel[2],
-    coordinate_pixel[1] + coordinate_pixel[3],
-    CFG.PIXEL_SIZE,
+    coordinate_pixel_2[0] ,
+    coordinate_pixel_2[1] ,
+    pixel_focalLength,
+    dis_cameraToObject, 
+    theta = -90  
 )  # cfg
 
 # TEST FLOW
 z_laser_to_camera = dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
-conv_real_target01, conv_real_target02 = dis.realTarget(
-    x_to_camera_01,
-    y_to_camera_01,
-    x_to_camera_02,
-    y_to_camera_02,
-    CFG.DISTANCE_O1O2,
-    CFG.FOCAL_LENGTH,
-    z_laser_to_camera,
-)
+                                                                    
+real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
+real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
+print(f'real_target01:{real_target01}')
+print(f'real_target02:{real_target02}')
 
-target01, pos_laser = createPoint(conv_real_target01, 1, rot_camera2base)  # fix
-target02, pos_laser = createPoint(conv_real_target01, 2, rot_camera2base)
+target01, pos_laser01 = createPoint(real_target01, 1, rot_camera2base)  # fix
+target02, pos_laser02 = createPoint(real_target02, 2, rot_camera2base)
+print(f'target01:{target01}, target02:{target02}')
 
-runRobot(target01, pos_laser)
-runRobot(target02, pos_laser)
+#     print(f"Target position: {pos_laser[2]}")
+#     choice = input(
+#         "Do you want to continue? (yes/no): "
+#     ).lower()  # Convert input to lowercase to handle variations
 
-robot.MoveJ(rf_camera2base_matrix)
+    # if choice == "y":
+
+# sleep_seconds(3)
+runRobot(target01, pos_laser01)
+# runRobot(target02, pos_laser02)
+
+    # elif choice == "n":
+    #     get_joint = robot.Joints()
+    #     print(f"get_joint:{get_joint}")
+    #     break
+    # else:
+    #     print("Invalid input. Please enter 'y' or 'n'.")
+
+# robot.MoveJ(rf_camera2base_matrix)
 
 
 current_joint_values = robot.Joints()
-target01 = np.array2string(target01)
-target02 = np.array2string(target02)
+# target01 = np.array2string(target01)
+# target02 = np.array2string(target02)
 limit = robot.JointLimits()
 
 # print(f'limit:{limit}')
@@ -323,10 +332,16 @@ def export_csv(data: dict):
 
 data_export = {
     "id": str(datetime.now()),
-    "target01": target01,
-    "target02": target02,
+    # "target01": target01,
+    # "target02": target02,
     "limit_lower": limit[0],
     "limit_upper": limit[1],
+    "x1_pixel": dis_pixel[0][0],
+    "y1_pixel": dis_pixel[0][1],
+    "x2_pixel": dis_pixel[1][0],
+    "y2_pixel": dis_pixel[1][1],
+    "distance": dis_cameraToObject,
+    "change_oy": None
     #### add if need
 }
 

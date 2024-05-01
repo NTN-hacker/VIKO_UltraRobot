@@ -13,7 +13,8 @@ SPEEDS = [100, 50]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
-DISTANCE_O1O2 = 60
+HORIZONTAL_BASELINE = 65 # 65: best value with object is black dot
+FORWARD_BASELINE = 55 # best value with object is black dot
 DISTANCE_LASERtoOBJECT = 150
 ########################################################## AI MODEL ###################################################################
 
