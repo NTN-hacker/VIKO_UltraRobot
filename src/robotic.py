@@ -1,19 +1,17 @@
-from robodk.robolink import *  # API to communicate with RoboDK
-from robodk.robomath import *  # basic matrix operations
+import sys
+sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
 import numpy as np
 import time
-import create_ref as cr
-import sys
-
-sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
-from config import config as CFG
 from datetime import datetime
 import pandas as pd
-import rot_pos as rp
-import lib.vision as vis  # temp
-# import test as dis
 
+
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+from config import config as CFG
 from lib import robot_lib as rl
+import lib.vision as vis  
+
 
 def getCoordinates(flag: bool):
     obj = vis.VisionModule()
@@ -57,7 +55,7 @@ def createPoint(arr_target, count):
     rf_target2base = np.dot(rf_camera2base, target_to_Camera)
     print("target_ref_base:", rf_target2base, "\n")
     
-    rot_target, pos_target = rp.rotPos(rf_target2base)
+    rot_target, pos_target = rl.rotPos(rf_target2base)
     print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
     rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(-90)]
     # pos_target = [pos_target[0] + 51.44, pos_target[1] + 57, pos_target[2]]
@@ -129,7 +127,7 @@ rot_flange2base = [
 ]  # Rotation angles [Rx, Ry, Rz] in radians
 
 # Create the transformation matrix for the new rf flange to base
-rf_flage2base = cr.createRef(pos_flange2base, rot_flange2base)
+rf_flage2base = rl.createRef(pos_flange2base, rot_flange2base)
 # print("rf_flage2base:", rf_flage2base, "\n")
 
 # reference frame camera to flange
@@ -141,7 +139,7 @@ rot_camera2flange = [
 ]  # Rotation angles [Rx, Ry, Rz] in radians
 
 # Create the transformation matrix for the new rf camera to flange
-rf_camera2flange = cr.createRef(pos_camera2flange, rot_camera2flange)
+rf_camera2flange = rl.createRef(pos_camera2flange, rot_camera2flange)
 # print("ref_camera2flange:", rf_camera2flange, "\n")
 
 rf_camera2flange_non_matrix = np.concatenate((pos_camera2flange, rot_camera2flange))
@@ -152,7 +150,7 @@ rf_camera2flange_matrix = TxyzRxyz_2_Pose(rf_camera2flange_non_matrix)
 rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
 # print("ref_camera2base:", rf_camera2base, "\n")
 
-rot_camera2base, pos_camera2base = rp.rotPos(rf_camera2base)
+rot_camera2base, pos_camera2base = rl.rotPos(rf_camera2base)
 # print(
 #     "rot_camera2base:", rot_camera2base, "\n", "pos_camera2base:", pos_camera2base, "\n"
 # )
