@@ -48,7 +48,7 @@ def sleep_seconds(seconds):
     print("Awake now!")
 
 
-def createPoint(arr_target, count):
+def createPoint(arr_target, count, theta_laser):
 
     target_to_Camera = intialTarget(arr_target[0], arr_target[1], arr_target[2])
 
@@ -57,8 +57,8 @@ def createPoint(arr_target, count):
     
     rot_target, pos_target = rl.rotPos(rf_target2base)
     print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
-    rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(-90)]
-    # pos_target = [pos_target[0] + 51.44, pos_target[1] + 57, pos_target[2]]
+    rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(theta_laser)]
+    pos_target = [pos_target[0] - 51.44, pos_target[1] - 57, pos_target[2]]
 
     target_laser_none_mat = np.concatenate(
         (pos_target, rot_target), axis=0
@@ -220,6 +220,7 @@ else:
 #VISION
 coordinate_pixel = getCoordinates(True)
 
+theta_laser = rl.rotLaser(coordinate_pixel)
 coordinate_pixel_1 = coordinate_pixel[0]
 print(coordinate_pixel)
 x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
@@ -253,8 +254,8 @@ real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 print(f'real_target01:{real_target01}')
 print(f'real_target02:{real_target02}')
 
-target01, pos_laser01 = createPoint(real_target01, 1)  # fix
-target02, pos_laser02 = createPoint(real_target02, 2)
+target01, pos_laser01 = createPoint(real_target01, 1, theta_laser)  # fix
+target02, pos_laser02 = createPoint(real_target02, 2, theta_laser)
 print(f'target01:{target01}, target02:{target02}')
 
 #     print(f"Target position: {pos_laser[2]}")

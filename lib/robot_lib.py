@@ -7,6 +7,7 @@ import sys
 import os.path as osp
 import os
 
+
 sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
 from config import config as CFG
 RDK = Robolink()
@@ -85,6 +86,21 @@ def createRef(translation, rotation):
 
     return transformation_matrix
 
+
+def rotLaser(coordinate_pixel):
+    pixel_1 = coordinate_pixel[0]
+    pixel_2 = coordinate_pixel[1]
+
+    angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
+    degree_angle = math.degrees(angle)
+    if degree_angle > 90:
+        theta_laser = 180 - degree_angle
+    else:
+        theta_laser = degree_angle
+    
+    print(f'thetalaser:{theta_laser}')
+
+    return theta_laser
 
 
 

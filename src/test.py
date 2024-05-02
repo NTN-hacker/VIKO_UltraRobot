@@ -1,11 +1,12 @@
 import numpy as np
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
-import rot_pos as rp
 import sys
+import math
 
 sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
 from config import config as CFG
+from lib import robot_lib as rl
 RDK = Robolink()
 robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 
@@ -15,7 +16,7 @@ def cameraPosLeft(matcamera2base):
     
     ## move the left position to capture
     camera2base_posLeft = matcamera2base
-    rot, pos = rp.rotPos(camera2base_posLeft)
+    rot, pos = rl.rotPos(camera2base_posLeft)
     print(f'rot, pos of left:{rot}, {pos}')
     rot = [rot[0], rot[1], rot[2]]
     print(f'rot:{rot}')
@@ -33,7 +34,7 @@ def cameraPosRight(matcamera2base):
     
     ## move the right position to capture
     camera2base_posRight = matcamera2base
-    rot, pos = rp.rotPos(camera2base_posRight)
+    rot, pos = rl.rotPos(camera2base_posRight)
     # pos = [pos[0] + CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
     rot = [rot[0], rot[1], rot[2]]
     print(f'rot:{rot}')
@@ -74,6 +75,19 @@ def distanceCameraToObject(x1_dis, x2_dis, focal_length, baseLine):
     dis_cameraToObject = baseLine * pixel_focalLength / (abs(x1_dis - x2_dis))
     print(f'dis_cameraToObject:{dis_cameraToObject}')
     return dis_cameraToObject, pixel_focalLength
+
+
+### calculate the angle
+xy = [[996, 428], [1196, 2095]]
+x = 5
+y = 3
+
+angle = math.atan2(428 - 2095, 996 - 1196)
+print("Arctan2 của (5, 3) là:", angle, "radians")
+
+# Hoặc chuyển đổi sang đơn vị đo góc khác như độ:
+degree_angle = math.degrees(angle)
+print("Arctan2 của (5, 3) là:", degree_angle, "độ")
 
 
 # dis_pixel:(269, 733, 271, 202)
