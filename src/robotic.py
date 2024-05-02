@@ -23,6 +23,8 @@ def getCoordinates(flag: bool):
     obj.save_image()
     coordinate = obj._getCoordinate_()
     # coordinate = obj._getCircle_()
+    if flag:
+        coordinate = obj._getCoordinateWeld_(obj.img_split, coordinate)
     obj._end_()
     return coordinate
 
@@ -183,12 +185,12 @@ robot.MoveJ(rf_camera2base_matrix)
 
 rl.distanceCameraToObject.cameraPosLeft(rf_camera2base)
 #VISION
-coordinate_pixel_Left = getCoordinates(True)
+coordinate_pixel_Left = getCoordinates(False)
 # print(f'coordinate_pixel_Left:{coordinate_pixel_Left}')
 
 rl.distanceCameraToObject.cameraPosRight(rf_camera2base)
 #VISION
-coordinate_pixel_Right = getCoordinates(True)
+coordinate_pixel_Right = getCoordinates(False)
 # print(f'coordinate_pixel_Right:{coordinate_pixel_Right}')
 
 robot.MoveJ(rf_camera2base_matrix)
