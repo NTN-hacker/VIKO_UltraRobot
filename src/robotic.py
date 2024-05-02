@@ -21,7 +21,7 @@ def getCoordinates(flag: bool):
     obj.save_image()
     coordinate = obj._getCoordinate_()
     # coordinate = obj._getCircle_()
-    if flag:
+    if flag == True:
         coordinate = obj._getCoordinateWeld_(obj.img_split, coordinate)
     obj._end_()
     return coordinate
@@ -181,12 +181,12 @@ robot.MoveJ(rf_camera2base_matrix)
 
 # rl.distanceCameraToObject.cameraForward(rf_camera2base)
 
-rl.distanceCameraToObject.cameraPosLeft(rf_camera2base)
+rl.cameraPosLeft(rf_camera2base)
 #VISION
 coordinate_pixel_Left = getCoordinates(False)
 # print(f'coordinate_pixel_Left:{coordinate_pixel_Left}')
 
-rl.distanceCameraToObject.cameraPosRight(rf_camera2base)
+rl.cameraPosRight(rf_camera2base)
 #VISION
 coordinate_pixel_Right = getCoordinates(False)
 # print(f'coordinate_pixel_Right:{coordinate_pixel_Right}')
@@ -199,13 +199,13 @@ print(f'dis_pixel:{dis_pixel}')
 # print(f'dis_pixel:{dis_pixel[0][0], dis_pixel[0][1], dis_pixel[1][0], dis_pixel[1][1]}')
 
 if abs(dis_pixel[0][0] - dis_pixel[1][0]) > 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 10:
-    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject.distanceCameraToObject(
+    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject(
         dis_pixel[0][0], dis_pixel[1][0], CFG.FOCAL_LENGTH, CFG.HORIZONTAL_BASELINE
     )  # distance from camera to object
     print(f'Distance:{dis_cameraToObject}')
 
 elif abs(dis_pixel[0][0] - dis_pixel[1][0]) < 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 10:
-    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject.distanceCameraToObject(
+    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject(
         dis_pixel[0][1], dis_pixel[1][1], CFG.FOCAL_LENGTH, CFG.FORWARD_BASELINE
     )  # distance from camera to object
     print(f'Distance:{dis_cameraToObject}')
@@ -219,9 +219,10 @@ else:
 
 #VISION
 coordinate_pixel = getCoordinates(True)
-coordinate_pixel_1 = [coordinate_pixel[0], coordinate_pixel[1]]
 
-x_to_camera_01, y_to_camera_01 = rl.distanceCameraToObject.convertCoordinates(
+coordinate_pixel_1 = coordinate_pixel[0]
+print(coordinate_pixel)
+x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
     coordinate_pixel_1[0],
@@ -232,9 +233,9 @@ x_to_camera_01, y_to_camera_01 = rl.distanceCameraToObject.convertCoordinates(
 )  # cfg
 
 #VISION
-coordinate_pixel_2 = [coordinate_pixel[0] + coordinate_pixel[2], coordinate_pixel[1] + coordinate_pixel[3]]
+coordinate_pixel_2 = coordinate_pixel[1]
 
-x_to_camera_02, y_to_camera_02 = rl.distanceCameraToObject.convertCoordinates(
+x_to_camera_02, y_to_camera_02 = rl.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
     coordinate_pixel_2[0] ,
@@ -265,7 +266,8 @@ print(f'target01:{target01}, target02:{target02}')
 
 # sleep_seconds(3)
 runRobot(target01, pos_laser01)
-# runRobot(target02, pos_laser02)
+sleep_seconds(10)
+runRobot(target02, pos_laser02)
 
     # elif choice == "n":
     #     get_joint = robot.Joints()

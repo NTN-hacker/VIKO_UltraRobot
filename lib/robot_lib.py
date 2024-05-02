@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
-import rot_pos as rp
 import sys
 import os.path as osp
 import os
@@ -122,7 +121,7 @@ def cameraPosLeft(matcamera2base):
     
     ## move the left position to capture
     camera2base_posLeft = matcamera2base
-    rot, pos = rp.rotPos(camera2base_posLeft)
+    rot, pos = rotPos(camera2base_posLeft)
     print(f'rot, pos of left:{rot}, {pos}')
     rot = [rot[0], rot[1], rot[2]]
     print(f'rot:{rot}')
@@ -140,7 +139,7 @@ def cameraPosRight(matcamera2base):
     
     ## move the right position to capture
     camera2base_posRight = matcamera2base
-    rot, pos = rp.rotPos(camera2base_posRight)
+    rot, pos = rotPos(camera2base_posRight)
     # pos = [pos[0] + CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
     rot = [rot[0], rot[1], rot[2]]
     print(f'rot:{rot}')

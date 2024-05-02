@@ -174,12 +174,17 @@ class VisionModule():
         image = img.copy()
 
         result = model.predict(img, confidence=50, overlap=50).json()
-
-        detections = sv.Detections.from_roboflow(result)
-
-        coordinate = detections.xyxy[0]
-
-        x, y, x2, y2 = coordinate
+        try: 
+            detections = sv.Detections.from_roboflow(result)
+            print(detections)
+            coordinate = detections.xyxy[0]
+            x, y, x2, y2 = coordinate
+        except:
+            x_ori, y_ori, w, h = coordinate_ori
+            x = x_ori//2 - 100
+            y = y_ori
+            x2 = x_ori//2 + 100
+            y2 = y_ori+h 
 
         cv2.rectangle(img = image, pt1= (int(x), int(y)), pt2= (int(x2), int(y2)), color= (0, 255, 0), thickness= 1)
 
