@@ -50,7 +50,7 @@ class VisionModule():
         self.countImagesIntoGrab = 2
         self.model               = None
         self.MODEL_CONFIG        = CFG.MODEL['LightWeight_SAM']
-        self.PATH_OUTPUT         = f'Record_{str(datetime.now())[:10]}'
+        self.PATH_OUTPUT         = f'data/AI/Record_{str(datetime.now())[:10]}'
         if not osp.exists(self.PATH_OUTPUT):
             os.mkdir(self.PATH_OUTPUT)
         self.outputDir   = self.PATH_OUTPUT

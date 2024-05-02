@@ -1,119 +1,102 @@
-# import argparse
+import numpy as np
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+import rot_pos as rp
+import sys
 
-# import cv2
-
-
-# def get_opencv_result(video_to_process):
-#     # create VideoCapture object for further video processing
-#     captured_video = cv2.VideoCapture(video_to_process)
-#     # check video capture status
-#     if not captured_video.isOpened:
-#         print("Unable to open: " + video_to_process)
-#         exit(0)
-
-#     # instantiate background subtraction
-#     background_subtr_method = cv2.bgsegm.createBackgroundSubtractorGSOC()
-
-#     while True:
-#         # read video frames
-#         retval, frame = captured_video.read()
-
-#         # check whether the frames have been grabbed
-#         if not retval:
-#             break
-
-#         # resize video frames
-#         frame = cv2.resize(frame, (640, 360))
-
-#         # pass the frame to the background subtractor
-#         foreground_mask = background_subtr_method.apply(frame)
-#         # obtain the background without foreground mask
-#         background_img = background_subtr_method.getBackgroundImage()
-
-#         # show the current frame, foreground mask, subtracted result
-#         cv2.imshow("Initial Frames", frame)
-#         cv2.imshow("Foreground Masks", foreground_mask)
-#         cv2.imshow("Subtraction Result", background_img)
-
-#         keyboard = cv2.waitKey(10)
-#         if keyboard == 27:
-#             break
+sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot")
+from config import config as CFG
+RDK = Robolink()
+robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 
 
-# if __name__ == "__main__":
-#     # parser = argparse.ArgumentParser()
-#     # parser.add_argument(
-#     #     "--input_video",
-#     #     type=str,
-#     #     help="Define the full input video path",
-#     #     default="space_traffic.mp4",
-#     # )
 
-#     # # parse script arguments
-#     # args = parser.parse_args()
+def cameraPosLeft(matcamera2base):
+    
+    ## move the left position to capture
+    camera2base_posLeft = matcamera2base
+    rot, pos = rp.rotPos(camera2base_posLeft)
+    print(f'rot, pos of left:{rot}, {pos}')
+    rot = [rot[0], rot[1], rot[2]]
+    print(f'rot:{rot}')
+    pos = [pos[0], pos[1] + (CFG.HORIZONTAL_BASELINE)/2, pos[2]]
+    # pos = [pos[0] - CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
+    print(f'newpos:{pos}')
 
-#     input_video = "space_traffic.mp4"
-
-#     # start BS-pipeline
-#     get_opencv_result(input_video)
-
-
-import argparse
-
-import cv2
-import pybgs as bgs
+    camera2base_left_nonmat = np.concatenate((pos, rot))
+    camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
+    robot.MoveJ(camera2base_left)
+    print(f'camera2base_posLeft_mat:{camera2base_left}')
 
 
-def get_bgslib_result(video_to_process):
-    # create VideoCapture object for further video processing
-    captured_video = cv2.VideoCapture(video_to_process)
-    # check video capture status
-    if not captured_video.isOpened:
-        print("Unable to open: " + video_to_process)
-        exit(0)
+def cameraPosRight(matcamera2base):
+    
+    ## move the right position to capture
+    camera2base_posRight = matcamera2base
+    rot, pos = rp.rotPos(camera2base_posRight)
+    # pos = [pos[0] + CFG.FORWARD_BASELINE/2, pos[1], pos[2]]
+    rot = [rot[0], rot[1], rot[2]]
+    print(f'rot:{rot}')
+    pos = [pos[0], pos[1] - (CFG.HORIZONTAL_BASELINE)/2, pos[2]]
+    print(f'newpos:{pos}')
 
-    # instantiate background subtraction
-    background_subtr_method = bgs.SuBSENSE()
-
-    while True:
-        # read video frames
-        retval, frame = captured_video.read()
-
-        # check whether the frames have been grabbed
-        if not retval:
-            break
-
-        # resize video frames
-        frame = cv2.resize(frame, (640, 360))
-
-        # pass the frame to the background subtractor
-        foreground_mask = background_subtr_method.apply(frame)
-        # obtain the background without foreground mask
-        img_bgmodel = background_subtr_method.getBackgroundModel()
-
-        # show the current frame, foreground mask, subtracted result
-        cv2.imshow("Initial Frames", frame)
-        cv2.imshow("Foreground Masks", foreground_mask)
-        cv2.imshow("Subtraction result", img_bgmodel)
-
-        keyboard = cv2.waitKey(10)
-        if keyboard == 27:
-            break
+    camera2base_right_nonmat = np.concatenate((pos, rot))
+    camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
+    robot.MoveJ(camera2base_right)
+    print(f'camera2base_posLeft_mat:{camera2base_right}')
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_video",
-        type=str,
-        help="Define the full input video path",
-        default="space_traffic.mp4",
-    )
+def convertCoordinates(res_width, res_height, pixel_x, pixel_y, pixel_focalLength, dis_cameraToObject, theta):                    
 
-    # # parse script arguments
-    # args = parser.parse_args()
+    xpixel_to_center = pixel_x - res_width / 2
+    ypixel_to_center = pixel_y - res_height / 2
 
-    # # start BS-pipeline
+    pixel_XY = np.array([[xpixel_to_center], [ypixel_to_center], [1]])
 
-    input_video = "space_traffic.mp4"
-    get_bgslib_result(input_video)
+    rot_trans_XY = np.array([[np.cos(np.radians(theta)), -np.sin(np.radians(theta)), 0],\
+                             [np.sin(np.radians(theta)), np.cos(np.radians(theta)), 0],\
+                               [0, 0, 1]] )
+
+    new_XY = np.dot(rot_trans_XY, pixel_XY)
+
+    x1_real = new_XY[0][0]* dis_cameraToObject / pixel_focalLength
+    y1_real = new_XY[1][0]* dis_cameraToObject / pixel_focalLength
+
+    print("xtocamera:", x1_real, "\n")
+    print("ytocamera:", y1_real, "\n")
+
+    return x1_real, y1_real
+
+
+def distanceCameraToObject(x1_dis, x2_dis, focal_length, baseLine):
+    
+    pixel_focalLength = focal_length * 1000 / CFG.PIXEL_SIZE 
+    dis_cameraToObject = baseLine * pixel_focalLength / (abs(x1_dis - x2_dis))
+    print(f'dis_cameraToObject:{dis_cameraToObject}')
+    return dis_cameraToObject, pixel_focalLength
+
+
+# dis_pixel:(269, 733, 271, 202)
+# small 2
+# (2050.949134397749, 924.6976815317794)
+# (1930.690973910225, 1437.2208718198021)
+
+# Big 
+# (2050.03096639686, 1439.937362030905)
+# (1931.5211436809227, 922.0008008970045)
+
+# pixel_x1 = 2215
+# pixel_y1 = 2209
+# pixel_x2 = 1702
+# pixel_y2 = 2209
+
+
+# o1o2 = 60
+# res_width = 2048
+# res_height = 2448
+# focal_length = 16
+# x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, 3.45)
+# x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, 3.45)
+
+# dis = distanceCameraToObject(x1, x2, focal_length)
+# print(f'target1:{target1}, target2:{target2}')

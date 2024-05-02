@@ -11,8 +11,9 @@ from datetime import datetime
 import pandas as pd
 import rot_pos as rp
 import lib.vision as vis  # temp
-import dis_ob_cam as dis
+# import test as dis
 
+from lib import robot_lib as rl
 
 def getCoordinates(flag: bool):
     obj = vis.VisionModule()
@@ -178,14 +179,14 @@ robot.setSpeedJoints(10)
 # print("rf_camera2base_matrix:", rf_camera2base_matrix)
 robot.MoveJ(rf_camera2base_matrix)
 
-# dis.cameraForward(rf_camera2base)
+# rl.distanceCameraToObject.cameraForward(rf_camera2base)
 
-dis.cameraPosLeft(rf_camera2base)
+rl.distanceCameraToObject.cameraPosLeft(rf_camera2base)
 #VISION
 coordinate_pixel_Left = getCoordinates(True)
 # print(f'coordinate_pixel_Left:{coordinate_pixel_Left}')
 
-dis.cameraPosRight(rf_camera2base)
+rl.distanceCameraToObject.cameraPosRight(rf_camera2base)
 #VISION
 coordinate_pixel_Right = getCoordinates(True)
 # print(f'coordinate_pixel_Right:{coordinate_pixel_Right}')
@@ -198,13 +199,13 @@ print(f'dis_pixel:{dis_pixel}')
 # print(f'dis_pixel:{dis_pixel[0][0], dis_pixel[0][1], dis_pixel[1][0], dis_pixel[1][1]}')
 
 if abs(dis_pixel[0][0] - dis_pixel[1][0]) > 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 10:
-    dis_cameraToObject, pixel_focalLength = dis.distanceCameraToObject(
+    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject.distanceCameraToObject(
         dis_pixel[0][0], dis_pixel[1][0], CFG.FOCAL_LENGTH, CFG.HORIZONTAL_BASELINE
     )  # distance from camera to object
     print(f'Distance:{dis_cameraToObject}')
 
 elif abs(dis_pixel[0][0] - dis_pixel[1][0]) < 10 and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 10:
-    dis_cameraToObject, pixel_focalLength = dis.distanceCameraToObject(
+    dis_cameraToObject, pixel_focalLength = rl.distanceCameraToObject.distanceCameraToObject(
         dis_pixel[0][1], dis_pixel[1][1], CFG.FOCAL_LENGTH, CFG.FORWARD_BASELINE
     )  # distance from camera to object
     print(f'Distance:{dis_cameraToObject}')
@@ -220,7 +221,7 @@ else:
 coordinate_pixel = getCoordinates(True)
 coordinate_pixel_1 = [coordinate_pixel[0], coordinate_pixel[1]]
 
-x_to_camera_01, y_to_camera_01 = dis.convertCoordinates(
+x_to_camera_01, y_to_camera_01 = rl.distanceCameraToObject.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
     coordinate_pixel_1[0],
@@ -233,7 +234,7 @@ x_to_camera_01, y_to_camera_01 = dis.convertCoordinates(
 #VISION
 coordinate_pixel_2 = [coordinate_pixel[0] + coordinate_pixel[2], coordinate_pixel[1] + coordinate_pixel[3]]
 
-x_to_camera_02, y_to_camera_02 = dis.convertCoordinates(
+x_to_camera_02, y_to_camera_02 = rl.distanceCameraToObject.convertCoordinates(
     CFG.RESOLUTION_X,
     CFG.RESOLUTION_Y,
     coordinate_pixel_2[0] ,
@@ -284,31 +285,9 @@ limit = robot.JointLimits()
 # print(f'limit:{limit}')
 
 
-def export_csv(data: dict):
-    """
-    Export to excel or csv
-    """
-    time = str(datetime.now())
-    filename = f"Test_{time[:10]}.csv"
 
-    try:
-        # Read the existing CSV file into a DataFrame
-        existing_dataframe = pd.read_csv(filename)
-    except FileNotFoundError:
-        # If the file doesn't exist, create a new DataFrame
-        existing_dataframe = pd.DataFrame()
 
-    # Create a DataFrame from the new data
-    new_dataframe = pd.DataFrame(data)
-
-    # Concatenate the existing and new dataframes
-    updated_dataframe = pd.concat(
-        [existing_dataframe, new_dataframe], ignore_index=True
-    )
-
-    # Save the updated DataFrame to the CSV file
-    updated_dataframe.to_csv(filename, index=False)
-
+###### export 
 
 data_export = {
     "id": str(datetime.now()),
@@ -325,4 +304,4 @@ data_export = {
     #### add if need
 }
 
-export_csv(data_export)
+rl.export_csv(data_export)
