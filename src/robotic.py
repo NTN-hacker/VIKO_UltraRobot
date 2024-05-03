@@ -220,43 +220,43 @@ else:
 #VISION
 coordinate_pixel = getCoordinates(True)
 
-theta_laser = rl.rotLaser(coordinate_pixel)
-coordinate_pixel_1 = coordinate_pixel[0]
+# theta_laser = rl.rotLaser(coordinate_pixel)
+# coordinate_pixel_1 = coordinate_pixel[0]
 print(coordinate_pixel)
-x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
-    CFG.RESOLUTION_X,
-    CFG.RESOLUTION_Y,
-    coordinate_pixel_1[0],
-    coordinate_pixel_1[1],
-    pixel_focalLength,
-    dis_cameraToObject, 
-    theta = -90   
-)  # cfg
+# x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
+#     CFG.RESOLUTION_X,
+#     CFG.RESOLUTION_Y,
+#     coordinate_pixel_1[0],
+#     coordinate_pixel_1[1],
+#     pixel_focalLength,
+#     dis_cameraToObject, 
+#     theta = -90   
+# )  # cfg
 
 #VISION
 coordinate_pixel_2 = coordinate_pixel[1]
 
-x_to_camera_02, y_to_camera_02 = rl.convertCoordinates(
-    CFG.RESOLUTION_X,
-    CFG.RESOLUTION_Y,
-    coordinate_pixel_2[0] ,
-    coordinate_pixel_2[1] ,
-    pixel_focalLength,
-    dis_cameraToObject, 
-    theta = -90  
-)  # cfg
+# x_to_camera_02, y_to_camera_02 = rl.convertCoordinates(
+#     CFG.RESOLUTION_X,
+#     CFG.RESOLUTION_Y,
+#     coordinate_pixel_2[0] ,
+#     coordinate_pixel_2[1] ,
+#     pixel_focalLength,
+#     dis_cameraToObject, 
+#     theta = -90  
+# )  # cfg
 
 # TEST FLOW
 z_laser_to_camera = dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
                                                                     
-real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
-real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
-print(f'real_target01:{real_target01}')
-print(f'real_target02:{real_target02}')
+# real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
+# real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
+# print(f'real_target01:{real_target01}')
+# print(f'real_target02:{real_target02}')
 
-target01, pos_laser01 = createPoint(real_target01, 1, theta_laser)  # fix
-target02, pos_laser02 = createPoint(real_target02, 2, theta_laser)
-print(f'target01:{target01}, target02:{target02}')
+# target01, pos_laser01 = createPoint(real_target01, 1, theta_laser)  # fix
+# target02, pos_laser02 = createPoint(real_target02, 2, theta_laser)
+# print(f'target01:{target01}, target02:{target02}')
 
 #     print(f"Target position: {pos_laser[2]}")
 #     choice = input(
@@ -266,9 +266,9 @@ print(f'target01:{target01}, target02:{target02}')
     # if choice == "y":
 
 # sleep_seconds(3)
-runRobot(target01, pos_laser01)
-sleep_seconds(10)
-runRobot(target02, pos_laser02)
+# runRobot(target01, pos_laser01)
+# sleep_seconds(10)
+# runRobot(target02, pos_laser02)
 
     # elif choice == "n":
     #     get_joint = robot.Joints()

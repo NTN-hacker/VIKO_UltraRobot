@@ -9,7 +9,7 @@ from config import config as CFG
 from lib import robot_lib as rl
 RDK = Robolink()
 robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
-
+import cv2
 
 
 def cameraPosLeft(matcamera2base):
@@ -76,18 +76,42 @@ def distanceCameraToObject(x1_dis, x2_dis, focal_length, baseLine):
     print(f'dis_cameraToObject:{dis_cameraToObject}')
     return dis_cameraToObject, pixel_focalLength
 
+def get_point(img):
+    x, y = 0, 0
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # apply binary thresholding
+    ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
 
-### calculate the angle
-xy = [[996, 428], [1196, 2095]]
-x = 5
-y = 3
+    # detect the contours on the binary image using cv2.CHAIN_APPROX_NONE
+    contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, 
+                                        method=cv2.CHAIN_APPROX_NONE)
+    for contour in contours:
+        # draw contours on the original image
+        image_copy = img.copy()
+        area = cv2.contourArea(contour)
+        print(area)
+        if 0 < area < 10000:
+            cv2.drawContours(image_copy, contours=contour, contourIdx=-1, 
+                            color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+            M = cv2.moments(contour)
+            if M['m00'] != 0:
+                cx = float(M['m10'] / M['m00'])
+                cy = float(M['m01'] / M['m00'])
+                x, y, = cx, cy
+                print(f"Coordinates of the center: ({cx}, {cy})")
+                
+            else:
+                print("Could not find the center coordinates.")
 
-angle = math.atan2(428 - 2095, 996 - 1196)
-print("Arctan2 của (5, 3) là:", angle, "radians")
+    image_copy = cv2.putText(image_copy, ".", (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), thickness = 2, lineType=cv2.LINE_AA)
+    cv2.imshow("Image with Contours", image_copy)
+    cv2.waitKey(0)  # Wait indefinitely until a key is pressed
+    cv2.destroyAllWindows()  # Close all OpenCV windows
+    return x, y
 
-# Hoặc chuyển đổi sang đơn vị đo góc khác như độ:
-degree_angle = math.degrees(angle)
-print("Arctan2 của (5, 3) là:", degree_angle, "độ")
+image = cv2.imread("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot\\test.png")
+# x, y = get_point(image)
+
 
 
 # dis_pixel:(269, 733, 271, 202)
@@ -99,18 +123,18 @@ print("Arctan2 của (5, 3) là:", degree_angle, "độ")
 # (2050.03096639686, 1439.937362030905)
 # (1931.5211436809227, 922.0008008970045)
 
-# pixel_x1 = 2215
-# pixel_y1 = 2209
-# pixel_x2 = 1702
-# pixel_y2 = 2209
+pixel_x1 = 751
+pixel_y1 = 216
+pixel_x2 = 753.97
+pixel_y2 = 238.02
 
-
-# o1o2 = 60
-# res_width = 2048
-# res_height = 2448
-# focal_length = 16
-# x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, 3.45)
-# x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, 3.45)
-
+pixel_focalLength = 16 * 1000 / CFG.PIXEL_SIZE 
+o1o2 = 65
+res_width = 2048
+res_height = 2448
+focal_length = 16
+x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, pixel_focalLength, 558.45, -90)
+x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, pixel_focalLength, 563.45, -90)
+print (x1,y1, x2,y2)
 # dis = distanceCameraToObject(x1, x2, focal_length)
 # print(f'target1:{target1}, target2:{target2}')

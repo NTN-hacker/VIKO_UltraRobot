@@ -32,8 +32,9 @@ while camera.IsGrabbing():
     grabResult.Release()
     image = cv2.resize(image , (800,600))
     cv2.imshow("Image", image)
-    if cv2.waitKey(20) == ord("q"):
-        break
+    if cv2.waitKey(20) != -1:
+        break  # Wait indefinitely until a key is pressed
+
     
     
 # Releasing the resource    
