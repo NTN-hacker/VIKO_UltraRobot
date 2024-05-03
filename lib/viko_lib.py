@@ -117,7 +117,7 @@ def get_point(img):
     x, y = 0., 0.
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # apply binary thresholding
-    ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
 
     # detect the contours on the binary image using cv2.CHAIN_APPROX_NONE
     contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, 
@@ -127,7 +127,7 @@ def get_point(img):
         image_copy = img.copy()
         area = cv2.contourArea(contour)
         # print(area)
-        if 6000 < area < 10000:
+        if 0 < area < 10000:
             cv2.drawContours(image=image_copy, contours=contour, contourIdx=-1, 
                             color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
             M = cv2.moments(contour)

@@ -58,7 +58,7 @@ def createPoint(arr_target, count, theta_laser):
     rot_target, pos_target = rl.rotPos(rf_target2base)
     print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
     rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(theta_laser)]
-    pos_target = [pos_target[0] - 51.44, pos_target[1] - 57, pos_target[2]]
+    pos_target = [pos_target[0] - 51.44, pos_target[1] - 65, pos_target[2]]
 
     target_laser_none_mat = np.concatenate(
         (pos_target, rot_target), axis=0
@@ -92,7 +92,7 @@ if RUN_ON_ROBOT:
     status, status_msg = robot.ConnectedState()
     print(status)
     print(status_msg)
-    if status != ROBOTCOM_READY:
+    if status != ROBOTCOM_READY:                                      
         # Stop if the connection did not succeed
         print(status_msg)
         raise Exception("Failed to connect: " + status_msg)
@@ -107,7 +107,7 @@ def runRobot(target_laser_mat, pos_laser_to_object):
     speeds = CFG.SPEEDS  # cfg - TEST
     robot.setSpeed(speeds[1])
     # try:
-    robot.MoveJ(target_laser_mat)
+    robot.MoveL(target_laser_mat)
     get_joint = robot.Joints()
     print(f"get_joint:{get_joint}")
 
@@ -220,43 +220,43 @@ else:
 #VISION
 coordinate_pixel = getCoordinates(True)
 
-# theta_laser = rl.rotLaser(coordinate_pixel)
-# coordinate_pixel_1 = coordinate_pixel[0]
+theta_laser = rl.rotLaser(coordinate_pixel)
+coordinate_pixel_1 = coordinate_pixel[0]
+coordinate_pixel_2 = coordinate_pixel[1]
 print(coordinate_pixel)
-# x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
-#     CFG.RESOLUTION_X,
-#     CFG.RESOLUTION_Y,
-#     coordinate_pixel_1[0],
-#     coordinate_pixel_1[1],
-#     pixel_focalLength,
-#     dis_cameraToObject, 
-#     theta = -90   
-# )  # cfg
+x_to_camera_01, y_to_camera_01 = rl.convertCoordinates(
+    CFG.RESOLUTION_X,
+    CFG.RESOLUTION_Y,
+    coordinate_pixel_1[0],
+    coordinate_pixel_1[1],
+    pixel_focalLength,
+    dis_cameraToObject, 
+    theta = -90   
+)  # cfg
 
 #VISION
-coordinate_pixel_2 = coordinate_pixel[1]
 
-# x_to_camera_02, y_to_camera_02 = rl.convertCoordinates(
-#     CFG.RESOLUTION_X,
-#     CFG.RESOLUTION_Y,
-#     coordinate_pixel_2[0] ,
-#     coordinate_pixel_2[1] ,
-#     pixel_focalLength,
-#     dis_cameraToObject, 
-#     theta = -90  
-# )  # cfg
+x_to_camera_02, y_to_camera_02 = rl.convertCoordinates(
+    CFG.RESOLUTION_X,
+    CFG.RESOLUTION_Y,
+    coordinate_pixel_2[0],
+    coordinate_pixel_2[1] ,
+    pixel_focalLength,
+    dis_cameraToObject, 
+    theta = -90  
+)  # cfg
 
 # TEST FLOW
 z_laser_to_camera = dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
                                                                     
-# real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
-# real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
-# print(f'real_target01:{real_target01}')
-# print(f'real_target02:{real_target02}')
+real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
+real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
+print(f'real_target01:{real_target01}')
+print(f'real_target02:{real_target02}')
 
-# target01, pos_laser01 = createPoint(real_target01, 1, theta_laser)  # fix
-# target02, pos_laser02 = createPoint(real_target02, 2, theta_laser)
-# print(f'target01:{target01}, target02:{target02}')
+target01, pos_laser01 = createPoint(real_target01, 1, theta_laser)  # fix
+target02, pos_laser02 = createPoint(real_target02, 2, theta_laser)
+print(f'target01:{target01}, target02:{target02}')
 
 #     print(f"Target position: {pos_laser[2]}")
 #     choice = input(
@@ -265,10 +265,10 @@ z_laser_to_camera = dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
 
     # if choice == "y":
 
-# sleep_seconds(3)
-# runRobot(target01, pos_laser01)
-# sleep_seconds(10)
-# runRobot(target02, pos_laser02)
+sleep_seconds(2)
+runRobot(target01, pos_laser01)
+sleep_seconds(10)
+runRobot(target02, pos_laser02)
 
     # elif choice == "n":
     #     get_joint = robot.Joints()
@@ -277,7 +277,7 @@ z_laser_to_camera = dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
     # else:
     #     print("Invalid input. Please enter 'y' or 'n'.")
 
-# robot.MoveJ(rf_camera2base_matrix)
+robot.MoveJ(rf_camera2base_matrix)
 
 
 current_joint_values = robot.Joints()

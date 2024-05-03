@@ -14,7 +14,7 @@ converter = pylon.ImageFormatConverter()
 converter.OutputPixelFormat = pylon.PixelType_BGR8packed
 converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
-# used to record the time when we processed last frame
+# used to record the time when we processed last framea
 prev_frame_time = 0
 # used to record the time at which we processed current frame
 new_frame_time = 0
