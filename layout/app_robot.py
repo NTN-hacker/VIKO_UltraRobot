@@ -2,6 +2,8 @@ import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+from PyQt6 import QtWidgets
 import threading
 import time
 
@@ -10,17 +12,22 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Program Controller")
+        self.setWindowTitle("Ohlabs Robot Control")
         self.setGeometry(100, 100, 300, 200)
+        self.setStyleSheet("background-color: black;")  # Set background color
 
         self.label = QLabel("Program is Stopped", self)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setGeometry(50, 50, 200, 30)
 
+        # Scale the icon
+        self.iconOn = QIcon("layout\\png\\on.png")
+        self.iconOff = QIcon("layout\\png\\off.png")
+
         self.button = QPushButton("Start Program", self)
         self.button.setGeometry(100, 100, 100, 50)
         self.button.clicked.connect(self.toggle_program)
-
+        self.setWindowIcon(QIcon("layout\\png\\icon.png"))
         self.program_running = False
         self.program_thread = None
 
@@ -29,14 +36,25 @@ class MainWindow(QMainWindow):
             self.start_program()
             self.label.setText("Program is Running")
             self.button.setText("Stop Program")
+            self.button.setIcon(self.iconOn)
+            self.button.setText("Stop Program")
         else:
             self.stop_program()
             self.label.setText("Program is Stopped")
             self.button.setText("Start Program")
+            self.button.setIcon(self.iconOff)
+            self.button.setText("Start Program")
 
     def start_program(self):
+        """
+        Starts the program in a separate thread.
+
+        This function sets the program_running flag to True,
+        creates a new thread and starts the run_program method.
+        """
         self.program_running = True
         self.program_thread = threading.Thread(target=self.run_program)
+        # Start the thread
         self.program_thread.start()
 
     def run_program(self):
@@ -48,6 +66,11 @@ class MainWindow(QMainWindow):
         self.program_running = False
         if self.program_thread and self.program_thread.is_alive():
             self.program_thread.join()
+
+    def closeEvent(self, event):
+        """Override the close event to stop the program thread before closing the window."""
+        self.stop_program()
+        event.accept()
 
 
 if __name__ == "__main__":

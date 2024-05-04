@@ -1,7 +1,10 @@
 import sys
 
+# sys.path.append(
+#     "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
+# )  # config path
 sys.path.append(
-    "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
+    "E:\\Project\\Robot-6DOF\\VIKO_UltraRobot"
 )  # config path
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
