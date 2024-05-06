@@ -5,7 +5,7 @@ import sys
 
 sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot") # config path
 
-import library  as lib
+from library import viko_lib  as lib
 
 try:
     import numpy as np
