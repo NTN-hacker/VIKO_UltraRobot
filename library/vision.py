@@ -142,7 +142,7 @@ class VisionModule():
         marks = self.model.generate(img_cvt)
         #example
         for mark in marks:
-            if 1200000 < mark['area'] < 2000000:
+            if (1200000 < mark['area'] < 1500000) and (mark['bbox'][2]*mark['bbox'][3] < 1450000):
                 coordinate = mark['bbox']
                 print(len(marks))
                 x, y, w, h = coordinate
@@ -159,41 +159,60 @@ class VisionModule():
                 plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
                 self.img = img_cvt_cp.copy()
                 coordinate = [x, y, w, h]
+                print(mark)
                 
 
         x, y, w, h = coordinate
         self.img_split = img_cvt[ y: y+h, x:x+w]
+        cv2.namedWindow("Point detect", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Point detect', 600, 600)
+        cv2.imshow('Point detect', self.img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         print(coordinate)
         return coordinate
     
     def _getCoordinateWeld_(self, img, coordinate_ori) -> tuple:
-        rf = Roboflow(api_key="JtRFLNmuxFdQiNLXfFJj")
-        project = rf.workspace().project("weld-detection-slz4d")
-        model = project.version(1).model
-
         image = img.copy()
-
-        result = model.predict(img, confidence=50, overlap=50).json()
         try: 
+            x_ori, y_ori, w, h = coordinate_ori
+            if w<h:
+                x = (2*x_ori + w)//2 
+                y = y_ori
+                x2 = (2*x_ori + w)//2 
+                y2 = y_ori+h 
+            else:
+                x = x_ori
+                y = (2*y_ori + h)//2 
+                x2 = x_ori + w
+                y2 = (2*y_ori + h)//2 
+        except: 
+            rf = Roboflow(api_key="JtRFLNmuxFdQiNLXfFJj")
+            project = rf.workspace().project("weld-detection-slz4d")
+            model = project.version(1).model           
+
+            result = model.predict(img, confidence=50, overlap=50).json()
             detections = sv.Detections.from_roboflow(result)
             print(detections)
             coordinate = detections.xyxy[0]
             x, y, x2, y2 = coordinate
-        except:
-            x_ori, y_ori, w, h = coordinate_ori
-            x = x_ori//2 - 100
-            y = y_ori
-            x2 = x_ori//2 + 100
-            y2 = y_ori+h 
-
-        cv2.rectangle(img = image, pt1= (int(x), int(y)), pt2= (int(x2), int(y2)), color= (0, 255, 0), thickness= 1)
-
-        # cv2.imwrite(f'{self.outputDir}/Weld_{self.filename}', image)
-        x_ori, y_ori, w, h = coordinate_ori
-        self.img[y_ori:y_ori + h, x_ori:x_ori + w] = image
+        # except:
+        
+        cv2.rectangle(img = image, pt1= (int(0), int(h//2 -70)), pt2= (int(w), int(h//2 + 90)), color= (0, 255, 0), thickness= 1)
+        cv2.rectangle(img = self.img, pt1= (int(x), int(y-70)), pt2= (int(x2), int(y2+90)), color= (0, 255, 0), thickness= 1)
+        cv2.circle(self.img, (x, y), color = (255, 0, 0), radius = 10, thickness = 5)
+        cv2.namedWindow("Weld detect", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Weld detect', 600, 600)
+        cv2.imshow('Weld detect', self.img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
+        cv2.imwrite(f'{self.outputDir}/Weld_{self.filename}.png', image)
+        # x_ori, y_ori, w, h = coordinate_ori
+        # self.img[y_ori:y_ori + h, x_ori:x_ori + w] = image
         cv2.imwrite(f'{self.outputDir}/Weld_Detected.png', self.img)
 
-        coordinate_out = [[x_ori + x, y_ori + y], [x_ori + x2, y_ori + y2]]
+        coordinate_out = [[x, y], [x2, y2]]
 
         return coordinate_out
     
