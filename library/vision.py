@@ -140,9 +140,127 @@ class VisionModule():
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
-        coordinate = marks[0]['bbox']
+
+        for mark in marks:
+            if (1200000 < mark['area'] < 1500000) and (mark['bbox'][2]*mark['bbox'][3] < 1450000):
+                coordinate = mark['bbox']
+                print(len(marks))
+                x, y, w, h = coordinate
+                x, y, w, h = int(x), int(y), int(w), int(h)
+                # img_crop = img_cvt[y: y+h, x:x+w,  :]
+                
+                #display image after segment
+                cv2.circle(img_cvt_cp, (x, y), color = (255, 0, 0), radius = 50, thickness = 20)
+                text = f'({x}, {y})'
+                cv2.putText(img = img_cvt_cp, org = (x, y), fontFace = 1, fontScale = 5, text = text, color = (125, 255, 255), thickness = 10)
+                cv2.rectangle(img_cvt_cp, (x, y), (x + w, y + h), (0, 255, 125), thickness = 20)
+                # cv2.rectangle(img_cvt, ())
+                fig = plt.imshow(img_cvt_cp)
+                plt.savefig('%s/Box_%s' % (self.outputDir, self.filename))
+                self.img = img_cvt_cp.copy()
+                coordinate = [x, y, w, h]
+                print(mark)
+                
+
+        x, y, w, h = coordinate
+        self.img_split = img_cvt[ y: y+h, x:x+w]
+        cv2.namedWindow("Point detect", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Point detect', 600, 600)
+        cv2.imshow('Point detect', self.img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        print(coordinate)
         return coordinate
     
-    # def _getOnnxModel_(self):
-    #     # return self 
+    def _getCoordinateWeld_(self, img, coordinate_ori) -> tuple:
+        image = img.copy()
+        try: 
+            x_ori, y_ori, w, h = coordinate_ori
+            if w<h:
+                x = (2*x_ori + w)//2 
+                y = y_ori
+                x2 = (2*x_ori + w)//2 
+                y2 = y_ori+h 
+            else:
+                x = x_ori
+                y = (2*y_ori + h)//2 
+                x2 = x_ori + w
+                y2 = (2*y_ori + h)//2 
+        except: 
+            rf = Roboflow(api_key="JtRFLNmuxFdQiNLXfFJj")
+            project = rf.workspace().project("weld-detection-slz4d")
+            model = project.version(1).model           
+
+            result = model.predict(img, confidence=50, overlap=50).json()
+            detections = sv.Detections.from_roboflow(result)
+            print(detections)
+            coordinate = detections.xyxy[0]
+            x, y, x2, y2 = coordinate
+        # except:
+        
+        cv2.rectangle(img = image, pt1= (int(0), int(h//2 -70)), pt2= (int(w), int(h//2 + 90)), color= (0, 255, 0), thickness= 1)
+        cv2.rectangle(img = self.img, pt1= (int(x), int(y-70)), pt2= (int(x2), int(y2+90)), color= (0, 255, 0), thickness= 1)
+        cv2.circle(self.img, (x, y), color = (255, 0, 0), radius = 10, thickness = 5)
+        cv2.namedWindow("Weld detect", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Weld detect', 600, 600)
+        cv2.imshow('Weld detect', self.img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
+        cv2.imwrite(f'{self.outputDir}/Weld_{self.filename}.png', image)
+        # x_ori, y_ori, w, h = coordinate_ori
+        # self.img[y_ori:y_ori + h, x_ori:x_ori + w] = image
+        cv2.imwrite(f'{self.outputDir}/Weld_Detected.png', self.img)
+
+        coordinate_out = [[x, y], [x2, y2]]
+
+        return coordinate_out
+    
+    def backgroundSubtraction(self) -> list:
+        #Background Image
+        img_bg = cv2.imread('lib/BackGround.png', cv2.IMREAD_COLOR)
+        img_bg = cv2.cvtColor(img_bg, cv2.COLOR_BGR2RGB)
+        #Foreground Image
+        imageDict = self.image_list.pop(0)
+        img_obj = imageDict['image'] 
+        self.filename = imageDict['filename']
+        
+        #Background Subtraction
+        fmask = lib.main(img_obj, img_bg)
+        cv2.imwrite(osp.join(self.outputDir, f'Mask_{self.filename}'), fmask)
+    
+        #Post Processing
+        fg, coordinates = lib.boudingBox(img_obj, fgMask= fmask)
+        cv2.imwrite(osp.join(self.outputDir, f'Foreground_{self.filename}'), fg)
+        # print(f'The information of object {coordinate}, {area}')
+        # # Crop Working Space
+        # x, y, w, h = coordinate
+        # img_crop = img_obj[y: y+h, x: x+w]
+        # print(f'Time to process step 1 {datetime.datetime.now() - start_time}')
+        # # Test save
+        # cv2.imwrite(f'data/boudingbox/{osp.basename(obj_path)}', img_crop)
+
+
+
+        #Get coordinates 
+        # coordinates = list([])
+        # print(coordinates)
+
+        return coordinates
+    
+    def _getCircle_(self) -> list:
+        imageDict = self.image_list.pop(0)
+        img_obj = imageDict['image'] 
+        self.filename = imageDict['filename']
+
+        x, y = lib.get_point(img_obj)
+        
+        # lib.save_csv(self.filename, x, y)
+
+        lis = [x, y]
+        return lis
+    
+
+
+
                 
