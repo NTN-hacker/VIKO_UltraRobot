@@ -1,11 +1,11 @@
 import sys
 
-# sys.path.append(
-#     "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
-# )  # config path
 sys.path.append(
-    "E:\\Project\\Robot-6DOF\\VIKO_UltraRobot"
+    "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
 )  # config path
+# sys.path.append(
+#     "E:\\Project\\Robot-6DOF\\VIKO_UltraRobot"
+# )  # config path
 from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
 import numpy as np
@@ -21,23 +21,26 @@ from config import config as CFG
 ## class for vision robot
 class VisionRobot:
     def __init__(self, RDK=None, robot=None):
-        if RDK is None:
-            RDK = Robolink()
-        if robot is None:
-            self.robot = RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
-        if not robot.Valid():
+        # if RDK is None:
+        self.RDK = Robolink()
+    # if robot is None:
+        self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
+        self.robot_module = rob.RobotModule()
+        self.vision = vis.VisionModule()
+
+    def pickRobot(self):
+        if not self.robot.Valid():
             raise Exception("Invalid robot selected")
-
-        self.RDK = RDK
-
-        if RDK.RunMode() != RUNMODE_SIMULATE:
+        
+        RUN_ON_ROBOT = True
+        if self.RDK.RunMode() != RUNMODE_SIMULATE:
             RUN_ON_ROBOT = False
 
         if RUN_ON_ROBOT:
             # Connect to the robot using default IP
-            robot.Connect()  # Try to connect once
-            robot.ConnectSafe()  # Try to connect multiple times
-            status, status_msg = robot.ConnectedState()
+            self.robot.Connect()  # Try to connect once
+            self.robot.ConnectSafe()  # Try to connect multiple times
+            status, status_msg = self.robot.ConnectedState()
             print(status)
             print(status_msg)
             if status != ROBOTCOM_READY:
@@ -46,12 +49,10 @@ class VisionRobot:
                 raise Exception("Failed to connect: " + status_msg)
 
             # This will set to run the API programs on the robot and the simulator (online programming)
-            RDK.setRunMode(RUNMODE_RUN_ROBOT)
+            self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
 
-        robot.ConnectedState()
-        self.robot_module = rob.RobotModule()
-        self.vision = vis.VisionModule()
-        print("ConnectedState:", robot.ConnectedState(), "\n")
+        self.robot.ConnectedState()
+        print("ConnectedState:", self.robot.ConnectedState(), "\n")
 
     def fixedRef(self):
 
@@ -205,6 +206,7 @@ class VisionRobot:
         coordinate_pixel = self.getCoordinates(True)
         theta_laser = self.robot_module.rotLaser(coordinate_pixel)
         coordinate_pixel_1 = coordinate_pixel[0]
+        coordinate_pixel_2 = coordinate_pixel[1]
         print(coordinate_pixel)
 
         x_to_camera_01, y_to_camera_01 = self.robot_module.convertCoordinates(
@@ -217,7 +219,7 @@ class VisionRobot:
             theta=-90,
         )  # cfg
 
-        coordinate_pixel_2 = coordinate_pixel[1]
+
         x_to_camera_02, y_to_camera_02 = self.robot_module.convertCoordinates(
             CFG.RESOLUTION_X,
             CFG.RESOLUTION_Y,
@@ -263,6 +265,7 @@ class VisionRobot:
 
 def main():
     VisRob = VisionRobot()
+    VisRob.pickRobot()
     rf_camera2base_matrix, rf_camera2base = VisRob.fixedRef()
     VisRob.attRobot(rf_camera2base_matrix)
     dis_cameraToObject, pixel_focalLength, dis_pixel = VisRob.disCameraToObject(

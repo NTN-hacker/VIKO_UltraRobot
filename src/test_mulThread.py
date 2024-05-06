@@ -1,7 +1,7 @@
 import sys
 import threading
 
-sys.path.append("E:\\Project\\Robot-6DOF\\VIKO_UltraRobot")
+sys.path.append("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot")
 from layout import app_robot as app
 
 
@@ -14,5 +14,5 @@ class TestThread:
         print("Exiting " + self.name)
 
 
-if __name__ == "__main__":
-    app.main()
+# if __name__ == "__main__":
+#     app.main()

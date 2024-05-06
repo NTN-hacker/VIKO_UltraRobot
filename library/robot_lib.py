@@ -12,7 +12,8 @@ from config import config as CFG
 
 class RobotModule:
     def __init__(self):
-        self.robot = Robolink()
+        self.RDK = Robolink()
+        self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
 
     @staticmethod
     def rotPos(trans_matrix):
@@ -82,7 +83,7 @@ class RobotModule:
         return transformation_matrix
 
     @staticmethod
-    def rotLaser(self, coordinate_pixel):
+    def rotLaser(coordinate_pixel):
         pixel_1 = coordinate_pixel[0]
         pixel_2 = coordinate_pixel[1]
 

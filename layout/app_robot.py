@@ -1,14 +1,12 @@
 import sys
-from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from PyQt6 import QtWidgets
 import threading
 import time
 import os
-sys.path.append("E:\\Project\\Robot-6DOF\\VIKO_UltraRobot")
-# from src import test_mulThread as T
+sys.path.append("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot")
+from src import test_mulThread as T
 from src import robotic_modify as RM
 
 class MainWindow(QMainWindow):
@@ -17,7 +15,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Ohlabs Robot Control")
         self.setGeometry(100, 100, 300, 200)
-        self.setStyleSheet("background-color: black;")  # Set background color
+        self.setStyleSheet("background-color: grey;")  # Set background color
 
         self.label = QLabel("Program is Stopped", self)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -38,15 +36,13 @@ class MainWindow(QMainWindow):
         if not self.program_running:
             self.start_program()
             self.label.setText("Program is Running")
-            self.button.setText("Stop Program")
+            self.button.setText("On")
             self.button.setIcon(self.iconOn)
-            self.button.setText("Stop Program")
         else:
             self.stop_program()
             self.label.setText("Program is Stopped")
-            self.button.setText("Start Program")
+            self.button.setText("Off")
             self.button.setIcon(self.iconOff)
-            self.button.setText("Start Program")
 
     def start_program(self):
         """
@@ -66,7 +62,7 @@ class MainWindow(QMainWindow):
             RM.main()
             # obj = T.TestThread("test")
             # obj.run()
-            # time.sleep(1)
+            time.sleep(1)
 
     def stop_program(self):
         self.program_running = False
