@@ -3,7 +3,9 @@ import os.path as osp
 import importlib
 import sys
 
+sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot") # config path
 
+import library  as lib
 
 try:
     import numpy as np
@@ -17,6 +19,9 @@ try:
     from datetime import datetime
     from PIL import Image
     from  segment_anything import sam_model_registry, SamPredictor, SamAutomaticMaskGenerator
+    from roboflow import Roboflow
+    import supervision as sv
+    
 except ImportError:
     print('Vision module bindings requires "numpy", "cv2", "torch", "matplotlib.pyplot", "pypylon", "threading", "time", "pillow", "sam", "datetime" package.')
     print('Install it via command:')
@@ -140,7 +145,7 @@ class VisionModule():
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
         marks = self.model.generate(img_cvt)
         #example
-
+        img_cvt_cp = img_cvt.copy()
         for mark in marks:
             if (1200000 < mark['area'] < 1500000) and (mark['bbox'][2]*mark['bbox'][3] < 1450000):
                 coordinate = mark['bbox']
