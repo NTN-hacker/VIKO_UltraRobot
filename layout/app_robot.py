@@ -6,7 +6,10 @@ from PyQt6.QtGui import QIcon
 from PyQt6 import QtWidgets
 import threading
 import time
-
+import os
+sys.path.append("E:\\Project\\Robot-6DOF\\VIKO_UltraRobot")
+# from src import test_mulThread as T
+from src import robotic_modify as RM
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -60,7 +63,10 @@ class MainWindow(QMainWindow):
     def run_program(self):
         while self.program_running:
             print("Program is running...")
-            time.sleep(1)
+            RM.main()
+            # obj = T.TestThread("test")
+            # obj.run()
+            # time.sleep(1)
 
     def stop_program(self):
         self.program_running = False
@@ -73,8 +79,10 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+

@@ -10,6 +10,7 @@ from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robomath import *  # basic matrix operations
 import numpy as np
 import time
+from layout import app_robot as app
 
 from library import vision as vis
 from library import robot_lib as rob
@@ -292,4 +293,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    app.main()
