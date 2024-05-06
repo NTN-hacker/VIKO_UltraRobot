@@ -142,4 +142,7 @@ class VisionModule():
         #example
         coordinate = marks[0]['bbox']
         return coordinate
+    
+    def _getOnnxModel_(self):
+        return self.
                 
