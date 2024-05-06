@@ -65,7 +65,7 @@ class VisionRobot:
 
         # reference frame camera to flange
         pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(
-            0, -30, 200, 0, 0, 0
+            0, 0, 190, 0, 0, 0
         )
         rf_camera2flange = self.robot_module.createRef(
             pos_camera2flange, rot_camera2flange
@@ -90,7 +90,17 @@ class VisionRobot:
         rf_camera2flange_matrix = TxyzRxyz_2_Pose(rf_camera2flange_non_matrix)
         print("ref_camera2flange_test:", rf_camera2flange_matrix, "\n")
 
-        self.robot.setPoseFrame(self.robot.PoseFrame())
+
+        pos_setFrame = [0, 0, 0]  # Translation vector [Tx, Ty, Tz] ## sai so
+        rot_setFramee = [
+            np.radians(0),
+            np.radians(0),
+            np.radians(0),
+        ]  # Rotation angles [Rx, Ry, Rz] in radians
+        rf_setFrame = np.concatenate((pos_setFrame, rot_setFramee))
+        setFrame = TxyzRxyz_2_Pose(rf_setFrame)
+        
+        self.robot.setPoseFrame(setFrame)
         # print(f"robot.PoseFrame():{robot.PoseFrame()}")
         self.robot.setPoseTool(rf_camera2flange_matrix)
 
@@ -207,7 +217,7 @@ class VisionRobot:
         theta_laser = self.robot_module.rotLaser(coordinate_pixel)
         coordinate_pixel_1 = coordinate_pixel[0]
         coordinate_pixel_2 = coordinate_pixel[1]
-        print(coordinate_pixel)
+        print(f'coordinate_pixel:{coordinate_pixel}')
 
         x_to_camera_01, y_to_camera_01 = self.robot_module.convertCoordinates(
             CFG.RESOLUTION_X,
@@ -253,6 +263,7 @@ class VisionRobot:
         self.robot.setRounding(5)  # Set the rounding parameter
         self.robot.setSpeed(10, 10)  # Set linear speed in mm/s
         self.robot.setSpeedJoints(10)
+        print(f'rf_camera2base_matrix: {rf_camera2base_matrix}')
         self.robot.MoveJ(rf_camera2base_matrix)
 
     def getParam(self):
@@ -263,11 +274,12 @@ class VisionRobot:
         return current_joint_values, limit
 
 
-def main():
+def mainRob():
     VisRob = VisionRobot()
     VisRob.pickRobot()
     rf_camera2base_matrix, rf_camera2base = VisRob.fixedRef()
     VisRob.attRobot(rf_camera2base_matrix)
+
     dis_cameraToObject, pixel_focalLength, dis_pixel = VisRob.disCameraToObject(
         rf_camera2base, rf_camera2base_matrix
     )

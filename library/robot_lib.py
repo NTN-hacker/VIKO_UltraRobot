@@ -130,6 +130,8 @@ class RobotModule:
         pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
         camera2base_left_nonmat = np.concatenate((pos, rot))
         camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
+
+        print(f'camera2base_left:{camera2base_left}')
         self.robot.MoveJ(camera2base_left)
 
     def cameraPosRight(self, matcamera2base):
@@ -140,6 +142,8 @@ class RobotModule:
         pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
         camera2base_right_nonmat = np.concatenate((pos, rot))
         camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
+
+        print(f'camera2base_right:{camera2base_right}')
         self.robot.MoveJ(camera2base_right)
 
     def convertCoordinates(

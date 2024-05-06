@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
     def run_program(self):
         while self.program_running:
             print("Program is running...")
-            RM.main()
+            RM.mainRob()
             # obj = T.TestThread("test")
             # obj.run()
             time.sleep(1)
