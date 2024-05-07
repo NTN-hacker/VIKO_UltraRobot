@@ -2,10 +2,9 @@ import os
 import os.path as osp
 import importlib
 import sys
+from config import config as CFG
+from library import viko_lib as lib
 
-sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot") # config path
-
-from library import viko_lib  as lib
 
 try:
     import numpy as np
@@ -19,49 +18,44 @@ try:
     from datetime import datetime
     from PIL import Image
     from  segment_anything import sam_model_registry, SamPredictor, SamAutomaticMaskGenerator
+    from  mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+    from segment_anything_hq import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
     from roboflow import Roboflow
     import supervision as sv
-    
 except ImportError:
     print('Vision module bindings requires "numpy", "cv2", "torch", "matplotlib.pyplot", "pypylon", "threading", "time", "pillow", "sam", "datetime" package.')
     print('Install it via command:')
-    print('    pip install numpy/cv2/matplotlib/pypylon/threading/time/pillow/datetime')
+    print('    pip install numpy/cv2/matplotlib/pypylon/threading/time/pillow/datetime/roboflow/supervision')
     print('Depend on with your cuda version, this case: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121')
     print('To install model, we nees install from repo and checkpoint: pip install git+https://github.com/facebookresearch/segment-anything.git')
+    print('                                                         or pip install git+https://github.com/ChaoningZhang/MobileSAM.git')
     raise
 
 
 # TODO
 
-class CFG:
-    "Class for AI model to segment object (instance segmentation)"
-
-    weight = 'D:\\nhan\\viko\src\sam_vit_h_4b8939.pth' #Path of your checkpoint
-    model_type = 'vit_h'
-    device = 'cuda'
-
-
 class VisionModule():
     def __init__(self) -> None:
         #Init Transform Layer instance
         tl_factory = py.TlFactory.GetInstance()
-        devices = tl_factory.EnumerateDevices()
+        devices    = tl_factory.EnumerateDevices()
         for device in devices:
             print(device.GetModelName(), device.GetSerialNumber())
             self.model_name = device.GetModelName()
         
         self.camera = py.InstantCamera()
         self.camera.Attach(tl_factory.CreateDevice(devices[0]))
-        self.runningStatus = False
-        self.thread = None
-        self.image_list = list()
+        self.runningStatus       = False
+        self.thread              = None
+        self.image_list          = list()
         self.countImagesIntoGrab = 2
-        self.model = None
-        self.PATH_OUTPUT = f'Record_{str(datetime.now())[:10]}'
+        self.model               = None
+        self.MODEL_CONFIG        = CFG.MODEL['HQ_SAM']
+        self.PATH_OUTPUT         = f'data/AI/Record_{str(datetime.now())[:10]}'
         if not osp.exists(self.PATH_OUTPUT):
             os.mkdir(self.PATH_OUTPUT)
-        self.outputDir = self.PATH_OUTPUT
-
+        self.outputDir   = self.PATH_OUTPUT
+        self.filename    = None
     def _start_(self):
         self.camera.Open()
         self.settingParameter()
@@ -109,22 +103,23 @@ class VisionModule():
     
     def save_image(self):
         totalTime = 0
-        while not self.runningStatus:
-            time.sleep(0.001)
-        while True:
-            if not self.runningStatus and len(self.image_list) == 0:
-                break
-            if len(self.image_list) == 0:
-                continue
-            else:
-                imageDict = self.image_list.pop(0)
-                img = imageDict['image'] 
-                filename = imageDict['filename']
-                startTime = time.time()
-                im = Image.fromarray(img)
-                im.save('%s/%s' % (self.outputDir, filename))
-                totalTime = totalTime + (time.time() - startTime)
+        # while not self.runningStatus:
+        #     time.sleep(0.001)
+        # while True:
+        #     if not self.runningStatus and len(self.image_list) == 0:
+        #         break
+        #     if len(self.image_list) == 0:
+        #         continue
+        #     else:
+        imageDict = self.image_list.pop(0)
+        img = imageDict['image'] 
+        self.filename = imageDict['filename']
+        startTime = time.time()  
+        im = Image.fromarray(img)
+        im.save('%s/%s' % (self.outputDir, self.filename))
+        totalTime = totalTime + (time.time() - startTime)
         print('Total time for saving: %f' % totalTime)
+        return im
     
     def _end_(self):
         self.camera.Close()
@@ -134,20 +129,21 @@ class VisionModule():
         This function to get bounding box
         """
 
-        sam = sam_model_registry[CFG.model_type](checkpoint= CFG.weight)
-        sam.to(device= CFG.device)        
+        sam = sam_model_registry[self.MODEL_CONFIG['MODEL_TYPE']](checkpoint= self.MODEL_CONFIG['WEIGHT'])
+        sam.to(device= CFG.DEVICE)        
         self.model = SamAutomaticMaskGenerator(sam)
 
     
     def _getCoordinate_(self):
         image_arr = self.image_list[-1]['image']
-        assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
+        coordinate = list([])
+        # assert len(image_arr.shape) == 2, "image should be 3D and Color space is RGB"
         img_cvt = cv2.cvtColor(image_arr, cv2.COLOR_BGR2RGB)
+        img_cvt_cp = img_cvt.copy()
         marks = self.model.generate(img_cvt)
         #example
-        img_cvt_cp = img_cvt.copy()
         for mark in marks:
-            if (1200000 < mark['area'] < 1500000) and (mark['bbox'][2]*mark['bbox'][3] < 1450000):
+            if (1200000 < mark['area'] < 2000000):# and (mark['bbox'][2]*mark['bbox'][3] < 1450000):
                 coordinate = mark['bbox']
                 print(len(marks))
                 x, y, w, h = coordinate
@@ -165,7 +161,7 @@ class VisionModule():
                 self.img = img_cvt_cp.copy()
                 coordinate = [x, y, w, h]
                 print(mark)
-                
+                break
 
         x, y, w, h = coordinate
         self.img_split = img_cvt[ y: y+h, x:x+w]
@@ -265,7 +261,6 @@ class VisionModule():
         lis = [x, y]
         return lis
     
-
 
 
                 

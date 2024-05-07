@@ -26,7 +26,7 @@ class VisionRobot:
     # if robot is None:
         self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
         self.robot_module = rob.RobotModule()
-        self.vision = vis.VisionModule()
+        # self.vision = vis.VisionModule()
 
     def pickRobot(self):
         if not self.robot.Valid():
@@ -107,11 +107,11 @@ class VisionRobot:
         return rf_camera2base_matrix, rf_camera2base
 
     def getCoordinates(self, flag: bool):
-
+        self.vision = vis.VisionModule()
         self.vision._start_()
         self.vision._getImage_()
-        self.vision.load_model()
         self.vision.save_image()
+        self.vision.load_model()        
         coordinate = self.vision._getCoordinate_()
         # coordinate = self.vision._getCircle_()
         if flag == True:
@@ -243,13 +243,22 @@ class VisionRobot:
         real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
-        target01, pos_laser01 = self.createPoint(real_target01, 1, theta_laser)  # fix
-        target02, pos_laser02 = self.createPoint(real_target02, 2, theta_laser)
+        target01, pos_laser01 = self.createPoint(real_target01, 1, theta_laser, self.fixedRef()[-1])  # fix
+        target02, pos_laser02 = self.createPoint(real_target02, 2, theta_laser, self.fixedRef()[-1])
         print(f"target01:{target01}, target02:{target02}")
 
         return target01, target02, pos_laser01, pos_laser02
 
-    def runRobot(self, target_laser_mat, pos_laser_to_object):
+    def runMoveL(self, target_laser_mat, pos_laser_to_object):
+
+        speeds = CFG.SPEEDS  # cfg - TEST
+        self.robot.setSpeed(speeds[1])
+        # try:
+        self.robot.MoveL(target_laser_mat)
+        get_joint = self.robot.Joints()
+        print(f"get_joint:{get_joint}")
+
+    def runMoveJ(self, target_laser_mat, pos_laser_to_object):
 
         speeds = CFG.SPEEDS  # cfg - TEST
         self.robot.setSpeed(speeds[1])
@@ -287,9 +296,11 @@ def mainRob():
         dis_cameraToObject, pixel_focalLength
     )
     VisRob.sleep_seconds(3)
-    VisRob.runRobot(target01, pos_laser01)
+    VisRob.runMoveJ(target01, pos_laser01)
     VisRob.sleep_seconds(10)
-    VisRob.runRobot(target02, pos_laser02)
+    VisRob.runMoveL(target02, pos_laser02)
+    VisRob.attRobot(rf_camera2base_matrix)
+
     current_joint_values, limit = VisRob.getParam()
     data_export = {
         "id": str(datetime.now()),
@@ -304,8 +315,10 @@ def mainRob():
         "distance": dis_cameraToObject,
         #### add if need
     }
+    print(f'data_export:{data_export}')
     rob.RobotModule.export_csv(data_export)
 
 
 if __name__ == "__main__":
-    app.main()
+    # app.main()
+    mainRob()

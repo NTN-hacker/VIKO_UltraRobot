@@ -104,6 +104,10 @@ class RobotModule:
         time = str(datetime.now())
         filename = f"data/Robotic/Test_{time[:10]}.csv"
 
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
         try:
             # Read the existing CSV file into a DataFrame
             existing_dataframe = pd.read_csv(filename)
@@ -125,7 +129,7 @@ class RobotModule:
     def cameraPosLeft(self, matcamera2base):
         # move the left position to capture
         camera2base_posLeft = matcamera2base
-        rot, pos = self.rotPos(camera2base_posLeft)
+        pos, rot = self.rotPos(camera2base_posLeft)
         rot = [rot[0], rot[1], rot[2]]
         pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
         camera2base_left_nonmat = np.concatenate((pos, rot))
@@ -137,7 +141,7 @@ class RobotModule:
     def cameraPosRight(self, matcamera2base):
         # move the right position to capture
         camera2base_posRight = matcamera2base
-        rot, pos = self.rotPos(camera2base_posRight)
+        pos, rot = self.rotPos(camera2base_posRight)
         rot = [rot[0], rot[1], rot[2]]
         pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
         camera2base_right_nonmat = np.concatenate((pos, rot))
@@ -177,7 +181,7 @@ class RobotModule:
         return x1_real, y1_real
 
     @staticmethod
-    def distanceCameraToObject(self, x1_dis, x2_dis, focal_length, baseLine):
+    def distanceCameraToObject(x1_dis, x2_dis, focal_length, baseLine):
         pixel_focalLength = focal_length * 1000 / CFG.PIXEL_SIZE
         dis_cameraToObject = baseLine * pixel_focalLength / (abs(x1_dis - x2_dis))
         return dis_cameraToObject, pixel_focalLength
