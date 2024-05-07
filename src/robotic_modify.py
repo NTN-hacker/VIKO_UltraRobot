@@ -320,5 +320,5 @@ def mainRob():
 
 
 if __name__ == "__main__":
-    # app.main()
-    mainRob()
+    app.main()
+    # mainRob()
