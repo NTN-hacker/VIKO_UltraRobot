@@ -15,43 +15,50 @@ class TestThread:
     def __init__(self):
         self.rob_mod = RM.VisionRobot()
         self.rob_mod.pickRobot()
+        self.rob_mod.fixedRef()
+        self.rob_mod.attRobot()
 
     def limitMotion(self):
         # Default limit space in the Cartesian space
-        DEFAULT_XYZ_MIN = np.array([199, -480, -140])
+        DEFAULT_XYZ_MIN = np.array([199, -480, -300])
         DEFAULT_XYZ_MAX = np.array([727, 480, 305])
 
+        print(f'X, Y, Z in range: (199, 727), (-480, 480), (-300, 305)')
         x1 = float(input("Enter X Coordinate: "))
         y1 = float(input("Enter Y Coordinate: "))
         z1 = float(input("Enter Z Coordinate: "))
-        XYZ_1 = np.array([[x1], [y1], [z1]])
+        XYZ_1 = np.array([x1, y1, z1])
+        print(f"Target created: ({x1}, {y1}, {z1})")
 
         x2 = float(input("Enter X Coordinate: "))
         y2 = float(input("Enter Y Coordinate: "))
         z2 = float(input("Enter Z Coordinate: "))
-        XYZ_2 = np.array([[x2], [y2], [z2]])
+        XYZ_2 = np.array([x2, y2, z2])
         print(f"Target created: ({x2}, {y2}, {z2})")
 
-        rot = np.array([0, 0, 0])
+        rot = np.array([np.radians(-180), np.radians(0), np.radians(0)])
 
-        if np.all(DEFAULT_XYZ_MIN <= XYZ_1) and np.all(XYZ_1 <= DEFAULT_XYZ_MAX):
+        target_1_within_range = all(DEFAULT_XYZ_MIN[i] <= XYZ_1[i] <= DEFAULT_XYZ_MAX[i] for i in range(3))
+        target_2_within_range = all(DEFAULT_XYZ_MIN[i] <= XYZ_2[i] <= DEFAULT_XYZ_MAX[i] for i in range(3))
 
+        if target_1_within_range:
+            
             print("Target 1 is within the default range.")
             target2base_none_mat1 = np.concatenate((XYZ_1, rot), axis=0)
             target2base_mat1 = TxyzRxyz_2_Pose(target2base_none_mat1)
             print(f"target_laser_mat:{target2base_mat1}")
-            self.rob_mod.runMoveJ(target2base_mat1)
+            self.rob_mod.runMoveJ(target2base_mat1, None)
 
         else:
             print("Target 1 is outside the default range.")
 
-        if np.all(DEFAULT_XYZ_MIN <= XYZ_2) and np.all(XYZ_2 <= DEFAULT_XYZ_MAX):
+        if target_2_within_range:
 
             print("Target 2 is within the default range.")
             target2base_none_mat2 = np.concatenate((XYZ_2, rot), axis=0)
             target2base_mat2 = TxyzRxyz_2_Pose(target2base_none_mat2)
             print(f"target_laser_mat:{target2base_mat2}")
-            self.rob_mod.runMoveL(target2base_mat2)
+            self.rob_mod.runMoveL(target2base_mat2, None)
 
         else:
             print("Target 2 is outside the default range.")

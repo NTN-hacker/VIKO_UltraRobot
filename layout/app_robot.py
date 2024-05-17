@@ -6,7 +6,6 @@ import threading
 import time
 import os
 sys.path.append("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot")
-from src import test_mulThread as T
 from src import robotic_modify as RM
 
 class MainWindow(QMainWindow):

@@ -58,7 +58,7 @@ class VisionRobot:
 
         # reference frame flange to base
         pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(
-            380, 0, 405, -180, 0, 0
+            380, 0, 405, 180, 0, 0
         )
         rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
         print("rf_flage2base:", rf_flage2base, "\n")
@@ -76,7 +76,7 @@ class VisionRobot:
         rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
         print("ref_camera2base:", rf_camera2base, "\n")
 
-        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(51.44, 57, 0, 0, 0, 0)
+        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(54, 57, 0, 0, 0, 0)
         self.rf_laser2camera = self.robot_module.createRef(pos_laser2camera, rot_laser2camera )
 
         rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
