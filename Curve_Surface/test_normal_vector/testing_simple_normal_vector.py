@@ -136,7 +136,7 @@ if __name__ == "__main__":
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
     ax.set_title("Points cloud on Surface")
-    plt.show()
+    # plt.show()
 
     source_nv = simple_normal_vector(source)
     print(f"source_nv: {source_nv}")

@@ -263,7 +263,7 @@ class VisionRobot:
         # try:
         self.robot.MoveL(target_laser_mat)
         get_joint = self.robot.Joints()
-        print(f"get_joint:{get_joint}")
+        # print(f"get_joint:{get_joint}")
 
     def runMoveJ(self, target_laser_mat, pos_laser_to_object):
 
@@ -272,7 +272,7 @@ class VisionRobot:
         # try:
         self.robot.MoveJ(target_laser_mat)
         get_joint = self.robot.Joints()
-        print(f"get_joint:{get_joint}")
+        # print(f"get_joint:{get_joint}")
 
     def attRobot(self):
 
