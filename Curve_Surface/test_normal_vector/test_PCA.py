@@ -3,6 +3,11 @@ import open3d as o3d
 from sklearn.neighbors import NearestNeighbors
 
 
+def mean_normal_vector(point_clouds):
+    normal_vector_list = []
+    pass
+
+
 def pcd_show(point_clouds=[]):
     show_list = []
     for point_cloud in point_clouds:
@@ -17,6 +22,7 @@ def pcd_show(point_clouds=[]):
         else:
             show_list.append(point_cloud)
     o3d.visualization.draw_geometries(show_list, point_show_normal=True)
+
 
 def calculate_fitting_normalvector(source):
     # 평균점 구하기
@@ -41,6 +47,7 @@ def calculate_fitting_normalvector(source):
 
     # normal vector 추출
     return V_T.T[:3, 2]
+
 
 def estimation_normal_vector(source, radius=0.1, near_sample_num=15):
     # radius : 지정된 반경 범위
@@ -90,15 +97,48 @@ def estimation_normal_vector(source, radius=0.1, near_sample_num=15):
 
 if __name__ == "__main__":
     coord = o3d.geometry.TriangleMesh.create_coordinate_frame()
+
     # theta_sample_num = 100
     # theta = np.arange(0.0, 2 * np.pi, (2 * np.pi / theta_sample_num))
     # r = 1.0
-    # x = r * np.cos(theta)
+    # x = theta
     # y = r * np.sin(theta)
-    # z = np.zeros_like(x)
+    # z = r * np.cos(theta)
+    # np_curve_surface = np.stack([x, y, z], axis=-1)
+    # source_nv = estimation_normal_vector(np_curve_surface, 0.5, 100)
 
+    # source_pcd = o3d.geometry.PointCloud()
+    # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(np_curve_surface))
+    # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
+    # pcd_show([source_pcd, coord])
 
-    # 2. Noise data
+    # Generate the target point cloud representing a sinusoidal curve surface
+    x = np.linspace(-5, 5, 10)
+    y = np.linspace(-5, 5, 10)
+    X, Y = np.meshgrid(x, y)
+    Z = -(1 / 10) * (X**2) + -(1 / 10) * (Y**2)  # Phương trình parabol
+    np_curve_surface = np.stack([X, Y, Z], axis=-1)
+    print(f"np_curve_surface: {np_curve_surface}")
+    new_cureve_surface = np_curve_surface.reshape((-1, 3)) + 100
+    print(f"new_cureve_surface: {new_cureve_surface}")
+
+    # source_cur = np_curve_surface.reshape((-1, 3)) + np.random.uniform(
+    #     -0.05, 0.05, (1600, 3)
+    # )
+    # pcd_show([source_cur, coord])
+
+    # source = np_curve_surface.reshape((-1, 3)) + np.random.uniform(
+    #     -0.05, 0.05, (400, 3)
+    # )
+    source = new_cureve_surface.reshape((-1, 3))
+    source_nv = estimation_normal_vector(source, 2, 40)
+
+    source_pcd = o3d.geometry.PointCloud()
+    source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
+    source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
+    pcd_show([source_pcd, coord])
+
+    # 2. Noise data on plane
     plate_X = np.arange(0, 1.0, 0.1)
     plate_Y = np.arange(0, 1.0, 0.1)
     plate_X, plate_Y = np.meshgrid(plate_X, plate_Y)
@@ -109,19 +149,25 @@ if __name__ == "__main__":
     # Define new plane coordinates in the XZ-plane
     plate_X_perpendicular = np.arange(0.0, 1.0, 0.1)
     plate_Z_perpendicular = np.arange(0.0, 1.0, 0.1)
-    plate_X_perpendicular, plate_Z_perpendicular = np.meshgrid(plate_X_perpendicular, plate_Z_perpendicular)
+    plate_X_perpendicular, plate_Z_perpendicular = np.meshgrid(
+        plate_X_perpendicular, plate_Z_perpendicular
+    )
     plate_Y_perpendicular = np.zeros_like(plate_X_perpendicular)
 
     # Stack the coordinates to form the new plane
-    np_plate_perpendicular = np.stack([plate_X_perpendicular, plate_Y_perpendicular, plate_Z_perpendicular], axis=-1)
+    np_plate_perpendicular = np.stack(
+        [plate_X_perpendicular, plate_Y_perpendicular, plate_Z_perpendicular], axis=-1
+    )
     combined_plate = np.concatenate([np_plate, np_plate_perpendicular], axis=0)
     # Add noise to the new plane
-    source_perpendicular = np_plate_perpendicular.reshape((-1, 3)) + np.random.uniform(-0.05, 0.05, (100, 3))
-    pcd_show([source,source_perpendicular, coord])
+    source_perpendicular = np_plate_perpendicular.reshape((-1, 3)) + np.random.uniform(
+        -0.05, 0.05, (100, 3)
+    )
+    # pcd_show([source, source_perpendicular, coord])
 
     # np_plate = np.stack([plate_X, plate_Y, plate_Z], axis=-1)
     source = combined_plate.reshape((-1, 3)) + np.random.uniform(-0.05, 0.05, (200, 3))
-    source_nv = estimation_normal_vector(source, 0.5, 60)
+    source_nv = estimation_normal_vector(source, 0.5, 100)
 
     source_pcd = o3d.geometry.PointCloud()
     source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))

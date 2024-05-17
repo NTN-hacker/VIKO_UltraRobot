@@ -244,7 +244,7 @@ if __name__ == "__main__":
     # Generate the target point cloud representing a sinusoidal curve surface
     target = np.stack([x, y, z], axis=-1)
 
-    source = pcd_rotation(target, 45, 0, 0)
+    source = pcd_rotation(target, 90, 0, 0)
 
     pcd_show1([source])
 
