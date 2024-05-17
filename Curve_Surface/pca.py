@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+#1. Generate random plane data
 
-#1. 랜덤 평면 데이터 생성
 plate_X = np.arange(-1.0,1.0,0.1);
 plate_Y = np.arange(-1.0,1.0,0.1);
 plate_X, plate_Y = np.meshgrid(plate_X, plate_Y);
@@ -11,7 +11,7 @@ np_plate = np.stack([plate_X,plate_Y,plate_Z],axis=-1);
 data = (np_plate + np.random.uniform(-0.1,0.1,np_plate.shape)).reshape((-1,3));
 
 
-#생성 데이터 가시화
+#Visualization of generated data
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(data[:,0],data[:,1],data[:,2]);
@@ -21,7 +21,7 @@ ax.set_zlim(-1.5,1.5);
 plt.show()
 
 
-#2. 데이터 평균 계산
+#2. Calculating data averages
 data_mean = data.mean(axis=0);
 n = data.shape[0];
 print("data:",data)
@@ -29,7 +29,7 @@ print("data mean:",data_mean)
 print("data num:",n)
 centroid_data = data - data_mean;
 
-# centroid 데이터 가시화
+# centroid Data visualization
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(data[:,0],data[:,1],data[:,2],marker = 'o');
@@ -39,7 +39,7 @@ ax.set_ylim(-2.0,2.0);
 ax.set_zlim(-2.0,2.0);
 plt.show()
 
-#3. PCA 작업
+#3. PCA 
 X = centroid_data;
 #Cov_X = (1.0/n)*np.dot(X.T,X);
 Cov_X = (1.0/n)*np.dot(X.T,X);
@@ -51,14 +51,16 @@ print("S :",S)
 print("V_T :",V_T)
 print(np.dot(S.T,S))
 
-#4. 평면 생성
+
+"""
+#4. Create a Plane
 plate_X = np.arange(-1.0,1.0,0.1);
 plate_Y = np.arange(-1.0,1.0,0.1);
 plate_X, plate_Y = np.meshgrid(plate_X, plate_Y);
 plate_Z = np.zeros_like(plate_X);
 np_plate = np.stack([plate_X,plate_Y,plate_Z],axis=-1);
 
-#PCA 통해 얻은 평면 가시화
+#PCA Planar visualization obtained through
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 np_plate = np.dot(V_T,np_plate.reshape((-1,3)).T).reshape(3,20,20).T;
@@ -70,11 +72,11 @@ ax.set_zlim(-2.0,2.0);
 plt.show()
 
 
-#5.45도 기울어진 평면
+#5.45 degree inclined plane
 np_plate = np.stack([plate_X,plate_Y,plate_Z],axis=-1);
 data = (np_plate + np.random.uniform(-0.1,0.1,np_plate.shape)).reshape((-1,3));
 
-#평면 x축으로 45도 회전
+#Rotate 45 degrees around the plane x-axis
 R_x = [ [1.0,0.0,0.0],
         [0.0,np.cos(np.deg2rad(45)),-np.sin(np.deg2rad(45))],
         [0.0,np.sin(np.deg2rad(45)),np.cos(np.deg2rad(45))],]
@@ -103,3 +105,5 @@ print("U :",U)
 print("S :",S)
 print("V_T :",V_T)
 print(np.dot(S.T,S))
+
+"""

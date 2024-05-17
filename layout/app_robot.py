@@ -1,11 +1,12 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QMessageBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import threading
 import time
 import os
 sys.path.append("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot")
+from src import test_mulThread as T
 from src import robotic_modify as RM
 
 class MainWindow(QMainWindow):
@@ -58,15 +59,30 @@ class MainWindow(QMainWindow):
     def run_program(self):
         if self.program_running is True:
             print("Program is running...")
-            RM.mainRob()
-            # obj = T.TestThread("test")
-            # obj.run()
+            # RM.mainRob()
+            obj = ML.TestThread("test")
+            obj.run()
             time.sleep(1)
 
     def stop_program(self):
         self.program_running = False
         if self.program_thread and self.program_thread.is_alive():
             self.program_thread.join()
+        reply = QMessageBox()
+        reply.setText('Are you sure you want to exit the program?')
+        reply.setStandardButtons(QMessageBox.StandardButton.Yes | 
+                     QMessageBox.StandardButton.No)
+        
+        x = reply.exec()
+        
+        
+
+        if x == QMessageBox.standardButtons.Yes:
+            # Perform any necessary cleanup operations here
+            # ...
+
+            # Exit the Python program
+            sys.exit()
 
     def closeEvent(self, event):
         """Override the close event to stop the program thread before closing the window."""

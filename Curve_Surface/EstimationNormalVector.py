@@ -301,18 +301,21 @@ if __name__ == "__main__":
     z = np.zeros_like(x)
 
     # 0. generate data
-    target = np.stack([x, y, z], axis=-1)
-    source = pcd_rotation(target, 45.0, 0, 0)
-    init_source = source.copy()
-    source = init_source + [0.1, 0.1, 0.1]
-    pcd_show([source, coord])
+    # target = np.stack([x, y, z], axis=-1)
+    # print(f'target: {target} and type: {type(target)}')
+    # source = pcd_rotation(target, 45.0, 0, 0)
+    # # print(f'source: {source} and type: {type(source)}')
+    # init_source = source.copy()
+    # source = init_source + [0.1, 0.1, 0.1]
+    # pcd_show([source, coord])
 
     # 1. create simplenormal vector
-    source_nv = simple_normal_vector(source)
-    source_pcd = o3d.geometry.PointCloud()
-    source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
-    source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    pcd_show([source_pcd, coord])
+    # source_nv = simple_normal_vector(source)
+    # print(f'type: {type(source)}')
+    # source_pcd = o3d.geometry.PointCloud()
+    # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
+    # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
+    # pcd_show([source_pcd, coord])
 
     # 2. Noise data
     plate_X = np.arange(-1.0, 1.0, 0.1)
@@ -323,12 +326,12 @@ if __name__ == "__main__":
     source = np_plate.reshape((-1, 3)) + np.random.uniform(-0.05, 0.05, (400, 3))
     pcd_show([source, coord])
 
-    # # 3.
+    # 3.
     # source_nv = simple_normal_vector(source)
     # source_pcd = o3d.geometry.PointCloud()
     # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
     # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    # # pcd_show([source_pcd, coord])
+    # pcd_show([source_pcd, coord])
 
     # # 4. Cube nv estimation
     # cube = o3d.geometry.TriangleMesh.create_box()
@@ -337,7 +340,7 @@ if __name__ == "__main__":
     # source_pcd = o3d.geometry.PointCloud()
     # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
     # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    # # pcd_show([source_pcd, coord])
+    # pcd_show([source_pcd, coord])
 
     # # 4. cylinder nv estimation
     # cylinder = o3d.geometry.TriangleMesh.create_cylinder()
@@ -346,25 +349,25 @@ if __name__ == "__main__":
     # source_pcd = o3d.geometry.PointCloud()
     # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
     # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    # # pcd_show([source_pcd, coord])
+    # pcd_show([source_pcd, coord])
 
     # # 5.
-    # np_plate = np.stack([plate_X, plate_Y, plate_Z], axis=-1)
-    # source = np_plate.reshape((-1, 3)) + np.random.uniform(-0.05, 0.05, (400, 3))
-    # source_nv = estimation_normal_vector(source, 0.5, 60)
-    # source_pcd = o3d.geometry.PointCloud()
-    # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
-    # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    # # pcd_show([source_pcd, coord])
+    np_plate = np.stack([plate_X, plate_Y, plate_Z], axis=-1)
+    source = np_plate.reshape((-1, 3)) + np.random.uniform(-0.05, 0.05, (400, 3))
+    source_nv = estimation_normal_vector(source, 0.5, 60)
+    source_pcd = o3d.geometry.PointCloud()
+    source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
+    source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
+    pcd_show([source_pcd, coord])
 
-    # # 6. Cube nv estimation
+    # 6. Cube nv estimation
     # cube = o3d.geometry.TriangleMesh.create_box()
     # source = np.asarray(cube.sample_points_poisson_disk(5000).points)
     # source_nv = estimation_normal_vector(source, radius=0.1, near_sample_num=30)
     # source_pcd = o3d.geometry.PointCloud()
     # source_pcd.points = o3d.utility.Vector3dVector(np.asarray(source))
     # source_pcd.normals = o3d.utility.Vector3dVector(np.asarray(source_nv))
-    # # pcd_show([source_pcd, coord])
+    # pcd_show([source_pcd, coord])
 
     # # 6. cylinder nv estimation
     # cylinder = o3d.geometry.TriangleMesh.create_cylinder()
