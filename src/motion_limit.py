@@ -9,6 +9,7 @@ from robodk.robomath import *  # basic matrix operations
 from src import robotic_modify as RM
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+from library import robot_lib as rl
 
 
 
@@ -19,13 +20,14 @@ class TestThread:
         self.rob_mod.pickRobot()
         self.rob_mod.fixedRef()
         self.rob_mod.attRobot()
+        self.robot_module = rl.RobotModule()
 
     def point(self):
 
-        x = np.linspace(-40, 40, 20)
-        y = np.linspace(-40, 40, 20)
+        x = np.linspace(-40, 40, 10)
+        y = np.linspace(-40, 40, 10)
         X, Y = np.meshgrid(x, y)
-        Z = -(1 / 70) * (X**2) + -(1 / 70) * (Y**2)  # Phương trình parabol
+        Z = (-1 / 120) * (X**2) + (-1 / 120) * (Y**2)  # Phương trình parabol
 
         X = X + 500
         Y= Y - 50
@@ -85,8 +87,15 @@ class TestThread:
 
         
         return angle_2_vector
+    @staticmethod
+    def sleep_seconds(seconds):
+        print(f"Sleeping for {seconds} seconds...")
+        time.sleep(seconds)
+        print("Awake now!")
     
-    def move(self, check_target, angle_2_vector):
+    # def move(self, check_target, angle_2_vector):
+    def move(self):
+
         # Default limit space in the Cartesian space
         DEFAULT_XYZ_MIN = np.array([199, -480, -300])
         DEFAULT_XYZ_MAX = np.array([727, 480, 305])
@@ -96,23 +105,29 @@ class TestThread:
         i = j = 0
         # print(f'target:{(check_target)}')
         # print(f'target:{(check_target[0][0])}')    
-        for i in range (len(check_target)):
+        # for i in range (len(check_target)):
             
-            for j in range(3):
-                target_1_within_range = all(DEFAULT_XYZ_MIN[j] <= check_target[i][j] <= DEFAULT_XYZ_MAX[j] for j in range(3))
+        #     for j in range(3):
+        #         target_1_within_range = all(DEFAULT_XYZ_MIN[j] <= check_target[i][j] <= DEFAULT_XYZ_MAX[j] for j in range(3))
 
 
-                if target_1_within_range: 
-                    rot = [rot[0], np.radians(angle_2_vector[i]), rot[2]]
-                    target2base_none_mat1 = np.concatenate((check_target[i], rot), axis=0)
-                    target2base_mat1 = TxyzRxyz_2_Pose(target2base_none_mat1)  
+        #         if target_1_within_range: 
+        #             rot = [rot[0], np.radians(angle_2_vector[i]), rot[2]]
+        #             target2base_none_mat1 = np.concatenate((check_target[i], rot), axis=0)
+        #             target2base_mat1 = TxyzRxyz_2_Pose(target2base_none_mat1)  
 
-                else:
-                    print("Target 1 is outside the default range.")
+        #         else:
+        #             print("Target 1 is outside the default range.")
 
 
-            self.rob_mod.runMoveJ(target2base_mat1, None)
-            print(f"target_laser_mat:{target2base_mat1}")
+            # self.rob_mod.runMoveJ(target2base_mat1, None)
+            # print(f"target_laser_mat:{target2base_mat1}")
+        # self.robot_module.cameraPosLeft(self.rob_mod.rf_laser2base)
+        # self.sleep_seconds(20)
+        self.robot_module.cameraPosRight(self.rob_mod.rf_laser2base)
+        self.sleep_seconds(20)
+        # self.rob_mod.attRobot()
+
 
 
     def calculate_fitting_normalvector(self, source):
@@ -183,7 +198,7 @@ class TestThread:
             else:
                 normal_vector_list.append(np.zeros((3)))
             
-        print(f'nor:{normal_vector_list[50:70]}')
+        print(f'nor:{normal_vector_list[50:60]}')
 
         return np.array(normal_vector_list)
 
@@ -192,7 +207,8 @@ class TestThread:
 if __name__ == "__main__":
     # app.main()
     test = TestThread()
-    points, source = test.point()
-    source_nv = test.estimation_normal_vector(source, 15, 60)
-    angle_2_vector = test.calculate_angle_between_vectors(source_nv[50:70])
-    test.move(points, angle_2_vector)
+    test.move()
+    # points, source = test.point()
+    # source_nv = test.estimation_normal_vector(source, 30, 60)
+    # angle_2_vector = test.calculate_angle_between_vectors(source_nv[50:60])
+    # test.move(points, angle_2_vector)
