@@ -58,7 +58,7 @@ class VisionRobot:
 
         # reference frame flange to base
         pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(
-            380, 0, 405, 180, 0, 0
+            380, 0, 255, 180, 0, 0
         )
         rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
         print("rf_flage2base:", rf_flage2base, "\n")

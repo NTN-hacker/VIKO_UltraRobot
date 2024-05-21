@@ -60,7 +60,7 @@ class BaslerGuiWindow(wx.Frame):
     auto_gain_on = False
     preview_on = False
     capture_on = False
-    framerate = 120
+    framerate = 35
     exposure = 7
     gain = 0
     cameras_list = []

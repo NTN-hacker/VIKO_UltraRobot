@@ -131,15 +131,19 @@ def get_point(img):
 # (2050.03096639686, 1439.937362030905)
 # (1931.5211436809227, 922.0008008970045)
 
-pixel_x1 = 822
-pixel_y1 = 333
-pixel_x2 = 822
-pixel_y2 = 860
+p1=[858.5115955011445, 1202.8767880043406]
+p2=[331.5910552470038, 673.9383554899064]
+
+pixel_x1 = p1[1]
+pixel_y1 = p1[0]
+pixel_x2 = p2[1]
+pixel_y2 = p2[0]
 
 pixel_focalLength = 16 * 1000 / CFG.PIXEL_SIZE 
 o1o2 = 65
-res_width = 2048
-res_height = 2448
+res_width = 2448
+res_height = 2048
+
 focal_length = 16
 #x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, pixel_focalLength, 558.45, -90)
 #x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, pixel_focalLength, 563.45, -90)

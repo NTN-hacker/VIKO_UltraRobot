@@ -122,7 +122,7 @@ class TestThread:
 
             # self.rob_mod.runMoveJ(target2base_mat1, None)
             # print(f"target_laser_mat:{target2base_mat1}")
-        # self.robot_module.cameraPosLeft(self.rob_mod.rf_laser2base)
+        # self.robot_module.cameraPosLeft(self.rob_mod.rf_laser2base)0
         # self.sleep_seconds(20)
         self.robot_module.cameraPosRight(self.rob_mod.rf_laser2base)
         self.sleep_seconds(20)
