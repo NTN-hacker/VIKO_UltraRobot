@@ -148,11 +148,11 @@ if __name__ == "__main__":
     x = np.linspace(-40, 40, 20)
     y = np.linspace(-40, 40, 20)
     X, Y = np.meshgrid(x, y)
-    Z = -(1 / 120) * (X**2) + -(1 / 120) * (Y**2)  # Phương trình parabol
+    Z = -(1 / 70) * (X**2) + -(1 / 70) * (Y**2)  # Phương trình parabol
 
-    # X = X + 450
-    # Y= Y -50
-    # Z = Z - 60
+    X = X + 450
+    Y= Y -50
+    Z = Z - 60
     # print(f'X, Y, Z: {X, Y, Z}')
     np_curve_surface = np.stack([X, Y, Z], axis=-1)
     print(f"np_curve_surface: {np_curve_surface[5]}")
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     #     -0.05, 0.05, (400, 3)
     # )
     # source = np_curve_surface.reshape((-1, 3))
-    source_nv = estimation_normal_vector(source, 15, 60)
+    source_nv = estimation_normal_vector(source, 25, 60)
     print(f'source_nv:{source_nv[50:60]}')
 
     calculate_angle_between_vectors(source_nv[50:60])
@@ -190,8 +190,7 @@ if __name__ == "__main__":
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
     ax.set_title("Points cloud on Surface")
-    # plt.show()
-    for point, normal in zip(source, source_nv):
+    for point, normal in zip(np_curve_surface, source_nv):
         ax.quiver(
             point[0],
             point[1],
@@ -199,8 +198,8 @@ if __name__ == "__main__":
             normal[0],
             normal[1],
             normal[2],
-            length=2,
-            color="r",
+            length=0.2,
+            color="purple",
         )
 
     plt.show()
