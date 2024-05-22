@@ -5,8 +5,10 @@ from PyQt6.QtGui import QIcon
 import threading
 import time
 import os
+
 sys.path.append("D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot")
 from src import robotic_modify as RM
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -68,13 +70,12 @@ class MainWindow(QMainWindow):
         if self.program_thread and self.program_thread.is_alive():
             self.program_thread.join()
         reply = QMessageBox()
-        reply.setText('Are you sure you want to exit the program?')
-        reply.setStandardButtons(QMessageBox.StandardButton.Yes | 
-                     QMessageBox.StandardButton.No)
-        
+        reply.setText("Are you sure you want to exit the program?")
+        reply.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
         x = reply.exec()
-        
-        
 
         if x == QMessageBox.standardButtons.Yes:
             # Perform any necessary cleanup operations here
@@ -94,5 +95,3 @@ def main():
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-
-
