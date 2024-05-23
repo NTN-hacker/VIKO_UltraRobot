@@ -12,7 +12,6 @@ from sklearn.neighbors import NearestNeighbors
 from library import robot_lib as rl
 
 
-
 class TestThread:
 
     def __init__(self):
@@ -30,33 +29,33 @@ class TestThread:
         Z = (-1 / 120) * (X**2) + (-1 / 120) * (Y**2)  # Phương trình parabol
 
         X = X + 500
-        Y= Y - 50
+        Y = Y - 50
         Z = Z - 150
         # print(f'X, Y, Z: {X, Y, Z}')
         np_curve_surface = np.stack([X, Y, Z], axis=-1)
         points = np_curve_surface[5]
-        print(f'point:{points}')
+        print(f"point:{points}")
 
         source = np_curve_surface.reshape((-1, 3))
 
         return points, source
 
     def calculate_angle_between_vectors(self, b):
-   
+
         a = [0, 0, 1]
         oy_vecto = [1, 0, 0]
         angle_2_vector = []
         angle_2_oy_vector = []
-        for i in range (len(b)):
+        for i in range(len(b)):
             # Calculate the dot product
             dot_product = np.dot(a, b[i])
             dot_dev = np.dot(oy_vecto, b[i])
-            
+
             # Calculate the magnitudes of the vectors
             magnitude_a = np.linalg.norm(a)
             magnitude_b = np.linalg.norm(b[i])
             magnitude_c = np.linalg.norm(oy_vecto)
-            
+
             # Calculate the cosine of the angle
             cos_theta = dot_product / (magnitude_a * magnitude_b)
             cos_theta_02 = dot_dev / (magnitude_c * magnitude_b)
@@ -69,9 +68,9 @@ class TestThread:
             angle_2_oy_vector.append(angle_degrees_02)
 
             if angle_degrees_02 <= 90:
-            
-            # Convert the angle to degrees
-                angle_degrees = np.degrees(angle_radians) 
+
+                # Convert the angle to degrees
+                angle_degrees = np.degrees(angle_radians)
                 angle_2_vector.append(angle_degrees)
 
             elif angle_degrees_02 > 90:
@@ -80,19 +79,18 @@ class TestThread:
 
             # else:
             #     print("check angle")
-  
 
-        print(f'angle:{angle_2_vector}')
-        print(f'angle_oy:{angle_2_oy_vector}')
+        print(f"angle:{angle_2_vector}")
+        print(f"angle_oy:{angle_2_oy_vector}")
 
-        
         return angle_2_vector
+
     @staticmethod
     def sleep_seconds(seconds):
         print(f"Sleeping for {seconds} seconds...")
         time.sleep(seconds)
         print("Awake now!")
-    
+
     # def move(self, check_target, angle_2_vector):
     def move(self):
 
@@ -104,31 +102,27 @@ class TestThread:
 
         i = j = 0
         # print(f'target:{(check_target)}')
-        # print(f'target:{(check_target[0][0])}')    
+        # print(f'target:{(check_target[0][0])}')
         # for i in range (len(check_target)):
-            
+
         #     for j in range(3):
         #         target_1_within_range = all(DEFAULT_XYZ_MIN[j] <= check_target[i][j] <= DEFAULT_XYZ_MAX[j] for j in range(3))
 
-
-        #         if target_1_within_range: 
+        #         if target_1_within_range:
         #             rot = [rot[0], np.radians(angle_2_vector[i]), rot[2]]
         #             target2base_none_mat1 = np.concatenate((check_target[i], rot), axis=0)
-        #             target2base_mat1 = TxyzRxyz_2_Pose(target2base_none_mat1)  
+        #             target2base_mat1 = TxyzRxyz_2_Pose(target2base_none_mat1)
 
         #         else:
         #             print("Target 1 is outside the default range.")
 
-
-            # self.rob_mod.runMoveJ(target2base_mat1, None)
-            # print(f"target_laser_mat:{target2base_mat1}")
-        # self.robot_module.cameraPosLeft(self.rob_mod.rf_laser2base)0
+        # self.rob_mod.runMoveJ(target2base_mat1, None)
+        # print(f"target_laser_mat:{target2base_mat1}")
+        # self.robot_module.cameraPosLeft(self.rob_mod.rf_laser2base)
         # self.sleep_seconds(20)
         self.robot_module.cameraPosRight(self.rob_mod.rf_laser2base)
         self.sleep_seconds(20)
         # self.rob_mod.attRobot()
-
-
 
     def calculate_fitting_normalvector(self, source):
         # 평균점 구하기
@@ -153,7 +147,6 @@ class TestThread:
 
         # normal vector 추출
         return V_T.T[:3, 2]
-
 
     def estimation_normal_vector(self, source, radius=0.1, near_sample_num=15):
         # radius : 지정된 반경 범위
@@ -197,11 +190,10 @@ class TestThread:
 
             else:
                 normal_vector_list.append(np.zeros((3)))
-            
-        print(f'nor:{normal_vector_list[50:60]}')
+
+        print(f"nor:{normal_vector_list[50:60]}")
 
         return np.array(normal_vector_list)
-
 
 
 if __name__ == "__main__":
