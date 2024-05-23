@@ -131,8 +131,8 @@ class RobotModule:
         camera2base_posLeft = matcamera2base
         pos, rot = self.rotPos(camera2base_posLeft)
         rot = [rot[0], rot[1], rot[2]]
-        # pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        pos = [pos[0] + CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
+        pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
+        # pos = [pos[0] + CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
 
         camera2base_left_nonmat = np.concatenate((pos, rot))
         camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
@@ -145,8 +145,8 @@ class RobotModule:
         camera2base_posRight = matcamera2base
         pos, rot = self.rotPos(camera2base_posRight)
         rot = [rot[0], rot[1], rot[2]]
-        # pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        pos = [pos[0] - CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
+        pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
+        # pos = [pos[0] - CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
 
         camera2base_right_nonmat = np.concatenate((pos, rot))
         camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
