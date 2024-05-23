@@ -58,7 +58,8 @@ def createPoint(arr_target, count, theta_laser):
     rot_target, pos_target = rl.rotPos(rf_target2base)
     print("rot_target:", rot_target, "\n", "pos_target:", pos_target, "\n")
     rot_target = [rot_target[0], rot_target[1], rot_target[2] + np.radians(theta_laser)]
-    pos_target = [pos_target[0] - 51.44, pos_target[1] - 65, pos_target[2]]
+    pos_target = [pos_target[0] - 57, pos_target[1] + 65, pos_target[2]] #### not fix, need the new parameter from the Mr. Dung
+    # pos_target = [pos_target[0], pos_target[1], pos_target[2]]
 
     target_laser_none_mat = np.concatenate(
         (pos_target, rot_target), axis=0
@@ -121,7 +122,7 @@ def runRobot(target_laser_mat, pos_laser_to_object):
 # reference frame from flange to base
 pos_flange2base = [380, 0, 405]  # Translation vector [Tx, Ty, Tz]
 rot_flange2base = [
-    np.radians(-180),
+    np.radians(180),
     np.radians(0),
     np.radians(0),
 ]  # Rotation angles [Rx, Ry, Rz] in radians
@@ -131,7 +132,7 @@ rf_flage2base = rl.createRef(pos_flange2base, rot_flange2base)
 # print("rf_flage2base:", rf_flage2base, "\n")
 
 # reference frame camera to flange
-pos_camera2flange = [0, 0, 190]  # Translation vector [Tx, Ty, Tz] ## sai so
+pos_camera2flange = [55, 0, 190]  # Translation vector [Tx, Ty, Tz] ## sai so
 rot_camera2flange = [
     np.radians(0),
     np.radians(0),
