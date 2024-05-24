@@ -65,7 +65,7 @@ class VisionRobot:
 
         # reference frame camera to flange
         pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(
-            0, 0, 190, 0, 0, 0
+            59, 0, 190, 0, 0, 0
         )
         rf_camera2flange = self.robot_module.createRef(
             pos_camera2flange, rot_camera2flange
@@ -76,7 +76,7 @@ class VisionRobot:
         rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
         print("ref_camera2base:", rf_camera2base, "\n")
 
-        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(54, 57, 0, 0, 0, 0)
+        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(-54.43, 57, 0, 0, 0, 0)
         self.rf_laser2camera = self.robot_module.createRef(pos_laser2camera, rot_laser2camera )
 
         rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
@@ -129,6 +129,7 @@ class VisionRobot:
         return coordinate
 
     def detectPosition(self):
+        
         weldHomePos= self.getCoordinates(False)
         x = weldHomePos[0] 
         y = weldHomePos[1]
