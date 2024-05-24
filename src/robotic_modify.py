@@ -13,7 +13,7 @@ import time
 from layout import app_robot as app
 
 from library import vision as vis
-from library import robot_lib as rob
+from library import robot_lib_modify as rob
 from datetime import datetime
 from config import config as CFG
 
@@ -58,7 +58,7 @@ class VisionRobot:
 
         # reference frame flange to base
         pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(
-            380, 0, 255, 180, 0, 0
+            380, 0, 405, 180, 0, 0
         )
         rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
         print("rf_flage2base:", rf_flage2base, "\n")
@@ -127,6 +127,15 @@ class VisionRobot:
             )
         self.vision._end_()
         return coordinate
+
+    def detectPosition(self):
+        weldHomePos= self.getCoordinates(False)
+        x = weldHomePos[0] 
+        y = weldHomePos[1]
+        w = weldHomePos[2]
+        h = weldHomePos[3]
+
+        
 
     @staticmethod
     def sleep_seconds(seconds):
@@ -274,7 +283,7 @@ class VisionRobot:
         get_joint = self.robot.Joints()
         # print(f"get_joint:{get_joint}")
 
-    def attRobot(self):
+    def setRobot(self):
 
         self.robot.setRounding(5)  # Set the rounding parameter
         self.robot.setSpeed(10, 10)  # Set linear speed in mm/s
@@ -294,7 +303,7 @@ def mainRob():
     VisRob = VisionRobot()
     VisRob.pickRobot()
     VisRob.fixedRef()
-    VisRob.attRobot()
+    VisRob.setRobot()
 
     dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
     target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget()
@@ -303,7 +312,7 @@ def mainRob():
     VisRob.runMoveJ(target01, pos_laser01)
     VisRob.sleep_seconds(10)
     VisRob.runMoveL(target02, pos_laser02)
-    VisRob.attRobot()
+    VisRob.setRobot()
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {
