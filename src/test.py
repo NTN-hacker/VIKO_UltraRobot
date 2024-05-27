@@ -148,6 +148,13 @@ focal_length = 16
 #x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, pixel_focalLength, 558.45, -90)
 #x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, pixel_focalLength, 563.45, -90)
 #print (x1,y1, x2,y2)
-dis = distanceCameraToObject(pixel_y1, pixel_y2, focal_length, 65)
-print(dis)
+# dis = distanceCameraToObject(pixel_y1, pixel_y2, focal_length, 65)
+# print(dis)
 #print(f'target1:{target1}, target2:{target2}')
+
+A = [5, 5]
+B = [10, 20]
+
+theta1 = np.arctan2(A[1] - B[1], A[0] - B[0])
+theta2 = np.arctan2(B[1] - A[1], B[0] - A[0])
+print(f"theta1: {np.degrees(theta1)}, theta2: {np.degrees(theta2)}")

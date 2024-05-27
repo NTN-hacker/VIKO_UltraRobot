@@ -128,16 +128,7 @@ class VisionRobot:
         self.vision._end_()
         return coordinate
 
-    def detectPosition(self):
-        
-        weldHomePos= self.getCoordinates(False)
-        x = weldHomePos[0] 
-        y = weldHomePos[1]
-        w = weldHomePos[2]
-        h = weldHomePos[3]
-
-        
-
+       
     @staticmethod
     def sleep_seconds(seconds):
         print(f"Sleeping for {seconds} seconds...")
@@ -158,26 +149,40 @@ class VisionRobot:
         rot_Laser = rotz(np.radians(theta_laser))
 
         rf_target2base_af = np.dot(rf_target2base_bf, rot_Laser)
-        print(f'rf_laser2base_af:{rf_target2base_af}')
+        # print(f'rf_laser2base_af:{rf_target2base_af}')
 
         pos, rot  = self.robot_module.rotPos(rf_target2base_af)
         target2base_none_mat = np.concatenate((pos, rot), axis=0)
-        print(f'pos, rot:{pos}, {rot}')
+        # print(f'pos, rot:{pos}, {rot}')
 
         target2base_mat = TxyzRxyz_2_Pose(target2base_none_mat)
-        print(f"target_laser_mat:{target2base_mat}")
+        # print(f"target_laser_mat:{target2base_mat}")
 
         return target2base_mat, pos
 
     def disCameraToObject(self):
 
-        self.robot_module.cameraPosLeft(self.rf_laser2base)
-        coordinate_pixel_Left = self.getCoordinates(False)
+        posObject = self.getCoordinates(False)
+        x = posObject[0] 
+        y = posObject[1]
+        w = posObject[2]
+        h = posObject[3]
 
-        self.robot_module.cameraPosRight(self.rf_laser2base)
-        coordinate_pixel_Right = self.getCoordinates(False)
+        if (x + w) / (y + h) > 1:
+            self.robot_module.moveForward(self.rf_laser2base)
+            coordinate_pixel_01 = self.getCoordinates(False)
 
-        dis_pixel = [coordinate_pixel_Left, coordinate_pixel_Right]
+            self.robot_module.moveBack(self.rf_laser2base)
+            coordinate_pixel_02 = self.getCoordinates(False)
+        
+        else:
+            self.robot_module.moveLeft(self.rf_laser2base)
+            coordinate_pixel_01 = self.getCoordinates(False)
+
+            self.robot_module.moveRight(self.rf_laser2base)
+            coordinate_pixel_02 = self.getCoordinates(False)
+
+        dis_pixel = [coordinate_pixel_01, coordinate_pixel_02]
         print(f"dis_pixel:{dis_pixel}")
 
         if (
@@ -190,7 +195,7 @@ class VisionRobot:
                     dis_pixel[0][0],
                     dis_pixel[1][0],
                     CFG.FOCAL_LENGTH,
-                    CFG.HORIZONTAL_BASELINE,
+                    CFG.VERTICAL_BASELINE,
                 )
             )  # distance from camera to object
             print(f"Distance:{dis_cameraToObject}")
@@ -205,7 +210,7 @@ class VisionRobot:
                     dis_pixel[0][1],
                     dis_pixel[1][1],
                     CFG.FOCAL_LENGTH,
-                    CFG.FORWARD_BASELINE,
+                    CFG.HORIZONTAL_BASELINE,
                 )
             )  # distance from camera to object
             print(f"Distance:{dis_cameraToObject}")
@@ -243,7 +248,7 @@ class VisionRobot:
             coordinate_pixel_1[1],
             self.pixel_focalLength,
             self.dis_cameraToObject,
-            theta=-90,
+            theta=90,
         )  # cfg
 
 
@@ -254,9 +259,12 @@ class VisionRobot:
             coordinate_pixel_2[1],
             self.pixel_focalLength,
             self.dis_cameraToObject,
-            theta=-90,
+            theta=90,
         )  # cfg
         z_laser_to_camera = self.dis_cameraToObject - CFG.DISTANCE_LASERtoOBJECT
+        if z_laser_to_camera > 600:
+            z_laser_to_camera = 330
+            print("check the distance")
         real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
@@ -309,9 +317,9 @@ def mainRob():
     dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
     target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget()
 
-    VisRob.sleep_seconds(3)
+    # VisRob.sleep_seconds(3)
     VisRob.runMoveJ(target01, pos_laser01)
-    VisRob.sleep_seconds(10)
+    VisRob.sleep_seconds(5)
     VisRob.runMoveL(target02, pos_laser02)
     VisRob.setRobot()
 

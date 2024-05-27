@@ -88,11 +88,14 @@ class RobotModule:
         pixel_2 = coordinate_pixel[1]
 
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
-        degree_angle = math.degrees(angle)
-        if degree_angle > 90:
-            theta_laser = 180 - degree_angle
-        else:
-            theta_laser = degree_angle
+        theta_laser = math.degrees(angle)
+        print(f"theta_laser:{theta_laser}")
+        # if degree_angle > 90:
+            # theta_laser = 180 - degree_angle
+        # else:
+        #     theta_laser = degree_angle
+        
+        # print(f"theta_laser:{theta_laser}")
 
         return theta_laser
 
@@ -126,33 +129,53 @@ class RobotModule:
         # Save the updated DataFrame to the CSV file
         updated_dataframe.to_csv(filename, index=False)
 
-    def cameraPosLeft(self, matcamera2base):
+    def moveLeft(self, matcamera2base):
         # move the left position to capture
         camera2base_posLeft = matcamera2base
         pos, rot = self.rotPos(camera2base_posLeft)
         rot = [rot[0], rot[1], rot[2]]
-        pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        # pos = [pos[0] + CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
+        pos = [pos[0], pos[1] + CFG.VERTICAL_BASELINE / 2, pos[2]]
 
         camera2base_left_nonmat = np.concatenate((pos, rot))
         camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
-
-        print(f'camera2base_left:{camera2base_left}')
+        # print(f'camera2base_left:{camera2base_left}')
         self.robot.MoveJ(camera2base_left)
 
-    def cameraPosRight(self, matcamera2base):
+    def moveRight(self, matcamera2base):
         # move the right position to capture
         camera2base_posRight = matcamera2base
         pos, rot = self.rotPos(camera2base_posRight)
         rot = [rot[0], rot[1], rot[2]]
-        pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        # pos = [pos[0] - CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
+        pos = [pos[0], pos[1] - CFG.VERTICAL_BASELINE / 2, pos[2]]
 
         camera2base_right_nonmat = np.concatenate((pos, rot))
         camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
-
-        print(f'camera2base_right:{camera2base_right}')
+        # print(f'camera2base_right:{camera2base_right}')
         self.robot.MoveJ(camera2base_right)
+
+    def moveForward(self, matcamera2base):
+        # move the left position to capture
+        camera2base_posFw = matcamera2base
+        pos, rot = self.rotPos(camera2base_posFw)
+        rot = [rot[0], rot[1], rot[2]]
+        pos = [pos[0] + CFG.HORIZONTAL_BASELINE / 2, pos[1], pos[2]]
+
+        camera2base_fw_nonmat = np.concatenate((pos, rot))
+        camera2base_fw = TxyzRxyz_2_Pose(camera2base_fw_nonmat)
+        # print(f'camera2base_left:{camera2base_fw}')
+        self.robot.MoveJ(camera2base_fw)
+
+    def moveBack(self, matcamera2base):
+        # move the right position to capture
+        camera2base_posBack = matcamera2base
+        pos, rot = self.rotPos(camera2base_posBack)
+        rot = [rot[0], rot[1], rot[2]]
+        pos = [pos[0] - CFG.HORIZONTAL_BASELINE / 2, pos[1], pos[2]]
+
+        camera2base_back_nonmat = np.concatenate((pos, rot))
+        camera2base_back = TxyzRxyz_2_Pose(camera2base_back_nonmat)
+        # print(f'camera2base_right:{camera2base_back}')
+        self.robot.MoveJ(camera2base_back)
 
     def convertCoordinates(
         self,
