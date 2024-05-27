@@ -160,6 +160,17 @@ class VisionRobot:
 
         return target2base_mat, pos
 
+    ### check the angle of sample to rotate and measure the distance
+    # def checkRot(self):
+    #     x = [x1, x2]
+    #     y = [y1, y2]
+    #     A = np.vstack([x, np.ones(len(x))]).T
+    #     a, b = np.linalg.lstsq(A, y, rcond=None)[0]
+        
+       
+
+# Tính toán các hệ số a và b
+        a, b = np.linalg.lstsq(A, y, rcond=None)[0]
     def disCameraToObject(self):
 
         posObject = self.getCoordinates(False)
@@ -186,8 +197,8 @@ class VisionRobot:
         print(f"dis_pixel:{dis_pixel}")
 
         if (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) > 10
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 10
+            abs(dis_pixel[0][0] - dis_pixel[1][0]) > 15
+            and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 15
         ):
 
             dis_cameraToObject, pixel_focalLength = (
@@ -201,8 +212,8 @@ class VisionRobot:
             print(f"Distance:{dis_cameraToObject}")
 
         elif (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) < 10
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 10
+            abs(dis_pixel[0][0] - dis_pixel[1][0]) < 15
+            and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 15
         ):
 
             dis_cameraToObject, pixel_focalLength = (
@@ -216,11 +227,11 @@ class VisionRobot:
             print(f"Distance:{dis_cameraToObject}")
 
         elif (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 10
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 10
+            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 15
+            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 15
         ) or (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 10
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 10
+            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 15
+            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 15
         ):
             print(f"check 2 pixels")
             # distance from camera to object
