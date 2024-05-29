@@ -1,0 +1,18 @@
+deceptron2
+
+# Int the terminal, yout local server:
+# pip install git+https://github.com/facebookresearch/fvcore
+
+# pip install av
+
+# conda install -c anaconda scipy
+
+# conda install -c anaconda ninja
+
+# pip install git+https://github.com/facebookresearch/detectron2.git
+
+# Colab:
+# !pip install -q 'git+https://github.com/facebookresearch/detectron2.git'?
+# DONE
+
+torch, torchvision
