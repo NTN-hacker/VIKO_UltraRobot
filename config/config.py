@@ -39,5 +39,8 @@ MODEL = {
     "HQ_SAM": {
         "WEIGHT": 'D:\\nhan\\viko\src\weight\sam_hq_vit_tiny.pth',
         "MODEL_TYPE": "vit_tiny",
+    },
+    "YOLOV9": {
+        "WEIGHT": 'D:\\nhan\\viko\src\weight\\best.pt'
     }
 }

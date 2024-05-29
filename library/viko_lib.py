@@ -163,5 +163,14 @@ def save_csv(filename, x, y):
     df = pd.DataFrame(data)
     df.to_csv('TestCircle.csv')
     return True
-            
+
+def convert_mask(mask):
+    """
+    Use for Yolo
+    """
+    color_image = np.zeros((640, 640, 3), dtype=np.uint8)
+    color_image[:, :, 0] = mask[0]  
+    color_image[:, :, 1] = mask[0]  
+    color_image[:, :, 2] = mask[0]  
+    return color_image
   

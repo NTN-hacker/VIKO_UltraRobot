@@ -27,6 +27,21 @@ class VisionRobot:
         self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
         self.robot_module = rob.RobotModule()
         # self.vision = vis.VisionModule()
+    
+    def getCoordinates(self, flag = True):
+        self.vision = vis.VisionModule()
+        self.vision._start_()
+        self.vision._getImage_()
+        # self.vision.save_image()
+        self.vision.load_model()        
+        coordinate = self.vision._getCoordinate_(POINT_END = 80)
+        # coordinate = self.vision._getCircle_()
+        # if flag == True:
+        #     coordinate = self.vision._getCoordinateWeld_(
+        #         self.vision.img_split, coordinate
+        #     )
+        self.vision._end_()
+        return coordinate
 
     def pickRobot(self):
         if not self.robot.Valid():
@@ -34,11 +49,12 @@ class VisionRobot:
         
         RUN_ON_ROBOT = True
         if self.RDK.RunMode() != RUNMODE_SIMULATE:
-            RUN_ON_ROBOT = False
-
+            RUN_ON_ROBOT = False    
+        # self.robot.Disconnect()
         if RUN_ON_ROBOT:
             # Connect to the robot using default IP
-            self.robot.Connect()  # Try to connect once
+            # self.robot.Connect()  # Try to connect once
+            self.robot.Disconnect()
             self.robot.ConnectSafe()  # Try to connect multiple times
             status, status_msg = self.robot.ConnectedState()
             print(status)
@@ -50,8 +66,9 @@ class VisionRobot:
 
             # This will set to run the API programs on the robot and the simulator (online programming)
             self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
+            self.RDK.HideRoboDK()
 
-        self.robot.ConnectedState()
+        # self.robot.ConnectedState()
         print("ConnectedState:", self.robot.ConnectedState(), "\n")
 
     def fixedRef(self):
@@ -113,20 +130,7 @@ class VisionRobot:
 
         return self.rf_laser2base_matrix, self.rf_laser2base, self.rf_laser2camera
 
-    def getCoordinates(self, flag: bool):
-        self.vision = vis.VisionModule()
-        self.vision._start_()
-        self.vision._getImage_()
-        self.vision.save_image()
-        self.vision.load_model()        
-        coordinate = self.vision._getCoordinate_()
-        # coordinate = self.vision._getCircle_()
-        if flag == True:
-            coordinate = self.vision._getCoordinateWeld_(
-                self.vision.img_split, coordinate
-            )
-        self.vision._end_()
-        return coordinate
+
 
        
     @staticmethod
@@ -167,10 +171,6 @@ class VisionRobot:
     #     A = np.vstack([x, np.ones(len(x))]).T
     #     a, b = np.linalg.lstsq(A, y, rcond=None)[0]
         
-       
-
-# Tính toán các hệ số a và b
-        a, b = np.linalg.lstsq(A, y, rcond=None)[0]
     def disCameraToObject(self):
 
         posObject = self.getCoordinates(False)
@@ -252,6 +252,13 @@ class VisionRobot:
         coordinate_pixel_2 = coordinate_pixel[1]
         print(f'coordinate_pixel:{coordinate_pixel}')
 
+
+        ### fix value
+        self.dis_cameraToObject = 569
+        self.pixel_focalLength = CFG.FOCAL_LENGTH * 1000 / CFG.PIXEL_SIZE
+        ###
+
+
         x_to_camera_01, y_to_camera_01 = self.robot_module.convertCoordinates(
             CFG.RESOLUTION_X,
             CFG.RESOLUTION_Y,
@@ -325,7 +332,7 @@ def mainRob():
     VisRob.fixedRef()
     VisRob.setRobot()
 
-    dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
+    # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
     target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget()
 
     # VisRob.sleep_seconds(3)
@@ -341,11 +348,11 @@ def mainRob():
         # "target02": target02,
         "limit_lower": limit[0],
         "limit_upper": limit[1],
-        "x1_pixel": dis_pixel[0][0],
-        "y1_pixel": dis_pixel[0][1],
-        "x2_pixel": dis_pixel[1][0],
-        "y2_pixel": dis_pixel[1][1],
-        "distance": dis_cameraToObject,
+        # "x1_pixel": dis_pixel[0][0],
+        # "y1_pixel": dis_pixel[0][1],
+        # "x2_pixel": dis_pixel[1][0],
+        # "y2_pixel": dis_pixel[1][1],
+        # "distance": dis_cameraToObject,
         #### add if need
     }
     print(f'data_export:{data_export}')
