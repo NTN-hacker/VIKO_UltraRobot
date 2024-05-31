@@ -18,6 +18,9 @@ HORIZONTAL_BASELINE = 55 # 65: best value with object is black dot
 VERTICAL_BASELINE = 450 # best value with object is black dot
 
 DISTANCE_LASERtoOBJECT = 120
+DISTANCE_CAMERA2OBJECT = 569
+
+
 ########################################################## AI MODEL ###################################################################
 
 
