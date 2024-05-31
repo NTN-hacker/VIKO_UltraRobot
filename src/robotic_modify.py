@@ -2,17 +2,14 @@ import sys
 
 sys.path.append(
     "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
-)  # config path
-# sys.path.append(
-#     "E:\\Project\\Robot-6DOF\\VIKO_UltraRobot"
-# )  # config path
-from robodk.robolink import *  # API to communicate with RoboDK
-from robodk.robomath import *  # basic matrix operations
+)  
+from robodk.robolink import * 
+from robodk.robomath import *  
 import numpy as np
 import time
 from layout import app_robot as app
 
-from library import vision as vis
+from library import vision_robotic as vis
 from library import robot_lib_modify as rob
 from datetime import datetime
 from config import config as CFG
@@ -21,55 +18,47 @@ from config import config as CFG
 ## class for vision robot
 class VisionRobot:
     def __init__(self, RDK=None, robot=None):
-        # if RDK is None:
         self.RDK = Robolink()
-    # if robot is None:
         self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
         self.robot_module = rob.RobotModule()
-        # self.vision = vis.VisionModule()
     
-    def getCoordinates(self, flag = True):
+    def getCoordinates(self, model, image, flag = True):
         self.vision = vis.VisionModule()
-        self.vision._start_()
-        self.vision._getImage_()
-        # self.vision.save_image()
-        self.vision.load_model()        
-        coordinate = self.vision._getCoordinate_(POINT_END = 80)
-        # coordinate = self.vision._getCircle_()
-        # if flag == True:
-        #     coordinate = self.vision._getCoordinateWeld_(
-        #         self.vision.img_split, coordinate
-        #     )
-        self.vision._end_()
+        self.vision.load_model(model)     
+        coordinate = self.vision._getCoordinateTest_(image)
         return coordinate
 
-    def pickRobot(self):
+    def connectRobot(self):
         if not self.robot.Valid():
             raise Exception("Invalid robot selected")
         
         RUN_ON_ROBOT = True
         if self.RDK.RunMode() != RUNMODE_SIMULATE:
-            RUN_ON_ROBOT = False    
-        # self.robot.Disconnect()
+            RUN_ON_ROBOT = False  
+
+        self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
         if RUN_ON_ROBOT:
             # Connect to the robot using default IP
-            # self.robot.Connect()  # Try to connect once
-            self.robot.Disconnect()
-            self.robot.ConnectSafe()  # Try to connect multiple times
-            status, status_msg = self.robot.ConnectedState()
-            print(status)
-            print(status_msg)
-            if status != ROBOTCOM_READY:
+            self.robot.Connect('192.168.10.111')  # Try to connect once
+            self.robot.ConnectSafe('192.168.10.111')  # Try to connect multiple times
+            self.status, status_msg = self.robot.ConnectedState()
+            print('self.status', self.status)
+            if self.status != ROBOTCOM_READY:
                 # Stop if the connection did not succeed
                 print(status_msg)
                 raise Exception("Failed to connect: " + status_msg)
 
             # This will set to run the API programs on the robot and the simulator (online programming)
             self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
-            self.RDK.HideRoboDK()
+            # self.RDK.CloseRoboDK()
 
-        # self.robot.ConnectedState()
         print("ConnectedState:", self.robot.ConnectedState(), "\n")
+
+    def disConnectRobot(self):
+        self.status, status_msg = self.robot.ConnectedState()
+        print(f'status:{self.status}')
+        if self.status == ROBOTCOM_READY:
+            self.robot.Disconnect()
 
     def fixedRef(self):
 
@@ -129,9 +118,6 @@ class VisionRobot:
         self.robot.setPoseTool(rf_laser2flange_matrix)
 
         return self.rf_laser2base_matrix, self.rf_laser2base, self.rf_laser2camera
-
-
-
        
     @staticmethod
     def sleep_seconds(seconds):
@@ -164,12 +150,6 @@ class VisionRobot:
 
         return target2base_mat, pos
 
-    ### check the angle of sample to rotate and measure the distance
-    # def checkRot(self):
-    #     x = [x1, x2]
-    #     y = [y1, y2]
-    #     A = np.vstack([x, np.ones(len(x))]).T
-    #     a, b = np.linalg.lstsq(A, y, rcond=None)[0]
         
     def disCameraToObject(self):
 
@@ -244,9 +224,9 @@ class VisionRobot:
 
         return dis_cameraToObject, dis_pixel
 
-    def getTarget(self):
+    def getTarget(self, model, image):
 
-        coordinate_pixel = self.getCoordinates(True)
+        coordinate_pixel = self.getCoordinates(model, image, True)
         theta_laser = self.robot_module.rotLaser(coordinate_pixel)
         coordinate_pixel_1 = coordinate_pixel[0]
         coordinate_pixel_2 = coordinate_pixel[1]
@@ -304,7 +284,7 @@ class VisionRobot:
     def runMoveJ(self, target_laser_mat, pos_laser_to_object):
 
         speeds = CFG.SPEEDS  # cfg - TEST
-        self.robot.setSpeed(speeds[1])
+        self.robot.setSpeed(speeds[0])
         # try:
         self.robot.MoveJ(target_laser_mat)
         get_joint = self.robot.Joints()
@@ -313,8 +293,8 @@ class VisionRobot:
     def setRobot(self):
 
         self.robot.setRounding(5)  # Set the rounding parameter
-        self.robot.setSpeed(10, 10)  # Set linear speed in mm/s
-        self.robot.setSpeedJoints(10)
+        self.robot.setSpeed(150, 150)  # Set linear speed in mm/s
+        self.robot.setSpeedJoints(60)
         print(f'rf_laser2base_matrix: {self.rf_laser2base_matrix}')
         self.robot.MoveJ(self.rf_laser2base_matrix)
 
@@ -326,14 +306,14 @@ class VisionRobot:
         return current_joint_values, limit
 
 
-def mainRob():
+def run(model, image):
     VisRob = VisionRobot()
-    VisRob.pickRobot()
+    VisRob.connectRobot()
     VisRob.fixedRef()
     VisRob.setRobot()
 
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
-    target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget()
+    target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget(model, image)
 
     # VisRob.sleep_seconds(3)
     VisRob.runMoveJ(target01, pos_laser01)
@@ -357,8 +337,12 @@ def mainRob():
     }
     print(f'data_export:{data_export}')
     rob.RobotModule.export_csv(data_export)
-
+     
+def stop():
+    VisRob = VisionRobot()
+    VisRob.disConnectRobot()
 
 if __name__ == "__main__":
     # app.main()
-    mainRob()
+    run()
+    # stop()
