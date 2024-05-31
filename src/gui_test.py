@@ -169,9 +169,9 @@ class InspectionFrame(wx.Frame):
         self.run_left_btn = wx.Button(left_panel, label="left")
         self.run_right_btn = wx.Button(left_panel, label="right")
 
-        self.run_inspection_plan_btn.Bind(wx.EVT_BUTTON, self.on_run_inspection_plan)
-        self.start_robot_btn.Bind(wx.EVT_BUTTON, self.on_start_robot)
-        self.stop_robot_btn.Bind(wx.EVT_BUTTON, self.on_stop_robot)
+        self.run_center_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
+        self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_left)
+        self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_right)
 
         left_panel.SetSizer(left_sizer)
 
@@ -242,7 +242,19 @@ class InspectionFrame(wx.Frame):
         self.stop_robot()
         if self.inspection_thread is not None:
             self.inspection_thread.join()
+    #####################################
+    def on_run_center(self, event):
+        self.robot_running = True
+        self.move_center()
 
+    def on_run_center(self, event):
+        self.robot_running = True
+        self.move_left()
+    
+    def on_run_center(self, event):
+        self.robot_running = True
+        self.move_right()
+    #####################################
     def run_inspection(self):
         self.load_model()
         try:
@@ -325,6 +337,21 @@ class InspectionFrame(wx.Frame):
         if hasattr(self, 'camera_panel') and self.camera_panel:
             self.camera_panel.stop_camera()  
         self.Destroy()
+    
+
+    ####################################
+    def move_center(self):
+        print('Testing')
+        return True
+    
+    def move_left(self):
+        print('Testing')
+        return True
+    
+    def move_right(self):
+        print('Testing')
+        return True
+    ###################################
 
 app = wx.App(False)
 frame = InspectionFrame(None, "Robot Inspection System")
