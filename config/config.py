@@ -9,7 +9,8 @@ config file
 
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45
-SPEEDS = [100, 50]
+LINEAR_SPEEDS = [50, 100]
+JOINT_SPEEDS = [10, 60]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION

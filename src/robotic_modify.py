@@ -153,59 +153,13 @@ class VisionRobot:
         return target2base_mat, pos
 
     ### measure distance manually
-    def getPixelLeft(self):
+    def movLeft(self):
+        self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
         self.robot_module.moveLeft(self.rf_laser2base)
-        self.coordinate_pixel_01 = self.getCoordinates(False)
 
-    def getPixelRight(self):
+    def movRight(self):
+        self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
         self.robot_module.moveRight(self.rf_laser2base)
-        self.coordinate_pixel_02 = self.getCoordinates(False)
-
-    def manDistance(self):
-        dis_pixel = [self.coordinate_pixel_01, self.coordinate_pixel_02]
-        print(f"dis_pixel:{dis_pixel}")
-
-        if (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) > 15
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) < 15
-        ):
-
-            dis_cameraToObject, pixel_focalLength = (
-                self.robot_module.distanceCameraToObject(
-                    dis_pixel[0][0],
-                    dis_pixel[1][0],
-                    CFG.FOCAL_LENGTH,
-                    CFG.VERTICAL_BASELINE,
-                )
-            )  # distance from camera to object
-            print(f"Distance:{dis_cameraToObject}")
-
-        elif (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) < 15
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) > 15
-        ):
-
-            self.dis_cameraToObject, self.pixel_focalLength = (
-                self.robot_module.distanceCameraToObject(
-                    dis_pixel[0][1],
-                    dis_pixel[1][1],
-                    CFG.FOCAL_LENGTH,
-                    CFG.HORIZONTAL_BASELINE,
-                )
-            )  # distance from camera to object
-            print(f"Distance:{dis_cameraToObject}")
-
-        elif (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 15
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 15
-        ) or (
-            abs(dis_pixel[0][0] - dis_pixel[1][0]) >= 15
-            and abs(dis_pixel[0][1] - dis_pixel[1][1]) >= 15
-        ):
-            print(f"check 2 pixels")
-            # distance from camera to object
-        else:
-            print("out 5 pixel")
 
     ### auto measure distance
     def disCameraToObject(self):
@@ -290,8 +244,8 @@ class VisionRobot:
         print(f"coordinate_pixel:{coordinate_pixel}")
 
         # ### fix value
-        # self.dis_cameraToObject = 569
-        # self.pixel_focalLength = CFG.FOCAL_LENGTH * 1000 / CFG.PIXEL_SIZE
+        self.dis_cameraToObject = 569
+        self.pixel_focalLength = CFG.FOCAL_LENGTH * 1000 / CFG.PIXEL_SIZE
         # ###
 
         x_to_camera_01, y_to_camera_01 = self.robot_module.convertCoordinates(
@@ -324,34 +278,24 @@ class VisionRobot:
         target02, pos_laser02 = self.createPoint(real_target02, 2, theta_laser)
         print(f"target01:{target01}, target02:{target02}")
 
-        return target01, target02, pos_laser01, pos_laser02
+        return target01, target02
 
-    def runMoveL(self, target_laser_mat, pos_laser_to_object):
-
-        speeds = CFG.SPEEDS  # cfg - TEST
-        self.robot.setSpeed(speeds[1])
-        # try:
+    def runMoveL(self, target_laser_mat):
+        self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
         self.robot.MoveL(target_laser_mat)
-        get_joint = self.robot.Joints()
-        # print(f"get_joint:{get_joint}")
 
-    def runMoveJ(self, target_laser_mat, pos_laser_to_object):
-
-        speeds = CFG.SPEEDS  # cfg - TEST
-        self.robot.setSpeed(speeds[0])
-        # try:
+    def runMoveJ(self, target_laser_mat):
+        self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
         self.robot.MoveJ(target_laser_mat)
-        get_joint = self.robot.Joints()
-        # print(f"get_joint:{get_joint}")
 
-    def homePos(self):
-        print(f"rf_laser2base_matrix: {self.rf_laser2base_matrix}")
+    def homePos(self, linearSpeed, joinSpeed):
+        self.setRobot(linearSpeed, joinSpeed)
         self.robot.MoveJ(self.rf_laser2base_matrix)
 
-    def setRobot(self):
+    def setRobot(self, linearSpeed, jointSpeed):
         self.robot.setRounding(5)  # Set the rounding parameter
-        self.robot.setSpeed(150, 150)  # Set linear speed in mm/s
-        self.robot.setSpeedJoints(60)
+        self.robot.setSpeed(linearSpeed)  # Set linear speed in mm/s
+        self.robot.setSpeedJoints(jointSpeed)
 
     def getParam(self):
         """Get custom binary data from this item. Use setParam to set the data"""
@@ -361,24 +305,38 @@ class VisionRobot:
         return current_joint_values, limit
 
 
-def run(model, image):
+def connect():
     VisRob = VisionRobot()
     VisRob.connectRobot()
     VisRob.fixedRef()
-    VisRob.setRobot()
+    print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
 
-    VisRob.homePos()
-    VisRob.getPixelLeft()
-    VisRob.getPixelRight()
-    VisRob.manDistance()
 
+def movLeft():
+    VisRob = VisionRobot()
+    print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
+    VisRob.movLeft()
+
+
+def movRight():
+    VisRob = VisionRobot()
+    VisRob.movRight()
+
+
+def movHome():
+    VisRob = VisionRobot()
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+
+
+def run(model, image):
+    VisRob = VisionRobot()
+    # VisRob.fixedRef()
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
-    target01, target02, pos_laser01, pos_laser02 = VisRob.getTarget(model, image)
-    # VisRob.sleep_seconds(3)
-    VisRob.runMoveJ(target01, pos_laser01)
+    target01, target02 = VisRob.getTarget(model, image)
+    VisRob.runMoveJ(target01)
     VisRob.sleep_seconds(5)
-    VisRob.runMoveL(target02, pos_laser02)
-    VisRob.homePos()
+    VisRob.runMoveL(target02)
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {
