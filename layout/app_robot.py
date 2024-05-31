@@ -60,29 +60,27 @@ class MainWindow(QMainWindow):
     def run_program(self):
         if self.program_running is True:
             print("Program is running...")
-            # RM.mainRob()
-            obj = ML.TestThread("test")
-            obj.run()
+            RM.mainRob()
             time.sleep(1)
 
     def stop_program(self):
         self.program_running = False
         if self.program_thread and self.program_thread.is_alive():
             self.program_thread.join()
-        reply = QMessageBox()
-        reply.setText("Are you sure you want to exit the program?")
-        reply.setStandardButtons(
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
+        # reply = QMessageBox()
+        # reply.setText("Are you sure you want to exit the program?")
+        # reply.setStandardButtons(
+        #     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        # )
 
-        x = reply.exec()
+        # x = reply.exec()
 
-        if x == QMessageBox.standardButtons.Yes:
-            # Perform any necessary cleanup operations here
-            # ...
+        # if x == QMessageBox.standardButtons.Yes:
+        #     # Perform any necessary cleanup operations here
+        #     # ...
 
-            # Exit the Python program
-            sys.exit()
+        #     # Exit the Python program
+        #     sys.exit()
 
     def closeEvent(self, event):
         """Override the close event to stop the program thread before closing the window."""

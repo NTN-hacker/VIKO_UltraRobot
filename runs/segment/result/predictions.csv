@@ -1,0 +1,6 @@
+Timestamp,ImageName,OutputPath,Label,Confidence
+2024-05-31 14:54:55,sample_1.png,runs/segment/result\sample_1.png,0,0.7579774260520935
+2024-05-31 15:02:25,sample_2.png,runs/segment/result\sample_2.png,0,0.7614364624023438
+2024-05-31 15:05:01,sample_3.png,runs/segment/result\sample_3.png,0,0.7709760665893555
+2024-05-31 15:07:40,sample_4.png,runs/segment/result\sample_4.png,0,0.7068273425102234
+2024-05-31 15:08:19,sample_5.png,runs/segment/result\sample_5.png,0,0.8958211541175842

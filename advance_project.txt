@@ -1,3 +1,4 @@
 1- define the angle for Tee join model
 2- add more the tranjectory for 3 sample (condition to determine)
 3- function to start and stop the program
+4- connect pc with robot -> detect and return the coordinate -> run robot -> disconnect if need

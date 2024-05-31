@@ -1,0 +1,10 @@
+Timestamp,ImageName,OutputPath,Label,Confidence
+2024-05-31 14:35:48,sample_1.png,../runs/segment/predict38/output\sample_1.png,"tensor([0.], device='cuda:0')","tensor([0.6567], device='cuda:0')"
+2024-05-31 14:36:20,sample_2.png,../runs/segment/predict38/output\sample_2.png,"tensor([0.], device='cuda:0')","tensor([0.6567], device='cuda:0')"
+2024-05-31 14:40:04,sample_3.png,../runs/segment/predict38/output\sample_3.png,0,0.6567047834396362
+2024-05-31 14:40:47,sample_4.png,../runs/segment/predict38/output\sample_4.png,0,0.8876562118530273
+2024-05-31 14:40:47,sample_5.png,../runs/segment/predict38/output\sample_5.png,0,0.7874550223350525
+2024-05-31 14:40:47,sample_6.png,../runs/segment/predict38/output\sample_6.png,0,0.7083870768547058
+2024-05-31 14:43:03,sample_7.png,../runs/segment/predict38/output\sample_7.png,0,0.8876562118530273
+2024-05-31 14:43:03,sample_8.png,../runs/segment/predict38/output\sample_8.png,0,0.7874550223350525
+2024-05-31 14:43:03,sample_9.png,../runs/segment/predict38/output\sample_9.png,0,0.7083870768547058

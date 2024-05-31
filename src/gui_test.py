@@ -15,6 +15,8 @@ from library import viko_lib as lib
 from src import robotic_modify as rm
 from layout.gui import gui_vision 
 
+
+
 class ImagePanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -165,14 +167,18 @@ class InspectionFrame(wx.Frame):
         # for point in inspection_points:
         #     left_sizer.Add(wx.Button(left_panel, label=point), 0, wx.EXPAND | wx.ALL, 5)
 
+        self.run_connect_btn = wx.Button(left_panel, label="connect")
         self.run_center_btn = wx.Button(left_panel, label="center")
         self.run_left_btn = wx.Button(left_panel, label="left")
         self.run_right_btn = wx.Button(left_panel, label="right")
 
+        self.run_connect_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
         self.run_center_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
         self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_run_left)
         self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_run_right)
 
+        self.run_connect_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_connect_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.run_center_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
         self.run_center_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.run_left_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
@@ -180,6 +186,7 @@ class InspectionFrame(wx.Frame):
         self.run_right_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
         self.run_right_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
 
+        left_sizer.Add(self.run_connect_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_center_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_left_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_right_btn, 0, wx.ALL, 5)
@@ -293,13 +300,16 @@ class InspectionFrame(wx.Frame):
             print(f"Error during inspection: {e}")
 
     def run_inspection_point(self, img):
-        detected_img, coordinate = self.run_ai_model(img)
-        data = {
-            "Z_Distance": "70 cm",
-            "Start_Point": f"{coordinate[0]}",
-            "End_Point": f"{coordinate[1]}",
-            "Object": "A"
-        }
+        detected_img, coordinate, flag = self.run_ai_model(img)
+        if flag == 0:
+            data = {
+                "Z_Distance": "70 cm",
+                "Start_Point": f"{coordinate[0]}",
+                "End_Point": f"{coordinate[1]}",
+                "Object": "A"
+            }
+        else:
+            data = {"Note":"No weld object"}
         wx.CallAfter(self.show_dialog, data)
         return detected_img
 
@@ -344,7 +354,15 @@ class InspectionFrame(wx.Frame):
         print(img.shape)
         img = cv2.resize(img, (640, 640), interpolation=cv2.INTER_CUBIC)
         results = self.model.predict(source=img, save=True, conf=0.65)
+        
         plot = results[0].plot()
+
+        #save data
+        label_out = lib.save_data_predict(results, plot)
+        print(label_out)
+
+        flag = 0 if 0 in label_out else 1
+        print(flag)
 
         coordinate_re = results[0].masks.xy[0]
         pts = np.zeros((len(coordinate_re), 2))
@@ -353,7 +371,7 @@ class InspectionFrame(wx.Frame):
             pts[idx] = [int(point[0]), int(point[1])]
         pts = np.array(pts, np.int32)
         
-        return plot, results[0].boxes.xyxy[0]
+        return plot, results[0].boxes.xyxy[0], flag
 
     def on_close(self, event):
         if hasattr(self, 'camera_panel') and self.camera_panel:

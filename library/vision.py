@@ -68,7 +68,7 @@ class VisionModule():
         """
         The funciton use to get images from camera
         """
-
+        imageDict = None
         self.camera.PixelFormat = "RGB8"
         #count frame
         self.camera.StartGrabbingMax(self.countImagesIntoGrab)

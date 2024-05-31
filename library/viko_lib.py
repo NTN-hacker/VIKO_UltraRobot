@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import datetime
 import pandas as pd
+import os
 
 MAX_AREA = 2048*2448
 #Preprocessing
@@ -174,3 +175,62 @@ def convert_mask(mask):
     color_image[:, :, 2] = mask[0]  
     return color_image
   
+def find_point_end(pts: np.array):
+    points = pts
+
+    start_point = points[0]
+
+    distances = np.linalg.norm(points - start_point, axis=1)
+
+    max_distance_index = np.argmax(distances)
+
+    max_distance_point = points[max_distance_index]
+
+    return max_distance_point, distances[max_distance_index]
+
+def save_data_predict(results, image_re):
+    """
+    Save data predict when infer
+    """
+
+
+    output_dir = 'runs/segment/result'
+    os.makedirs(output_dir, exist_ok=True)
+    labels = []
+
+    csv_file_path = 'runs/segment/result/predictions.csv'
+    if os.path.exists(csv_file_path):
+        df = pd.read_csv(csv_file_path)
+    else:
+        df = pd.DataFrame(columns=['Timestamp', 'ImageName', 'OutputPath', 'Label', 'Confidence'])
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+    new_rows = []
+
+
+    for idx, result in enumerate(results):
+        boxes = result.boxes  
+        for box in boxes:
+            label = int(box.cls.item()) 
+            confidence = float(box.conf.item()) 
+            labels.append(label)
+            
+            image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
+            output_path = os.path.join(output_dir, image_name)
+            cv2.imwrite(output_path, image_re)
+
+            new_rows.append({
+                'Timestamp': timestamp,
+                'ImageName': image_name,
+                'OutputPath': output_path,
+                'Label': label,
+                'Confidence': confidence
+            })
+
+    new_df = pd.DataFrame(new_rows)
+    df = pd.concat([df, new_df], ignore_index=True)
+
+    df.to_csv(csv_file_path, index=False)
+    return labels

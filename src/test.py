@@ -158,3 +158,16 @@ B = [10, 20]
 theta1 = np.arctan2(A[1] - B[1], A[0] - B[0])
 theta2 = np.arctan2(B[1] - A[1], B[0] - A[0])
 print(f"theta1: {np.degrees(theta1)}, theta2: {np.degrees(theta2)}")
+
+# Dữ liệu mẫu
+x = np.array([1, 2, 3, 4])
+y = np.array([3, 5, 7, 9])
+
+# Thêm cột chứa toàn giá trị 1 vào x
+A = np.vstack([x, np.ones(len(x))]).T
+
+# Tính toán các hệ số a và b
+a, b = np.linalg.lstsq(A, y, rcond=None)[0]
+
+print(f"Hệ số a: {a}")
+print(f"Hệ số b: {b}")
