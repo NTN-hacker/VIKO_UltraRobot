@@ -158,6 +158,8 @@ class InspectionFrame(wx.Frame):
         notebook.AddPage(tab1, "Inspection")
         notebook.AddPage(tab2, "Settings")
 
+        self.pos_status = 'home'
+
         # Setup tab1 layout
         main_sizer = wx.BoxSizer(wx.HORIZONTAL)
         left_panel = wx.Panel(tab1)
@@ -271,14 +273,17 @@ class InspectionFrame(wx.Frame):
 
     def on_run_center(self, event):
         self.robot_running = True
+        self.pos_status = 'home'
         self.move_center()
 
     def on_run_left(self, event):
         self.robot_running = True
+        self.pos_status = 'left'
         self.move_left()
     
     def on_run_right(self, event):
         self.robot_running = True
+        self.pos_status = 'right'
         self.move_right()
     #####################################
     def run_inspection(self):
@@ -313,7 +318,7 @@ class InspectionFrame(wx.Frame):
     def start_robot(self):
         print('Testing')
         img = cv2.imread('temp.png', cv2.IMREAD_ANYCOLOR)
-        rm.run(self.model, img)
+        rm.run(self.model, img, self.pos_status)
         return True
     def stop_robot(self):
         print('Testing')
