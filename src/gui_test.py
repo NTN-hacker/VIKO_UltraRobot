@@ -169,9 +169,20 @@ class InspectionFrame(wx.Frame):
         self.run_left_btn = wx.Button(left_panel, label="left")
         self.run_right_btn = wx.Button(left_panel, label="right")
 
-        self.run_inspection_plan_btn.Bind(wx.EVT_BUTTON, self.on_run_inspection_plan)
-        self.start_robot_btn.Bind(wx.EVT_BUTTON, self.on_start_robot)
-        self.stop_robot_btn.Bind(wx.EVT_BUTTON, self.on_stop_robot)
+        self.run_center_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
+        self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_run_left)
+        self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_run_right)
+
+        self.run_center_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_center_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.run_left_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_left_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.run_right_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_right_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+
+        left_sizer.Add(self.run_center_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.run_left_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.run_right_btn, 0, wx.ALL, 5)
 
         left_panel.SetSizer(left_sizer)
 
@@ -242,7 +253,30 @@ class InspectionFrame(wx.Frame):
         self.stop_robot()
         if self.inspection_thread is not None:
             self.inspection_thread.join()
+    ###################GUI#############################
+    def on_hover(self, event):
+        button = event.GetEventObject()
+        button.SetBackgroundColour(wx.Colour(173, 216, 230))  # Change to whatever color you want
+        button.Refresh()
 
+    def on_leave(self, event):
+        button = event.GetEventObject()
+        button.SetBackgroundColour(wx.NullColour)  # Reset to default color
+        button.Refresh()
+    ###################################################
+    ################# NEW FUNCTION ####################
+    def on_run_center(self, event):
+        self.robot_running = True
+        self.move_center()
+
+    def on_run_left(self, event):
+        self.robot_running = True
+        self.move_left()
+    
+    def on_run_right(self, event):
+        self.robot_running = True
+        self.move_right()
+    #####################################
     def run_inspection(self):
         self.load_model()
         try:
@@ -325,6 +359,21 @@ class InspectionFrame(wx.Frame):
         if hasattr(self, 'camera_panel') and self.camera_panel:
             self.camera_panel.stop_camera()  
         self.Destroy()
+    
+
+    ################ NEW FUNCTION ####################
+    def move_center(self):
+        print('Testing')
+        return True
+    
+    def move_left(self):
+        print('Testing')
+        return True
+    
+    def move_right(self):
+        print('Testing')
+        return True
+    ###################################
 
 app = wx.App(False)
 frame = InspectionFrame(None, "Robot Inspection System")
