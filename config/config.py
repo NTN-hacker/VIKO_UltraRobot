@@ -15,7 +15,7 @@ FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
 HORIZONTAL_BASELINE = 55 # 65: best value with object is black dot
-VERTICAL_BASELINE = 65 # best value with object is black dot
+VERTICAL_BASELINE = 450 # best value with object is black dot
 
 DISTANCE_LASERtoOBJECT = 120
 ########################################################## AI MODEL ###################################################################
