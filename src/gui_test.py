@@ -170,8 +170,19 @@ class InspectionFrame(wx.Frame):
         self.run_right_btn = wx.Button(left_panel, label="right")
 
         self.run_center_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
-        self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_left)
-        self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_right)
+        self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_run_left)
+        self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_run_right)
+
+        self.run_center_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_center_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.run_left_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_left_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.run_right_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
+        self.run_right_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+
+        left_sizer.Add(self.run_center_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.run_left_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.run_right_btn, 0, wx.ALL, 5)
 
         left_panel.SetSizer(left_sizer)
 
@@ -242,16 +253,27 @@ class InspectionFrame(wx.Frame):
         self.stop_robot()
         if self.inspection_thread is not None:
             self.inspection_thread.join()
-    #####################################
+    ###################GUI#############################
+    def on_hover(self, event):
+        button = event.GetEventObject()
+        button.SetBackgroundColour(wx.Colour(173, 216, 230))  # Change to whatever color you want
+        button.Refresh()
+
+    def on_leave(self, event):
+        button = event.GetEventObject()
+        button.SetBackgroundColour(wx.NullColour)  # Reset to default color
+        button.Refresh()
+    ###################################################
+    ################# NEW FUNCTION ####################
     def on_run_center(self, event):
         self.robot_running = True
         self.move_center()
 
-    def on_run_center(self, event):
+    def on_run_left(self, event):
         self.robot_running = True
         self.move_left()
     
-    def on_run_center(self, event):
+    def on_run_right(self, event):
         self.robot_running = True
         self.move_right()
     #####################################
@@ -339,7 +361,7 @@ class InspectionFrame(wx.Frame):
         self.Destroy()
     
 
-    ####################################
+    ################ NEW FUNCTION ####################
     def move_center(self):
         print('Testing')
         return True
