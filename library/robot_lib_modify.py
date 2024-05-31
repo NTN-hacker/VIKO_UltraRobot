@@ -90,8 +90,8 @@ class RobotModule:
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
         theta_laser = math.degrees(angle)
         print(f"theta_laser:{theta_laser}")
-        # if degree_angle > 90:
-            # theta_laser = 180 - degree_angle
+        if theta_laser < -90:
+            theta_laser = 180 + theta_laser
         # else:
         #     theta_laser = degree_angle
         
@@ -138,7 +138,7 @@ class RobotModule:
 
         camera2base_left_nonmat = np.concatenate((pos, rot))
         camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
-        # print(f'camera2base_left:{camera2base_left}')
+        print(f'camera2base_left:{camera2base_left}')
         self.robot.MoveJ(camera2base_left)
 
     def moveRight(self, matcamera2base):

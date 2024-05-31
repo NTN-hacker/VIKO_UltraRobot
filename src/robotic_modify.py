@@ -19,6 +19,8 @@ class VisionRobot:
         self.RDK = Robolink()
         self.robot = self.RDK.ItemUserPick("Yaskawa GP8 Base", ITEM_TYPE_ROBOT)
         self.robot_module = rob.RobotModule()
+        self.connectRobot()
+        # self.fixedRef()
 
     def getCoordinates(self, model, image, flag=True):
         self.vision = vis.VisionModule()
@@ -64,13 +66,13 @@ class VisionRobot:
         if self.status == ROBOTCOM_READY:
             self.robot.Disconnect()
 
-    def fixedRef(self):
+    def fixedRef(self, y_flange2base):
         """
         Fixed refer
         """
 
         # reference frame flange to base
-        pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(380, 0, 405, 180, 0, 0)
+        pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(380, y_flange2base, 405, 180, 0, 0)
         rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
         print("rf_flage2base:", rf_flage2base, "\n")
 
@@ -161,14 +163,22 @@ class VisionRobot:
 
     ### measure distance manually
     def movLeft(self):
+        # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef()
+        self.fixedRef(CFG.VERTICAL_BASELINE / 2)
+        print(f'self.rf_laser2base:{self.rf_laser2base}')
         self.robot_module.moveLeft(self.rf_laser2base)
 
     def movRight(self):
+        # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef()
+        self.fixedRef(-CFG.VERTICAL_BASELINE / 2)
         self.robot_module.moveRight(self.rf_laser2base)
+    
+    def homePos(self, linearSpeed, joinSpeed):
+        self.setRobot(linearSpeed, joinSpeed)
+        self.fixedRef(0)
+        self.robot.MoveJ(self.rf_laser2base_matrix)
 
     ### auto measure distance
     def disCameraToObject(self):
@@ -297,12 +307,6 @@ class VisionRobot:
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
         self.robot.MoveJ(target_laser_mat)
 
-    def homePos(self, linearSpeed, joinSpeed):
-        self.setRobot(linearSpeed, joinSpeed)
-        self.fixedRef()
-        self.robot.MoveJ(self.rf_laser2base_matrix)
-        return 0
-
     def setRobot(self, linearSpeed, jointSpeed):
         self.robot.setRounding(5)  # Set the rounding parameter
         self.robot.setSpeed(linearSpeed)  # Set linear speed in mm/s
@@ -316,19 +320,14 @@ class VisionRobot:
         return current_joint_values, limit
 
 #############################################
-def connect():
-    VisRob = VisionRobot()
-    VisRob.connectRobot()
-    VisRob.fixedRef()
-    # print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
 
-
-def movLeft():
+def movL():
+    print("jumpt into function")
     VisRob = VisionRobot()
     VisRob.movLeft()
 
 
-def movRight():
+def movR():
     VisRob = VisionRobot()
     VisRob.movRight()
 
@@ -340,7 +339,7 @@ def movHome():
 
 def run(model, image):
     VisRob = VisionRobot()
-    VisRob.fixedRef()
+    # VisRob.fixedRef()
 
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
     target01, target02 = VisRob.getTarget(model, image)
@@ -377,6 +376,7 @@ if __name__ == "__main__":
     # run()
     # stop()
     # obj = VisionRobot()
-    connect()
-    movLeft()
+    # connect()
+    # movHome()
+    movL()
     # obj.getPixelLeft()

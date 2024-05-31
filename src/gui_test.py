@@ -167,18 +167,14 @@ class InspectionFrame(wx.Frame):
         # for point in inspection_points:
         #     left_sizer.Add(wx.Button(left_panel, label=point), 0, wx.EXPAND | wx.ALL, 5)
 
-        self.run_connect_btn = wx.Button(left_panel, label="connect")
         self.run_center_btn = wx.Button(left_panel, label="center")
         self.run_left_btn = wx.Button(left_panel, label="left")
         self.run_right_btn = wx.Button(left_panel, label="right")
 
-        self.run_connect_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
         self.run_center_btn.Bind(wx.EVT_BUTTON, self.on_run_center)
         self.run_left_btn.Bind(wx.EVT_BUTTON, self.on_run_left)
         self.run_right_btn.Bind(wx.EVT_BUTTON, self.on_run_right)
 
-        self.run_connect_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
-        self.run_connect_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.run_center_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
         self.run_center_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.run_left_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
@@ -186,7 +182,7 @@ class InspectionFrame(wx.Frame):
         self.run_right_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
         self.run_right_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
 
-        left_sizer.Add(self.run_connect_btn, 0, wx.ALL, 5)
+
         left_sizer.Add(self.run_center_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_left_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_right_btn, 0, wx.ALL, 5)
@@ -272,6 +268,7 @@ class InspectionFrame(wx.Frame):
         button.Refresh()
     ###################################################
     ################# NEW FUNCTION ####################
+
     def on_run_center(self, event):
         self.robot_running = True
         self.move_center()
@@ -380,15 +377,19 @@ class InspectionFrame(wx.Frame):
     
 
     ################ NEW FUNCTION ####################
+
     def move_center(self):
+        rm.movHome()
         print('Testing')
         return True
     
     def move_left(self):
+        rm.movL()
         print('Testing')
         return True
     
     def move_right(self):
+        rm.movR()
         print('Testing')
         return True
     ###################################
