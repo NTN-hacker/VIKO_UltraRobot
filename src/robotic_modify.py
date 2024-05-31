@@ -26,7 +26,10 @@ class VisionRobot:
         coordinate = self.vision._getCoordinateTest_(image)
         return coordinate
 
-    def connectRobot(self):
+    def connectRobot(self)-> None:
+        """
+        Connect Robot and PC
+        """
         if not self.robot.Valid():
             raise Exception("Invalid robot selected")
 
@@ -49,21 +52,25 @@ class VisionRobot:
             # This will set to run the API programs on the robot and the simulator (online programming)
             self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
             # self.RDK.CloseRoboDK()
-
+        
         print("ConnectedState:", self.robot.ConnectedState(), "\n")
 
-    def disConnectRobot(self):
-        self.status, status_msg = self.robot.ConnectedState()
+    def disConnectRobot(self) -> None:
+        """
+        Disconnect PC RObot
+        """
+        self.status, _ = self.robot.ConnectedState()
         print(f"status:{self.status}")
         if self.status == ROBOTCOM_READY:
             self.robot.Disconnect()
 
     def fixedRef(self):
+        """
+        Fixed refer
+        """
 
         # reference frame flange to base
-        pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(
-            380, 0, 405, 180, 0, 0
-        )
+        pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(380, 0, 405, 180, 0, 0)
         rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
         print("rf_flage2base:", rf_flage2base, "\n")
 
@@ -90,9 +97,9 @@ class VisionRobot:
         rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
         pos_laser2flange, rot_laser2flange = self.robot_module.rotPos(rf_laser2flange)
 
-        self.rf_laser2base = np.dot(rf_camera2base, self.rf_laser2camera)
+        rf_laser2base = np.dot(rf_camera2base, self.rf_laser2camera)
 
-        pos_laser2base, rot_laser2base = self.robot_module.rotPos(self.rf_laser2base)
+        pos_laser2base, rot_laser2base = self.robot_module.rotPos(rf_laser2base)
         # print("rot_camera2base:", rot_camera2base, "\n", "pos_camera2base:", pos_camera2base, "\n")
 
         rf_laser2base_non_matrix = np.concatenate((pos_laser2base, rot_laser2base))
@@ -118,8 +125,8 @@ class VisionRobot:
         self.robot.setPoseFrame(setFrame)
         # print(f"robot.PoseFrame():{robot.PoseFrame()}")
         self.robot.setPoseTool(rf_laser2flange_matrix)
-
-        return self.rf_laser2base_matrix, self.rf_laser2base, self.rf_laser2camera
+        self.rf_laser2base = rf_laser2base
+        return  rf_laser2base
 
     @staticmethod
     def sleep_seconds(seconds):
@@ -155,21 +162,14 @@ class VisionRobot:
     ### measure distance manually
     def movLeft(self):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
+        self.fixedRef()
         self.robot_module.moveLeft(self.rf_laser2base)
-<<<<<<< HEAD
-        return 1
-=======
->>>>>>> 0b6e6433adcc47710274e1b4cf868cdc7bde04ff
 
     def movRight(self):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
+        self.fixedRef()
         self.robot_module.moveRight(self.rf_laser2base)
-<<<<<<< HEAD
-        return 2
-    
-=======
 
->>>>>>> 0b6e6433adcc47710274e1b4cf868cdc7bde04ff
     ### auto measure distance
     def disCameraToObject(self):
 
@@ -299,6 +299,7 @@ class VisionRobot:
 
     def homePos(self, linearSpeed, joinSpeed):
         self.setRobot(linearSpeed, joinSpeed)
+        self.fixedRef()
         self.robot.MoveJ(self.rf_laser2base_matrix)
         return 0
 
@@ -314,23 +315,16 @@ class VisionRobot:
 
         return current_joint_values, limit
 
-
+#############################################
 def connect():
     VisRob = VisionRobot()
     VisRob.connectRobot()
     VisRob.fixedRef()
-    print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
+    # print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
 
-<<<<<<< HEAD
-    VisRob.homePos()
-    VisRob.getPixelLeft()
-    VisRob.getPixelRight()
-=======
->>>>>>> 0b6e6433adcc47710274e1b4cf868cdc7bde04ff
 
 def movLeft():
     VisRob = VisionRobot()
-    print(f"rf_laser2base_matrix:{VisRob.rf_laser2base}")
     VisRob.movLeft()
 
 
@@ -346,7 +340,8 @@ def movHome():
 
 def run(model, image):
     VisRob = VisionRobot()
-    # VisRob.fixedRef()
+    VisRob.fixedRef()
+
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
     target01, target02 = VisRob.getTarget(model, image)
     VisRob.runMoveJ(target01)
@@ -376,13 +371,12 @@ def stop():
     VisRob = VisionRobot()
     VisRob.disConnectRobot()
 
-
+        
 if __name__ == "__main__":
     # app.main()
     # run()
     # stop()
-    obj = VisionRobot()
-    obj.connectRobot()
-    obj.fixedRef()
-    obj.setRobot()
-    obj.getPixelLeft()
+    # obj = VisionRobot()
+    connect()
+    movLeft()
+    # obj.getPixelLeft()
