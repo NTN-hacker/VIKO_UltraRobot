@@ -165,14 +165,14 @@ class VisionRobot:
     def movLeft(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(CFG.VERTICAL_BASELINE / 2)
+        self.fixedRef(0)
         print(f'self.rf_laser2base:{self.rf_laser2base}')
         self.robot_module.moveLeft(self.rf_laser2base)
 
     def movRight(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(-CFG.VERTICAL_BASELINE / 2)
+        self.fixedRef(0)
         self.robot_module.moveRight(self.rf_laser2base)
     
     def homePos(self, linearSpeed, joinSpeed):
@@ -322,26 +322,35 @@ class VisionRobot:
 #############################################
 
 def movL():
+    global movement_status
     print("jumpt into function")
     VisRob = VisionRobot()
     VisRob.movLeft()
-
+    VisRob.fixedRef(CFG.VERTICAL_BASELINE / 2)
+    
 
 def movR():
     VisRob = VisionRobot()
     VisRob.movRight()
-
+    VisRob.fixedRef(-CFG.VERTICAL_BASELINE / 2)
 
 def movHome():
     VisRob = VisionRobot()
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    VisRob.fixedRef(0)
 
-
-def run(model, image):
+def run(model, image, pos_status = 'home'):
     VisRob = VisionRobot()
-    # VisRob.fixedRef()
-
+    if pos_status == 'home':
+        VisRob.fixedRef(0)
+    elif pos_status == 'left':
+        VisRob.fixedRef(CFG.VERTICAL_BASELINE / 2)
+    elif pos_status == 'right':
+        VisRob.fixedRef(-CFG.VERTICAL_BASELINE / 2)
+    else:
+        stop()
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
+
     target01, target02 = VisRob.getTarget(model, image)
     VisRob.runMoveJ(target01)
     VisRob.sleep_seconds(5)
