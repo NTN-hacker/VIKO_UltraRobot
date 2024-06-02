@@ -1,4 +1,0 @@
-Timestamp,ImageName,OutputPath,Label,Confidence
-2024-05-31 14:52:39,sample_1.png,../runs/segment/result\sample_1.png,0,0.785510778427124
-2024-05-31 14:52:39,sample_2.png,../runs/segment/result\sample_2.png,0,0.6958519220352173
-2024-05-31 14:52:39,sample_3.png,../runs/segment/result\sample_3.png,0,0.6556806564331055
