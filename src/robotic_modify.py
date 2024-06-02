@@ -25,7 +25,7 @@ class VisionRobot:
     def getCoordinates(self, model, image, flag=True):
         self.vision = vis.VisionModule()
         self.vision.load_model(model)
-        coordinate = self.vision._getCoordinateTest_(image)
+        coordinate = self.vision._getCoordinateMultiobject_(image)
         return coordinate
 
     def connectRobot(self)-> None:

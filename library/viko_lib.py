@@ -291,17 +291,18 @@ def transform_coordinates(dict_re) -> list:
 
     return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
 
+
 def save_data_scan(results, image_re, coordinates):
     """
-    Save data predict when infer.
+    Save scan evaluation when infer.
     """
-    
-    output_dir = 'runs/segment/result'
+    output_dir = 'runs/segment/result/image'
     os.makedirs(output_dir, exist_ok=True)
-    labels = list()
-    confs = list()
+    labels = []
+    confs = []
+    new_rows = []
 
-    csv_file_path = os.path.join(output_dir, 'scan.csv')
+    csv_file_path = 'runs/segment/result/scan.csv'
     if os.path.exists(csv_file_path):
         df = pd.read_csv(csv_file_path)
     else:
@@ -310,9 +311,8 @@ def save_data_scan(results, image_re, coordinates):
             'CoordinateStart', 'CoordinateEnd', 'ScanLength'
         ])
 
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    new_rows = []
-
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+    
     for idx, result in enumerate(results):
         boxes = result.boxes  
         for box in boxes:
@@ -322,7 +322,11 @@ def save_data_scan(results, image_re, coordinates):
             confs.append(confidence)
             
             image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
-            output_path = os.path.join(output_dir, image_name)
+            output_path = os.path.join(output_dir, timestamp, image_name)
+            
+            # Create directory for current date if it doesn't exist
+            os.makedirs(os.path.join(output_dir, timestamp), exist_ok=True)
+            
             cv2.imwrite(output_path, image_re)
 
         # Calculate the number of scans and scan lengths

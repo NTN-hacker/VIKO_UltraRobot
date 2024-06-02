@@ -125,7 +125,7 @@ class VisionModule():
         if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
             #predict
             img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
-            dict_re = self.model.predict(img_resize, save=True, conf=0.65)   
+            dict_re = self.model.predict(img_resize, save=False, conf=0.65)   
 
             #image after predict
             plot = dict_re[0].plot() 
@@ -137,7 +137,7 @@ class VisionModule():
             img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
             
             #save data
-            label_out = lib.save_data_predict(dict_re, plot, transformed_coordinates)
+            label_out = lib.save_data_scan(dict_re, plot, transformed_coordinates)
 
             cv2.imshow("Image after define", img_re)
             cv2.waitKey(0)
