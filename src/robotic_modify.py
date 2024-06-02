@@ -45,7 +45,7 @@ class VisionRobot:
             self.robot.Connect("192.168.10.111")  # Try to connect once
             self.robot.ConnectSafe("192.168.10.111")  # Try to connect multiple times
             self.status, status_msg = self.robot.ConnectedState()
-            print("self.status", self.status)
+
             if self.status != ROBOTCOM_READY:
                 # Stop if the connection did not succeed
                 print(status_msg)
@@ -61,10 +61,9 @@ class VisionRobot:
         """
         Disconnect PC RObot
         """
-        self.status, _ = self.robot.ConnectedState()
-        print(f"status:{self.status}")
         if self.status == ROBOTCOM_READY:
             self.robot.Disconnect()
+            print(f"Stop:{self.robot.ConnectedState()}")
 
     def fixedRef(self, y_flange2base):
         """
@@ -87,7 +86,7 @@ class VisionRobot:
 
         # reference frame camera to base
         rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
-        print("ref_camera2base:", rf_camera2base, "\n")
+        # print("ref_camera2base:", rf_camera2base, "\n")
 
         pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(
             -54.43, 57, 0, 0, 0, 0
@@ -100,7 +99,7 @@ class VisionRobot:
         pos_laser2flange, rot_laser2flange = self.robot_module.rotPos(rf_laser2flange)
 
         rf_laser2base = np.dot(rf_camera2base, self.rf_laser2camera)
-
+        print(f'rf_laser2base:{rf_laser2base}')
         pos_laser2base, rot_laser2base = self.robot_module.rotPos(rf_laser2base)
         # print("rot_camera2base:", rot_camera2base, "\n", "pos_camera2base:", pos_camera2base, "\n")
 
@@ -113,7 +112,6 @@ class VisionRobot:
         )
 
         rf_laser2flange_matrix = TxyzRxyz_2_Pose(rf_laser2flange_non_matrix)
-        print("ref_camera2flange_test:", rf_laser2flange_matrix, "\n")
 
         pos_setFrame = [0, 0, 0]  # Translation vector [Tx, Ty, Tz] ## sai so
         rot_setFramee = [
@@ -353,7 +351,7 @@ def run(model, image, pos_status = 'home'):
 
     target01, target02 = VisRob.getTarget(model, image)
     VisRob.runMoveJ(target01)
-    VisRob.sleep_seconds(5)
+    # VisRob.sleep_seconds(5)
     VisRob.runMoveL(target02)
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 

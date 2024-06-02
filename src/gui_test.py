@@ -169,6 +169,14 @@ class InspectionFrame(wx.Frame):
         # for point in inspection_points:
         #     left_sizer.Add(wx.Button(left_panel, label=point), 0, wx.EXPAND | wx.ALL, 5)
 
+        # Load icon
+        icon = wx.Bitmap("layout/png/lab.png", wx.BITMAP_TYPE_PNG)
+
+        # Create an icon above the buttons
+        
+        button_size = (100, 30)  
+        icon = wx.ImageFromBitmap(icon).Scale(button_size[0], button_size[1], wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
+        self.icon_bitmap = wx.StaticBitmap(left_panel, bitmap=icon)
         self.run_center_btn = wx.Button(left_panel, label="center")
         self.run_left_btn = wx.Button(left_panel, label="left")
         self.run_right_btn = wx.Button(left_panel, label="right")
@@ -184,7 +192,7 @@ class InspectionFrame(wx.Frame):
         self.run_right_btn.Bind(wx.EVT_ENTER_WINDOW, self.on_hover)
         self.run_right_btn.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
 
-
+        left_sizer.Add(self.icon_bitmap, 0, wx.ALL | wx.CENTER, 5)
         left_sizer.Add(self.run_center_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_left_btn, 0, wx.ALL, 5)
         left_sizer.Add(self.run_right_btn, 0, wx.ALL, 5)

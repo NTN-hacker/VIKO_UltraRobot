@@ -26,8 +26,6 @@ class VisionRobot:
         coordinate = self.vision._getCoordinateTest_(image)
         return coordinate
     
-
-
     ### measure distance manually
     def movLeft(self):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
@@ -155,15 +153,15 @@ class VisionRobot:
 
     def runMoveL(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.robot.MoveL(target_laser_mat)
+        self.robot.robot.MoveL(target_laser_mat)
 
     def runMoveJ(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
-        self.robot.MoveJ(target_laser_mat)
+        self.robot.robot.MoveJ(target_laser_mat)
 
     def homePos(self, linearSpeed, joinSpeed):
         self.setRobot(linearSpeed, joinSpeed)
-        self.robot.MoveJ(self.rf_laser2base_matrix)
+        self.robot.robot.MoveJ(self.rf_laser2base_matrix)
         return 0
 
     def setRobot(self, linearSpeed, jointSpeed):

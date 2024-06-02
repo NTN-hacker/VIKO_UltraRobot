@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 import datetime
 import pandas as pd
 import os
+import sys
+sys.path.append(
+    "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
+)
+from config import config as CFG
+from library import viko_lib as lib
 
 MAX_AREA = 2048*2448
 #Preprocessing
@@ -234,3 +240,106 @@ def save_data_predict(results, image_re):
 
     df.to_csv(csv_file_path, index=False)
     return labels
+
+def draw_coordinates_on_image(image, coordinates):
+    """
+    Draws points and lines on the image for given coordinates.
+    """
+    colors = [
+        (255, 0, 0),  
+        (0, 255, 0),  
+        (0, 0, 255),  
+        (255, 255, 0),  
+        (255, 0, 255),  
+        (0, 255, 255),  
+    ]
+    
+    for idx, (start, end) in enumerate(coordinates):
+        color = colors[idx % len(colors)]
+
+        cv2.circle(image, tuple(start), radius=5, color=color, thickness=3)
+        cv2.circle(image, tuple(end), radius=5, color=color, thickness=3)
+
+        cv2.line(image, tuple(start), tuple(end), color=color, thickness=2)
+    
+    return image
+
+def transform_coordinates(dict_re) -> list:
+    """
+    Transforms the start and end coordinates based on the provided ratios.
+    """
+    list_label = []
+    for  result in dict_re:
+            boxes = result.boxes  
+            for box in boxes:
+                label = int(box.cls.item()) 
+                list_label.append(label)
+
+    coordinate_re = dict_re[0].masks.xy
+
+    indices = [idx for idx, label in enumerate(list_label) if label == 0]
+
+    extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
+    find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
+
+    coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
+
+    transform_coordinate = lambda start, end: [
+        [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
+        [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
+    ]
+
+    return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
+
+def save_data_scan(results, image_re, coordinates):
+    """
+    Save data predict when infer.
+    """
+    
+    output_dir = 'runs/segment/result'
+    os.makedirs(output_dir, exist_ok=True)
+    labels = list()
+    confs = list()
+
+    csv_file_path = os.path.join(output_dir, 'scan.csv')
+    if os.path.exists(csv_file_path):
+        df = pd.read_csv(csv_file_path)
+    else:
+        df = pd.DataFrame(columns=[
+            'Timestamp', 'ImageName', 'OutputPath', 'Label', 'Confidence', 
+            'CoordinateStart', 'CoordinateEnd', 'ScanLength'
+        ])
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    new_rows = []
+
+    for idx, result in enumerate(results):
+        boxes = result.boxes  
+        for box in boxes:
+            label = int(box.cls.item()) 
+            confidence = float(box.conf.item()) 
+            labels.append(label)
+            confs.append(confidence)
+            
+            image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
+            output_path = os.path.join(output_dir, image_name)
+            cv2.imwrite(output_path, image_re)
+
+        # Calculate the number of scans and scan lengths
+        for idx_m, (start, end) in enumerate(coordinates):
+            scan_length = np.linalg.norm(np.array(start) - np.array(end))
+
+            new_rows.append({
+                'Timestamp': timestamp,
+                'ImageName': image_name,
+                'OutputPath': output_path,
+                'Label': labels[idx_m],
+                'Confidence': confs[idx_m],
+                'CoordinateStart': start,
+                'CoordinateEnd': end,
+                'ScanLength': scan_length
+            })
+
+    new_df = pd.DataFrame(new_rows)
+    df = pd.concat([df, new_df], ignore_index=True)
+    df.to_csv(csv_file_path, index=False)

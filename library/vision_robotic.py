@@ -69,8 +69,6 @@ class VisionModule():
             img_resize = cv2.resize(img_cvt_cp, (640, 640), interpolation= cv2.INTER_CUBIC)
             dict_re = self.model.predict(img_resize, save=True, conf=0.65)
             
-            
-
             img_re = dict_re[0][0].orig_img
 
             mask = dict_re[0].masks.data.detach().cpu().numpy()
@@ -122,4 +120,27 @@ class VisionModule():
             cv2.destroyAllWindows()
         return coordinate 
     
+    def _getCoordinateMultiobject_(self, image):
     
+        if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
+            #predict
+            img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
+            dict_re = self.model.predict(img_resize, save=True, conf=0.65)   
+
+            #image after predict
+            plot = dict_re[0].plot() 
+
+            #coordinates
+            transformed_coordinates = lib.transform_coordinates(dict_re)
+            print(transformed_coordinates)
+
+            img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
+            
+            #save data
+            label_out = lib.save_data_predict(dict_re, plot, transformed_coordinates)
+
+            cv2.imshow("Image after define", img_re)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        return transformed_coordinates 
