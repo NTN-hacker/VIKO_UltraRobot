@@ -22,12 +22,6 @@ class VisionRobot:
         self.connectRobot()
         # self.fixedRef()
 
-    def getCoordinates(self, model, image, flag=True):
-        self.vision = vis.VisionModule()
-        self.vision.load_model(model)
-        coordinate = self.vision._getCoordinateMultiobject_(image)
-        return coordinate
-
     def connectRobot(self)-> None:
         """
         Connect Robot and PC
@@ -252,10 +246,10 @@ class VisionRobot:
 
         return dis_cameraToObject, dis_pixel
 
-    def getTarget(self, model, image):
+    def getTarget(self, coordinate_pixel):
 
-        coordinate_pixel = self.getCoordinates(model, image, True)
         theta_laser = self.robot_module.rotLaser(coordinate_pixel)
+
         coordinate_pixel_1 = coordinate_pixel[0]
         coordinate_pixel_2 = coordinate_pixel[1]
         print(f"coordinate_pixel:{coordinate_pixel}")
@@ -349,10 +343,17 @@ def run(model, image, pos_status = 'home'):
         stop()
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
 
-    target01, target02 = VisRob.getTarget(model, image)
-    VisRob.runMoveJ(target01)
-    # VisRob.sleep_seconds(5)
-    VisRob.runMoveL(target02)
+    coordinate_pixel_list = vis.getCoordinates(model, image, True)
+    # coordinate_pixel = coordinate_pixel_list[0]
+    for coordinate_pixel in coordinate_pixel_list:
+        target01, target02 = VisRob.getTarget(coordinate_pixel)
+        VisRob.runMoveJ(target01)
+        # VisRob.sleep_seconds(5)
+        VisRob.runMoveL(target02)
+
+
+        VisRob.sleep_seconds(1)
+        
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
