@@ -194,26 +194,26 @@ def find_point_end(pts: np.array):
 
     return max_distance_point, distances[max_distance_index]
 
-def save_data_predict(results, image_re):
+def getLabels(results, image_re):
     """
     Save data predict when infer
     """
 
 
-    output_dir = 'runs/segment/result'
-    os.makedirs(output_dir, exist_ok=True)
+    # output_dir = 'runs/segment/result'
+    # os.makedirs(output_dir, exist_ok=True)
     labels = []
 
-    csv_file_path = 'runs/segment/result/predictions.csv'
-    if os.path.exists(csv_file_path):
-        df = pd.read_csv(csv_file_path)
-    else:
-        df = pd.DataFrame(columns=['Timestamp', 'ImageName', 'OutputPath', 'Label', 'Confidence'])
+    # csv_file_path = 'runs/segment/result/predictions.csv'
+    # if os.path.exists(csv_file_path):
+    #     df = pd.read_csv(csv_file_path)
+    # else:
+    #     df = pd.DataFrame(columns=['Timestamp', 'ImageName', 'OutputPath', 'Label', 'Confidence'])
 
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-    new_rows = []
+    # new_rows = []
 
 
     for idx, result in enumerate(results):
@@ -223,22 +223,22 @@ def save_data_predict(results, image_re):
             confidence = float(box.conf.item()) 
             labels.append(label)
             
-            image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
-            output_path = os.path.join(output_dir, image_name)
-            cv2.imwrite(output_path, image_re)
+    #         image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
+    #         output_path = os.path.join(output_dir, image_name)
+    #         cv2.imwrite(output_path, image_re)
 
-            new_rows.append({
-                'Timestamp': timestamp,
-                'ImageName': image_name,
-                'OutputPath': output_path,
-                'Label': label,
-                'Confidence': confidence
-            })
+    #         new_rows.append({
+    #             'Timestamp': timestamp,
+    #             'ImageName': image_name,
+    #             'OutputPath': output_path,
+    #             'Label': label,
+    #             'Confidence': confidence
+    #         })
 
-    new_df = pd.DataFrame(new_rows)
-    df = pd.concat([df, new_df], ignore_index=True)
+    # new_df = pd.DataFrame(new_rows)
+    # df = pd.concat([df, new_df], ignore_index=True)
 
-    df.to_csv(csv_file_path, index=False)
+    # df.to_csv(csv_file_path, index=False)
     return labels
 
 def draw_coordinates_on_image(image, coordinates):

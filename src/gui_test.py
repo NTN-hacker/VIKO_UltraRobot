@@ -16,7 +16,6 @@ from src import robotic_modify as rm
 from layout.gui import gui_vision 
 
 
-
 class ImagePanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -363,12 +362,12 @@ class InspectionFrame(wx.Frame):
     def run_ai_model(self, img):
         print(img.shape)
         img = cv2.resize(img, (640, 640), interpolation=cv2.INTER_CUBIC)
-        results = self.model.predict(source=img, save=True, conf=0.65)
+        results = self.model.predict(source=img, conf=0.65)
         
         plot = results[0].plot()
 
         #save data
-        label_out = lib.save_data_predict(results, plot)
+        label_out = lib.getLabels(results, plot)
         print(label_out)
 
         flag = 0 if 0 in label_out else 1

@@ -85,6 +85,8 @@ class VisionRobot:
         pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(
             -54.43, 57, 0, 0, 0, 0
         )
+        print(f'pos_laser2camera, rot_laser2camera:{pos_laser2camera}, {rot_laser2camera}')
+
         self.rf_laser2camera = self.robot_module.createRef(
             pos_laser2camera, rot_laser2camera
         )
@@ -140,31 +142,35 @@ class VisionRobot:
         print("target_ref_base:", rf_target2base_bf, "\n")
 
         rot_Laser = rotz(np.radians(theta_laser))
+        yRot = roty(np.radians(45))
 
         rf_target2base_af = np.dot(rf_target2base_bf, rot_Laser)
-        # print(f'rf_laser2base_af:{rf_target2base_af}')
+        rf_target2base_af_Yrot = np.dot(np.dot(rf_target2base_bf, yRot), rot_Laser)
 
         pos, rot = self.robot_module.rotPos(rf_target2base_af)
         target2base_none_mat = np.concatenate((pos, rot), axis=0)
-        # print(f'pos, rot:{pos}, {rot}')
+
+        pos_Yrot, rot_Yrot = self.robot_module.rotPos(rf_target2base_af_Yrot)
+        target2baseYrot_none_mat = np.concatenate((pos_Yrot, rot_Yrot), axis=0)
 
         target2base_mat = TxyzRxyz_2_Pose(target2base_none_mat)
+        target2baseYrot_mat = TxyzRxyz_2_Pose(target2baseYrot_none_mat)
         # print(f"target_laser_mat:{target2base_mat}")
 
-        return target2base_mat, pos
+        return target2base_mat, target2baseYrot_mat
 
     ### measure distance manually
     def movLeft(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(0)
+        self.fixedRef(0, 0)
         print(f'self.rf_laser2base:{self.rf_laser2base}')
         self.robot_module.moveLeft(self.rf_laser2base)
 
     def movRight(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(0)
+        self.fixedRef(0, 0)
         self.robot_module.moveRight(self.rf_laser2base)
     
     def homePos(self, linearSpeed, joinSpeed):
@@ -285,11 +291,11 @@ class VisionRobot:
         real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
-        target01, pos_laser01 = self.createPoint(real_target01, 1, theta_laser)  # fix
-        target02, pos_laser02 = self.createPoint(real_target02, 2, theta_laser)
+        target01, targetYrot01_mat = self.createPoint(real_target01, 1, theta_laser)  # fix
+        target02, targetYrot02_mat = self.createPoint(real_target02, 2, theta_laser)
         print(f"target01:{target01}, target02:{target02}")
 
-        return target01, target02
+        return target01, target02, targetYrot01_mat, targetYrot02_mat
 
     def runMoveL(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
@@ -318,18 +324,15 @@ def movL():
     print("jumpt into function")
     VisRob = VisionRobot()
     VisRob.movLeft()
-    VisRob.fixedRef(CFG.VERTICAL_BASELINE / 2)
     
 
 def movR():
     VisRob = VisionRobot()
     VisRob.movRight()
-    VisRob.fixedRef(-CFG.VERTICAL_BASELINE / 2)
 
 def movHome():
     VisRob = VisionRobot()
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
-    VisRob.fixedRef(0)
 
 def run(model, image, pos_status = 'home'):
     VisRob = VisionRobot()
@@ -346,15 +349,17 @@ def run(model, image, pos_status = 'home'):
     coordinate_pixel_list = vis.getCoordinates(model, image, True)
     # coordinate_pixel = coordinate_pixel_list[0]
     for coordinate_pixel in coordinate_pixel_list:
-        target01, target02 = VisRob.getTarget(coordinate_pixel)
+        target01, target02, targetYrot01_mat, targetYrot02_mat = VisRob.getTarget(coordinate_pixel)
         VisRob.runMoveJ(target01)
+        VisRob.runMoveJ(targetYrot01_mat)
         # VisRob.sleep_seconds(5)
-        VisRob.runMoveL(target02)
+        # VisRob.runMoveL(target02)
+        # VisRob.runMoveL(targetYrot02_mat)
 
 
         VisRob.sleep_seconds(1)
         
-    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {
@@ -370,7 +375,7 @@ def run(model, image, pos_status = 'home'):
         # "distance": dis_cameraToObject,
         #### add if need
     }
-    print(f"data_export:{data_export}")
+    # print(f"data_export:{data_export}")
     rob.RobotModule.export_csv(data_export)
 
 

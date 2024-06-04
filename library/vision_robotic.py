@@ -139,8 +139,14 @@ class VisionModule():
             #save data
             label_out = lib.save_data_scan(dict_re, plot, transformed_coordinates)
 
-            cv2.imshow("Image after define", img_re)
+            cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
         return transformed_coordinates 
+    
+def getCoordinates(model, image, flag=True):
+    vision = VisionModule()
+    vision.load_model(model)
+    coordinate_list = vision._getCoordinateMultiobject_(image)
+    return coordinate_list
