@@ -142,35 +142,29 @@ class VisionRobot:
         print("target_ref_base:", rf_target2base_bf, "\n")
 
         rot_Laser = rotz(np.radians(theta_laser))
-        yRot = roty(np.radians(45))
-
         rf_target2base_af = np.dot(rf_target2base_bf, rot_Laser)
-        rf_target2base_af_Yrot = np.dot(np.dot(rf_target2base_bf, yRot), rot_Laser)
 
         pos, rot = self.robot_module.rotPos(rf_target2base_af)
+        # print(f'pos, rot:{pos}, {rot}')
         target2base_none_mat = np.concatenate((pos, rot), axis=0)
 
-        pos_Yrot, rot_Yrot = self.robot_module.rotPos(rf_target2base_af_Yrot)
-        target2baseYrot_none_mat = np.concatenate((pos_Yrot, rot_Yrot), axis=0)
-
         target2base_mat = TxyzRxyz_2_Pose(target2base_none_mat)
-        target2baseYrot_mat = TxyzRxyz_2_Pose(target2baseYrot_none_mat)
         # print(f"target_laser_mat:{target2base_mat}")
 
-        return target2base_mat, target2baseYrot_mat
+        return target2base_mat
 
     ### measure distance manually
     def movLeft(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(0, 0)
+        self.fixedRef(0)
         print(f'self.rf_laser2base:{self.rf_laser2base}')
         self.robot_module.moveLeft(self.rf_laser2base)
 
     def movRight(self):
         # self.connectRobot()
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
-        self.fixedRef(0, 0)
+        self.fixedRef(0)
         self.robot_module.moveRight(self.rf_laser2base)
     
     def homePos(self, linearSpeed, joinSpeed):
@@ -291,11 +285,11 @@ class VisionRobot:
         real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
-        target01, targetYrot01_mat = self.createPoint(real_target01, 1, theta_laser)  # fix
-        target02, targetYrot02_mat = self.createPoint(real_target02, 2, theta_laser)
-        print(f"target01:{target01}, target02:{target02}")
+        target01 = self.createPoint(real_target01, 1, theta_laser)  # fix
+        target02 = self.createPoint(real_target02, 2, theta_laser)
+        print(f"target01:{target01}, target02:{target02} ")
 
-        return target01, target02, targetYrot01_mat, targetYrot02_mat
+        return target01, target02
 
     def runMoveL(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
@@ -349,17 +343,14 @@ def run(model, image, pos_status = 'home'):
     coordinate_pixel_list = vis.getCoordinates(model, image, True)
     # coordinate_pixel = coordinate_pixel_list[0]
     for coordinate_pixel in coordinate_pixel_list:
-        target01, target02, targetYrot01_mat, targetYrot02_mat = VisRob.getTarget(coordinate_pixel)
+        target01, target02= VisRob.getTarget(coordinate_pixel)
         VisRob.runMoveJ(target01)
-        VisRob.runMoveJ(targetYrot01_mat)
         # VisRob.sleep_seconds(5)
-        # VisRob.runMoveL(target02)
-        # VisRob.runMoveL(targetYrot02_mat)
-
+        VisRob.runMoveL(target02)
 
         VisRob.sleep_seconds(1)
         
-    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {
