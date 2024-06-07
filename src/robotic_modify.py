@@ -11,6 +11,7 @@ from library import vision_robotic as vis
 from library import robot_lib_modify as rob
 from datetime import datetime
 from config import config as CFG
+import robodk as rdk
 
 
 ## class for vision robot
@@ -66,8 +67,8 @@ class VisionRobot:
 
         # reference frame flange to base
         pos_flange2base, rot_flange2base = self.robot_module.rotPosRef(380, y_flange2base, 405, 180, 0, 0)
-        rf_flage2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
-        print("rf_flage2base:", rf_flage2base, "\n")
+        self.rf_flange2base = self.robot_module.createRef(pos_flange2base, rot_flange2base)
+        print("rf_flage2base:", self.rf_flange2base, "\n")
 
         # reference frame camera to flange
         pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(
@@ -79,7 +80,7 @@ class VisionRobot:
         print("ref_camera2flange:", rf_camera2flange, "\n")
 
         # reference frame camera to base
-        rf_camera2base = np.dot(rf_flage2base, rf_camera2flange)
+        rf_camera2base = np.dot(self.rf_flange2base, rf_camera2flange)
         # print("ref_camera2base:", rf_camera2base, "\n")
 
         pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(
@@ -91,9 +92,9 @@ class VisionRobot:
             pos_laser2camera, rot_laser2camera
         )
 
-        rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
-        pos_laser2flange, rot_laser2flange = self.robot_module.rotPos(rf_laser2flange)
-
+        self.rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
+        pos_laser2flange, rot_laser2flange = self.robot_module.rotPos(self.rf_laser2flange)
+        print(f'pos_laser2flange, rot_laser2flange:{pos_laser2flange}, {rot_laser2flange}')
         rf_laser2base = np.dot(rf_camera2base, self.rf_laser2camera)
         print(f'rf_laser2base:{rf_laser2base}')
         pos_laser2base, rot_laser2base = self.robot_module.rotPos(rf_laser2base)
@@ -132,27 +133,49 @@ class VisionRobot:
 
     def createPoint(self, arr_target, count, theta_laser):
 
-        target2Camera = self.robot_module.intialTarget(
-            arr_target[0], arr_target[1], arr_target[2]
+        # target2Camera = self.robot_module.intialTarget(
+        #     arr_target[0], arr_target[1], arr_target[2]
+        # )
+        
+        pos_target2camera, rot_target2camera = self.robot_module.rotPosRef(
+             arr_target[0], arr_target[1], arr_target[2], -30, 20, 0
         )
 
-        rf_target2laser = np.dot(np.linalg.inv(self.rf_laser2camera), target2Camera)
-
-        rf_target2base_bf = np.dot(self.rf_laser2base, rf_target2laser)
-        print("target_ref_base:", rf_target2base_bf, "\n")
-
+        target2Camera = self.robot_module.createRef(
+            pos_target2camera, rot_target2camera
+        )
+        print(f'target2Camera:{target2Camera}')
+        rf_target2laserOrg = np.dot(np.linalg.inv(self.rf_laser2camera), target2Camera)
+        print(f"rf_target2laserOrg:{rf_target2laserOrg}")
         rot_Laser = rotz(np.radians(theta_laser))
-        rf_target2base_af = np.dot(rf_target2base_bf, rot_Laser)
 
-        pos, rot = self.robot_module.rotPos(rf_target2base_af)
-        # print(f'pos, rot:{pos}, {rot}')
+        rf_target2laser = np.dot(rf_target2laserOrg, rot_Laser)
+        posT_Laser, rotT_laser = self.robot_module.rotPos(rf_target2laser)
+        posT_Laser[1] = posT_Laser[1] + 60
+        posT_Laser[0] = posT_Laser[0] - 30
+        print(f'posT_Laser, rotT_laser:{posT_Laser}, {rotT_laser}')
+        rf_target2laser = self.robot_module.createRef(posT_Laser, rotT_laser)
+
+        rf_target2flange = np.dot(self.rf_laser2flange, rf_target2laser)
+        posT_FL, rotT_FL = self.robot_module.rotPos(rf_target2flange)
+        print(f'posT_FL, rotT_FL:{posT_FL}, {rotT_FL}')
+        # rf_target2laser = np.dot(rf_target2laserOrg, rot_Laser)
+
+        # rf_target2base = np.dot(np.dot(self.rf_flange2base, rf_target2flange), rotx(np.radians(40)))
+        rf_target2base = np.dot(self.rf_laser2base, rf_target2laser)
+        print("target_ref_base:", rf_target2base, "\n")
+        pos, rot = self.robot_module.rotPos(rf_target2base)
+        print(f'pos, rot:{pos}, {rot}')
+
+
         target2base_none_mat = np.concatenate((pos, rot), axis=0)
+        print(f'target2base_none_mat:{target2base_none_mat}')
 
         target2base_mat = TxyzRxyz_2_Pose(target2base_none_mat)
         # print(f"target_laser_mat:{target2base_mat}")
 
         return target2base_mat
-
+    
     ### measure distance manually
     def movLeft(self):
         # self.connectRobot()
@@ -287,9 +310,10 @@ class VisionRobot:
 
         target01 = self.createPoint(real_target01, 1, theta_laser)  # fix
         target02 = self.createPoint(real_target02, 2, theta_laser)
-        print(f"target01:{target01}, target02:{target02} ")
+        # print(f"target01:{target01}, target02:{target02} ")
 
-        return target01, target02
+        return target01, target02, theta_laser
+        # return target01
 
     def runMoveL(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[0])
@@ -343,14 +367,15 @@ def run(model, image, pos_status = 'home'):
     coordinate_pixel_list = vis.getCoordinates(model, image, True)
     # coordinate_pixel = coordinate_pixel_list[0]
     for coordinate_pixel in coordinate_pixel_list:
-        target01, target02= VisRob.getTarget(coordinate_pixel)
+        target01, target02, theta_laser = VisRob.getTarget(coordinate_pixel)
         VisRob.runMoveJ(target01)
+        
         # VisRob.sleep_seconds(5)
         VisRob.runMoveL(target02)
 
         VisRob.sleep_seconds(1)
         
-    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {
@@ -363,7 +388,7 @@ def run(model, image, pos_status = 'home'):
         # "y1_pixel": dis_pixel[0][1],
         # "x2_pixel": dis_pixel[1][0],
         # "y2_pixel": dis_pixel[1][1],
-        # "distance": dis_cameraToObject,
+        "theta_laser": theta_laser
         #### add if need
     }
     # print(f"data_export:{data_export}")

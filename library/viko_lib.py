@@ -277,18 +277,21 @@ def transform_coordinates(dict_re) -> list:
 
     coordinate_re = dict_re[0].masks.xy
 
-    indices = [idx for idx, label in enumerate(list_label) if label == 0]
+    indices = [idx for idx, label in enumerate(list_label) if label == 1] #NEW MODEL: 1
 
     extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
     find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
 
     coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
 
+    print(coordinates_end)
+    print(coordinates_start)
+
     transform_coordinate = lambda start, end: [
         [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
         [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
     ]
-
+    print(transform_coordinate)
     return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
 
 

@@ -72,6 +72,8 @@ class CameraPanel(wx.Panel):
 
     def update_camera(self):
         self.camera.Open()
+        self.camera.GainAuto.SetValue("Off")  
+        self.camera.Gain.SetValue(8.0)
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
         converter = pylon.ImageFormatConverter()
         converter.OutputPixelFormat = pylon.PixelType_BGR8packed
@@ -150,6 +152,8 @@ class InspectionFrame(wx.Frame):
     def __init__(self, parent, title):
         super(InspectionFrame, self).__init__(parent, title=title, size=(1400, 700))  # Tăng kích thước của khung để chứa cả panel camera
         self.h, self.w = 640, 640
+
+        self.load_model()
 
         notebook = wx.Notebook(self)
         tab1 = wx.Panel(notebook)
@@ -294,7 +298,7 @@ class InspectionFrame(wx.Frame):
         self.move_right()
     #####################################
     def run_inspection(self):
-        self.load_model()
+
         try:
             img = self.camera_panel.capture_image()  
             cv2.imwrite('temp.png', img)
@@ -311,15 +315,17 @@ class InspectionFrame(wx.Frame):
     def run_inspection_point(self, img):
         detected_img, coordinate, flag = self.run_ai_model(img)
         if flag == 0:
-            data = {
-                "Z_Distance": "70 cm",
-                "Start_Point": f"{coordinate[0]}",
-                "End_Point": f"{coordinate[1]}",
-                "Object": "A"
-            }
-        else:
+        #     data = {
+        #         "Z_Distance": "70 cm",
+        #         "Start_Point": f"{coordinate[0]}",
+        #         "End_Point": f"{coordinate[1]}",
+        #         "Object": "A"
+        #     }
+        # else:
             data = {"Note":"No weld object"}
-        wx.CallAfter(self.show_dialog, data)
+            wx.CallAfter(self.show_dialog, data)
+        else:
+            pass
         return detected_img
 
     def start_robot(self):
@@ -342,8 +348,8 @@ class InspectionFrame(wx.Frame):
         dialog.Destroy()
 
     def load_model(self):
-        self.status_text.SetLabel("Loading model, please wait...")
-        wx.Yield()
+        # self.status_text.SetLabel("Loading model, please wait...")
+        # wx.Yield()
         
         def update_gauge():
             for i in range(0, 101, 20):
@@ -356,8 +362,8 @@ class InspectionFrame(wx.Frame):
         self.model = YOLO(CFG.MODEL['YOLOV9']['WEIGHT'])
         
         gauge_thread.join()  # gauge to complete
-        wx.CallAfter(self.status_text.SetLabel, "Model loaded successfully")
-        wx.CallAfter(self.progress_bar.SetValue, 100)
+        # wx.CallAfter(self.status_text.SetLabel, "Model loaded successfully")
+        # wx.CallAfter(self.progress_bar.SetValue, 100)
 
     def run_ai_model(self, img):
         print(img.shape)
@@ -370,7 +376,8 @@ class InspectionFrame(wx.Frame):
         label_out = lib.getLabels(results, plot)
         print(label_out)
 
-        flag = 0 if 0 in label_out else 1
+        flag = 1 if 1 in label_out else 0 #NEW MODEL
+        # flag = 0 if 0 in label_out else 1
         print(flag)
 
         coordinate_re = results[0].masks.xy[0]
