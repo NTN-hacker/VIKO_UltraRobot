@@ -15,7 +15,19 @@ from library import viko_lib as lib
 from src import robotic_modify as rm
 from layout.gui import gui_vision 
 
+import math
 
+class DistanceCalculator:
+    def __init__(self, known_width, focal_length, sensor_width):
+        self.known_width = known_width  
+        self.focal_length = focal_length  
+        self.sensor_width = sensor_width  
+
+    def calculate_distance(self, width_in_frame):
+           
+        distance = 70
+
+        return distance
 class ImagePanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -155,6 +167,13 @@ class InspectionFrame(wx.Frame):
 
         self.load_model()
 
+        #Distance
+        self.distance_calculator = DistanceCalculator(
+            known_width=10,  
+            focal_length=16,  
+            sensor_width=3.45/1000  
+        )
+
         notebook = wx.Notebook(self)
         tab1 = wx.Panel(notebook)
         tab2 = wx.Panel(notebook)
@@ -262,6 +281,7 @@ class InspectionFrame(wx.Frame):
 
     def on_start_robot(self, event):
         self.robot_running = True
+        
         self.start_robot()
 
     def on_stop_robot(self, event):
@@ -312,27 +332,59 @@ class InspectionFrame(wx.Frame):
         except Exception as e:
             print(f"Error during inspection: {e}")
 
+    # def run_inspection_point(self, img):
+    #     detected_img, coordinate, flag = self.run_ai_model(img)
+    #     if flag == 0:
+    #     #     data = {
+    #     #         "Z_Distance": "70 cm",
+    #     #         "Start_Point": f"{coordinate[0]}",
+    #     #         "End_Point": f"{coordinate[1]}",
+    #     #         "Object": "A"
+    #     #     }
+    #     # else:
+    #         data = {"Note":"No weld object"}
+    #         wx.CallAfter(self.show_dialog, data)
+    #     else:
+    #         pass
+    #     return detected_img
+
     def run_inspection_point(self, img):
-        detected_img, coordinate, flag = self.run_ai_model(img)
-        if flag == 0:
-        #     data = {
-        #         "Z_Distance": "70 cm",
-        #         "Start_Point": f"{coordinate[0]}",
-        #         "End_Point": f"{coordinate[1]}",
-        #         "Object": "A"
-        #     }
-        # else:
-            data = {"Note":"No weld object"}
+        detected_img, boxes, flag = self.run_ai_model(img)
+        print('boxes', boxes)
+        if flag == 1:
+            if boxes is not None and len(boxes) > 0:
+                box = boxes.tolist()  
+                object_width = box[2] - box[0]  
+                distance = self.distance_calculator.calculate_distance(object_width)
+                data = {
+                    "Z_Distance": f"{distance:.2f} cm",
+                    "Start_Point": f"{box[0]}, {box[1]}",
+                    "End_Point": f"{box[2]}, {box[3]}",
+                    "Object": "A"
+                }
+            else:
+                data = {"Note": "No weld object"}
             wx.CallAfter(self.show_dialog, data)
         else:
             pass
         return detected_img
 
+    # def start_robot(self):
+    #     img = cv2.imread('temp.png', cv2.IMREAD_ANYCOLOR)
+    #     print('Testing')
+    #     rm.run(self.model, img, self.pos_status)
+    
+    #     return True
+
     def start_robot(self):
-        print('Testing')
+        self.robot_running = True
+        robot_thread = threading.Thread(target=self.run_robot)
+        robot_thread.start()
+
+    def run_robot(self):
         img = cv2.imread('temp.png', cv2.IMREAD_ANYCOLOR)
         rm.run(self.model, img, self.pos_status)
-        return True
+
     def stop_robot(self):
         print('Testing')
         rm.stop()
