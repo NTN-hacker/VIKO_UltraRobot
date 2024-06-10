@@ -138,22 +138,21 @@ class VisionRobot:
         # )
         
         pos_target2camera, rot_target2camera = self.robot_module.rotPosRef(
-             arr_target[0], arr_target[1], arr_target[2], -30, 20, 0
-        )
+             arr_target[0], arr_target[1], arr_target[2], -30, -20, 0)     ### configure the Rx and Ry rotation angle manually 
 
         target2Camera = self.robot_module.createRef(
             pos_target2camera, rot_target2camera
         )
-        print(f'target2Camera:{target2Camera}')
+
         rf_target2laserOrg = np.dot(np.linalg.inv(self.rf_laser2camera), target2Camera)
-        print(f"rf_target2laserOrg:{rf_target2laserOrg}")
         rot_Laser = rotz(np.radians(theta_laser))
 
         rf_target2laser = np.dot(rf_target2laserOrg, rot_Laser)
         posT_Laser, rotT_laser = self.robot_module.rotPos(rf_target2laser)
-        posT_Laser[1] = posT_Laser[1] + 60
-        posT_Laser[0] = posT_Laser[0] - 30
-        print(f'posT_Laser, rotT_laser:{posT_Laser}, {rotT_laser}')
+        posT_Laser[1] = posT_Laser[1] + 60      ### configure the y-position manually
+        posT_Laser[0] = posT_Laser[0] - 30      ### configure the x-position manually
+
+
         rf_target2laser = self.robot_module.createRef(posT_Laser, rotT_laser)
 
         rf_target2flange = np.dot(self.rf_laser2flange, rf_target2laser)
@@ -375,7 +374,7 @@ def run(model, image, pos_status = 'home'):
 
         VisRob.sleep_seconds(1)
         
-    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     current_joint_values, limit = VisRob.getParam()
     data_export = {

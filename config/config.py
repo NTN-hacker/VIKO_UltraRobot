@@ -10,7 +10,7 @@ config file
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45
 LINEAR_SPEEDS = [50, 100]
-JOINT_SPEEDS = [10, 20]
+JOINT_SPEEDS = [10, 0]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
@@ -46,6 +46,7 @@ MODEL = {
     },
     "YOLOV9": {
         "WEIGHT": 'D:\\nhan\\viko\src\weight\\best.pt'
+        # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     }
 }
 
