@@ -180,7 +180,7 @@ if __name__ == "__main__":
             normal[0],
             normal[1],
             normal[2],
-            length=1,
+            length=4,
             color="purple",
         )
 
