@@ -120,6 +120,31 @@ class VisionModule():
             cv2.destroyAllWindows()
         return coordinate 
     
+    def _getCoordinateSingleobject_(self, image):
+        
+            if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
+                #predict
+                img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
+                dict_re = self.model.predict(img_resize, save=False, conf=0.65)   
+
+                #image after predict
+                plot = dict_re[0].plot() 
+
+                #coordinates
+                transformed_coordinates = lib.transform_coordinates(dict_re, tag = 'single')
+                print('transformed_coordinates ', transformed_coordinates)
+
+                # img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
+                
+                #save data
+                # label_out = lib.save_data_scan(dict_re, plot, transformed_coordinates)
+
+                # cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
+                # cv2.waitKey(0)
+                # cv2.destroyAllWindows()
+
+            return transformed_coordinates    
+
     def _getCoordinateMultiobject_(self, image):
     
         if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
@@ -132,7 +157,7 @@ class VisionModule():
 
             #coordinates
             transformed_coordinates = lib.transform_coordinates(dict_re)
-            print(transformed_coordinates)
+            print('transformed_coordinates ', transformed_coordinates)
 
             img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
             
@@ -148,5 +173,5 @@ class VisionModule():
 def getCoordinates(model, image, flag=True):
     vision = VisionModule()
     vision.load_model(model)
-    coordinate_list = vision._getCoordinateMultiobject_(image)
+    coordinate_list = vision._getCoordinateSingleobject_(image)
     return coordinate_list

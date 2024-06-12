@@ -264,7 +264,7 @@ def draw_coordinates_on_image(image, coordinates):
     
     return image
 
-def transform_coordinates(dict_re) -> list:
+def transform_coordinates(dict_re, tag = 'multi') -> list:
     """
     Transforms the start and end coordinates based on the provided ratios.
     """
@@ -274,25 +274,79 @@ def transform_coordinates(dict_re) -> list:
             for box in boxes:
                 label = int(box.cls.item()) 
                 list_label.append(label)
+    if tag == 'multi':
 
-    coordinate_re = dict_re[0].masks.xy
 
-    indices = [idx for idx, label in enumerate(list_label) if label == 1] #NEW MODEL: 1
+        coordinate_re = dict_re[0].masks.xy
 
-    extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
-    find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
+        indices = [idx for idx, label in enumerate(list_label) if label == 1] #NEW MODEL: 1
 
-    coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
+        extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
 
-    print(coordinates_end)
-    print(coordinates_start)
+        find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
 
-    transform_coordinate = lambda start, end: [
-        [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
-        [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
-    ]
-    print(transform_coordinate)
-    return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
+        coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
+
+        print(coordinates_end)
+        print(coordinates_start)
+
+        transform_coordinate = lambda start, end: [
+            [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
+            [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
+        ]
+        print(transform_coordinate)
+        return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
+    elif tag == 'single':
+        from scipy.linalg import lstsq
+
+        img_re = dict_re[0][0].orig_img
+
+        #get mask
+        # index = 1
+        indices = [idx for idx, label in enumerate(list_label) if label == 1]
+        mask_test = dict_re[0].masks.data.detach().cpu().numpy()[indices[0]]
+        mask = cv2.normalize(mask_test, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+
+        #edge detection
+        high_threshold = 200
+        low_threshold = 100
+
+        edges = cv2.Canny(mask, low_threshold, high_threshold)
+
+        cv2.imshow("Image after edge detection", cv2.resize(edges, (600, 600), cv2.INTER_CUBIC))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        #get coordinate
+        x_coords, y_coords = np.nonzero(edges)
+
+        A = np.column_stack((x_coords, np.ones_like(x_coords)))
+        b = np.array(y_coords)
+
+        coeffs, _, _, _ = lstsq(A, b)
+
+        a, b = coeffs
+
+        print("Đường trung tâm: y =  {:.2f}*x + {:.2f}".format(a, b))
+
+        y_line = np.linspace(min(x_coords), max(x_coords), 100) 
+        x_line = a * y_line + b 
+
+        cv2.line(img_re, (int(x_line[0]), int(y_line[0])), (int(x_line[-1]), int(y_line[-1])), color = (255, 0, 0), thickness = 1)
+
+        coordinate_re = [[[int(x_line[0]* CFG.Y_RATIO), int(y_line[0]* CFG.X_RATIO)], [int(x_line[-1]* CFG.Y_RATIO), int(y_line[-1]* CFG.X_RATIO)]]]
+
+        cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        return coordinate_re
+
+
+
+    else:
+        print('No signal')
+    
 
 
 def save_data_scan(results, image_re, coordinates):

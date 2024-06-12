@@ -10,14 +10,14 @@ config file
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45
 LINEAR_SPEEDS = [50, 100]
-JOINT_SPEEDS = [10, 0]
+JOINT_SPEEDS = [20, 40]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
 HORIZONTAL_BASELINE = 55 # 65: best value with object is black dot
 VERTICAL_BASELINE = 450 # best value with object is black dot
 
-DISTANCE_LASERtoOBJECT = 120
+DISTANCE_LASERtoOBJECT = 180
 DISTANCE_CAMERA2OBJECT = 569
 
 
