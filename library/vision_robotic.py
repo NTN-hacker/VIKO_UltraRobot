@@ -120,58 +120,31 @@ class VisionModule():
             cv2.destroyAllWindows()
         return coordinate 
     
-    def _getCoordinateSingleobject_(self, image):
-        
-            if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
-                #predict
-                img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
-                dict_re = self.model.predict(img_resize, save=False, conf=0.65)   
-
-                #image after predict
-                plot = dict_re[0].plot() 
-
-                #coordinates
-                transformed_coordinates = lib.transform_coordinates(dict_re, tag = 'single')
-                print('transformed_coordinates ', transformed_coordinates)
-
-                # img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
-                
-                #save data
-                # label_out = lib.save_data_scan(dict_re, plot, transformed_coordinates)
-
-                # cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
-                # cv2.waitKey(0)
-                # cv2.destroyAllWindows()
-
-            return transformed_coordinates    
-
-    def _getCoordinateMultiobject_(self, image):
-    
+    def _getInfoObject_(self, image):
+        print(image.shape)
         if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
             #predict
+            # img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
-            dict_re = self.model.predict(img_resize, save=False, conf=0.65)   
+            dict_re = self.model.predict(img_resize, conf=0.65)   
 
             #image after predict
             plot = dict_re[0].plot() 
 
             #coordinates
-            transformed_coordinates = lib.transform_coordinates(dict_re)
-            print('transformed_coordinates ', transformed_coordinates)
+            listCoordinateReal = lib.transform_coordinates(dict_re)
+            print('Coordinate for robot ', listCoordinateReal)
 
-            img_re = lib.draw_coordinates_on_image(image, transformed_coordinates)
-            
             #save data
-            label_out = lib.save_data_scan(dict_re, plot, transformed_coordinates)
+            label_out = lib.save_data_scan(dict_re, plot, listCoordinateReal)
 
-            cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # default have weld
+            weld_model = lib.getWeldModel(dict_re= dict_re)
 
-        return transformed_coordinates 
+            return listCoordinateReal, weld_model
     
 def getCoordinates(model, image, flag=True):
     vision = VisionModule()
     vision.load_model(model)
-    coordinate_list = vision._getCoordinateSingleobject_(image)
-    return coordinate_list
+    coordinate_list, model_weld = vision._getInfoObject_(image)
+    return coordinate_list, model_weld

@@ -11,6 +11,7 @@ sys.path.append(
 )
 from config import config as CFG
 from library import viko_lib as lib
+from scipy.linalg import lstsq
 
 MAX_AREA = 2048*2448
 #Preprocessing
@@ -194,27 +195,90 @@ def find_point_end(pts: np.array):
 
     return max_distance_point, distances[max_distance_index]
 
-def getLabels(results, image_re):
+def find_centerLine(dict_re, index_obj):
+
+    img_re = dict_re[0].orig_img
+
+    mask_test = dict_re[0].masks.data.detach().cpu().numpy()[index_obj]
+    mask = cv2.normalize(mask_test, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+
+    #edge detection
+    high_threshold = 200
+    low_threshold = 100
+    edges = cv2.Canny(mask, low_threshold, high_threshold)
+
+    # nếu len(unique(x) < len(unique(y)))
+    # y is first
+    if (len(np.unique(np.nonzero(edges)[0])) < len(np.unique(np.nonzero(edges)[1]))):
+        y, x = np.nonzero(edges)
+        flag = False
+    else:
+        flag = True
+        x, y = np.nonzero(edges)
+
+    coefficient_matrix = np.column_stack((x, np.ones_like(x))) # y = x.a + 1.b
+
+    y_true = np.array(y) 
+
+    coeffs, _, loss, _ = lstsq(coefficient_matrix, y_true)
+
+    a, b = coeffs
+
+    start_end = np.linspace(min(x), max(x), 2)
+
+    y_start = start_end[0]*a + b
+    y_end = start_end[1]*a + b
+
+    # get coordinate start, end (by image, y horizontal - x vertical)
+    if flag == True:
+        coordinateXStart = y_start
+        coordinateXEnd = y_end
+        coordinateYStart = start_end[0]
+        coordinateYEnd = start_end[1]
+    else:
+        coordinateXStart = start_end[0]
+        coordinateXEnd = start_end[1]
+        coordinateYStart = y_start
+        coordinateYEnd = y_end
+    
+    print(flag)
+
+    print(F'coordinateXStart ', coordinateXStart)
+    print(F'coordinateYStart ', coordinateYStart)
+    
+    # cv2.line(img_re, (int(coordinateXStart), int(coordinateYStart)), (int(coordinateXEnd), int(coordinateYEnd)), color = (255, 0, 0), thickness = 1)
+
+    # cv2.imshow('test', mask)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+
+    # cv2.imshow('test', edges)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    # return coordinates
+
+    ## view and display
+    coordinateStart = [int(coordinateXStart), int(coordinateYStart)]
+    coordinateEnd   = [int(coordinateXEnd), int(coordinateYEnd)]
+
+    ## real
+    coordinateStartReal = [int(coordinateXStart*CFG.Y_RATIO), int(coordinateYStart*CFG.X_RATIO)]
+    coordinateEndReal   = [int(coordinateXEnd*CFG.Y_RATIO), int(coordinateYEnd*CFG.X_RATIO)]
+    
+    ## merge
+    coordinateView = [coordinateStart, coordinateEnd]
+    coordinateReal = [coordinateStartReal, coordinateEndReal] if coordinateStartReal[1] < coordinateEndReal[1] \
+                                                            else [coordinateEndReal, coordinateStartReal]
+
+    return coordinateView, coordinateReal
+
+def getLabels(results):
     """
     Save data predict when infer
     """
-
-
-    # output_dir = 'runs/segment/result'
-    # os.makedirs(output_dir, exist_ok=True)
     labels = []
-
-    # csv_file_path = 'runs/segment/result/predictions.csv'
-    # if os.path.exists(csv_file_path):
-    #     df = pd.read_csv(csv_file_path)
-    # else:
-    #     df = pd.DataFrame(columns=['Timestamp', 'ImageName', 'OutputPath', 'Label', 'Confidence'])
-
-    # timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-    # new_rows = []
-
 
     for idx, result in enumerate(results):
         boxes = result.boxes  
@@ -222,23 +286,6 @@ def getLabels(results, image_re):
             label = int(box.cls.item()) 
             confidence = float(box.conf.item()) 
             labels.append(label)
-            
-    #         image_name = f"sample_{len(df) + len(new_rows) + 1}.png"
-    #         output_path = os.path.join(output_dir, image_name)
-    #         cv2.imwrite(output_path, image_re)
-
-    #         new_rows.append({
-    #             'Timestamp': timestamp,
-    #             'ImageName': image_name,
-    #             'OutputPath': output_path,
-    #             'Label': label,
-    #             'Confidence': confidence
-    #         })
-
-    # new_df = pd.DataFrame(new_rows)
-    # df = pd.concat([df, new_df], ignore_index=True)
-
-    # df.to_csv(csv_file_path, index=False)
     return labels
 
 def draw_coordinates_on_image(image, coordinates):
@@ -264,90 +311,110 @@ def draw_coordinates_on_image(image, coordinates):
     
     return image
 
-def transform_coordinates(dict_re, tag = 'multi') -> list:
+def transform_coordinates(dict_re) -> list:
     """
     Transforms the start and end coordinates based on the provided ratios.
     """
-    list_label = []
-    for  result in dict_re:
-            boxes = result.boxes  
-            for box in boxes:
-                label = int(box.cls.item()) 
-                list_label.append(label)
-    if tag == 'multi':
 
-
-        coordinate_re = dict_re[0].masks.xy
-
-        indices = [idx for idx, label in enumerate(list_label) if label == 1] #NEW MODEL: 1
-
-        extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
-
-        find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
-
-        coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
-
-        print(coordinates_end)
-        print(coordinates_start)
-
-        transform_coordinate = lambda start, end: [
-            [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
-            [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
-        ]
-        print(transform_coordinate)
-        return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
-    elif tag == 'single':
-        from scipy.linalg import lstsq
-
-        img_re = dict_re[0][0].orig_img
-
-        #get mask
-        # index = 1
-        indices = [idx for idx, label in enumerate(list_label) if label == 1]
-        mask_test = dict_re[0].masks.data.detach().cpu().numpy()[indices[0]]
-        mask = cv2.normalize(mask_test, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
-
-        #edge detection
-        high_threshold = 200
-        low_threshold = 100
-
-        edges = cv2.Canny(mask, low_threshold, high_threshold)
-
-        cv2.imshow("Image after edge detection", cv2.resize(edges, (600, 600), cv2.INTER_CUBIC))
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        #get coordinate
-        x_coords, y_coords = np.nonzero(edges)
-
-        A = np.column_stack((x_coords, np.ones_like(x_coords)))
-        b = np.array(y_coords)
-
-        coeffs, _, _, _ = lstsq(A, b)
-
-        a, b = coeffs
-
-        print("Đường trung tâm: y =  {:.2f}*x + {:.2f}".format(a, b))
-
-        y_line = np.linspace(min(x_coords), max(x_coords), 100) 
-        x_line = a * y_line + b 
-
-        cv2.line(img_re, (int(x_line[0]), int(y_line[0])), (int(x_line[-1]), int(y_line[-1])), color = (255, 0, 0), thickness = 1)
-
-        coordinate_re = [[[int(x_line[0]* CFG.Y_RATIO), int(y_line[0]* CFG.X_RATIO)], [int(x_line[-1]* CFG.Y_RATIO), int(y_line[-1]* CFG.X_RATIO)]]]
-
-        cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        return coordinate_re
-
-
-
-    else:
-        print('No signal')
+    listCoordinateView = list([])
+    listCoordinateReal = list([])
     
+    list_label = lib.getLabels(dict_re)
+    indices = [idx for idx, label in enumerate(list_label) if label == 1]
 
+    for index in indices:
+        coordinateView, coordinateReal = lib.find_centerLine(dict_re= dict_re, index_obj = index)
+        listCoordinateView.append(coordinateView)
+        listCoordinateReal.append(coordinateReal)
+    
+    #View image all weld
+    img_re = draw_coordinates_on_image(dict_re[0].orig_img, listCoordinateView)    
+    cv2.imshow('Image Re', img_re)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    return listCoordinateReal
+
+
+    # if tag == 'multi':
+
+    #     coordinate_re = dict_re[0].masks.xy
+    #      #NEW MODEL: 1
+    #     extract_points = lambda idx: np.array(coordinate_re[idx], dtype=np.int32)
+    #     find_end_points = lambda pts: (lib.find_point_end(pts)[0].astype('uint'), pts[0].astype('uint'))
+    #     coordinates_end, coordinates_start = zip(*map(lambda idx: find_end_points(extract_points(idx)), indices))
+    #     transform_coordinate = lambda start, end: [
+    #         [int(start[0] * CFG.Y_RATIO), int(start[1] * CFG.X_RATIO)],
+    #         [int(end[0] * CFG.Y_RATIO), int(end[1] * CFG.X_RATIO)]
+    #     ]
+    #     return list(map(lambda pair: transform_coordinate(*pair), zip(coordinates_start, coordinates_end)))
+    
+    # elif tag == 'single':
+    #     from scipy.linalg import lstsq
+
+    #     img_re = dict_re[0][0].orig_img
+
+    #     #get mask
+    #     # index = 1
+    #     indices = [idx for idx, label in enumerate(list_label) if label == 1]
+    #     mask_test = dict_re[0].masks.data.detach().cpu().numpy()[indices[0]]
+    #     mask = cv2.normalize(mask_test, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+
+    #     #edge detection
+    #     high_threshold = 200
+    #     low_threshold = 100
+
+    #     edges = cv2.Canny(mask, low_threshold, high_threshold)
+
+    #     cv2.imshow("Image after edge detection", cv2.resize(edges, (600, 600), cv2.INTER_CUBIC))
+    #     cv2.waitKey(0)
+    #     cv2.destroyAllWindows()
+
+    #     #get coordinate
+    #     x_coords, y_coords = np.nonzero(edges)
+
+    #     A = np.column_stack((x_coords, np.ones_like(x_coords)))
+    #     b = np.array(y_coords)
+
+    #     coeffs, _, _, _ = lstsq(A, b)
+
+    #     a, b = coeffs
+
+    #     print("Đường trung tâm: y =  {:.2f}*x + {:.2f}".format(a, b))
+
+    #     y_line = np.linspace(min(x_coords), max(x_coords), 100) 
+    #     x_line = a * y_line + b 
+
+    #     cv2.line(img_re, (int(x_line[0]), int(y_line[0])), (int(x_line[-1]), int(y_line[-1])), color = (255, 0, 0), thickness = 1)
+
+    #     coordinate_re = [[[int(x_line[0]* CFG.Y_RATIO), int(y_line[0]* CFG.X_RATIO)], [int(x_line[-1]* CFG.Y_RATIO), int(y_line[-1]* CFG.X_RATIO)]]]
+
+    #     cv2.imshow("Image after define", cv2.resize(img_re, (600, 600), cv2.INTER_CUBIC))
+    #     cv2.waitKey(0)
+    #     cv2.destroyAllWindows()
+
+    #     return coordinate_re
+
+    # else:
+    #     print('No signal')
+    
+def getWeldModel(dict_re) -> str:
+    """
+    Label for single object
+    """
+    label_conf_model_weld = []
+    dict_model_weld = {0: '0_degree', 1: 'weld', 2: '90_degree', 3: 'other', 4: '30_degree'}
+    for idx, result in enumerate(dict_re):
+        boxes = result.boxes  
+        for box in boxes:
+            label = int(box.cls.item()) 
+            confidence = float(box.conf.item())
+            if (label != 1) and (label != 3) and confidence > 0.6:
+    
+                label_conf_model_weld.append([dict_model_weld[label], confidence])
+
+    shape = label_conf_model_weld[0][0]
+    return shape
 
 def save_data_scan(results, image_re, coordinates):
     """

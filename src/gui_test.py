@@ -349,7 +349,7 @@ class InspectionFrame(wx.Frame):
     #     return detected_img
 
     def run_inspection_point(self, img):
-        detected_img, boxes, flag = self.run_ai_model(img)
+        detected_img, boxes, name_obj, flag = self.run_ai_model(img)
         print('boxes', boxes)
         if flag == 1:
             if boxes is not None and len(boxes) > 0:
@@ -360,7 +360,7 @@ class InspectionFrame(wx.Frame):
                     "Z_Distance": f"{distance:.2f} cm",
                     "Start_Point": f"{box[0]}, {box[1]}",
                     "End_Point": f"{box[2]}, {box[3]}",
-                    "Object": "A"
+                    "Object": name_obj
                 }
             else:
                 data = {"Note": "No weld object"}
@@ -425,7 +425,8 @@ class InspectionFrame(wx.Frame):
         plot = results[0].plot()
 
         #save data
-        label_out = lib.getLabels(results, plot)
+        label_out = lib.getLabels(results)
+        name_obj = lib.getWeldModel(results)
         print(label_out)
 
         flag = 1 if 1 in label_out else 0 #NEW MODEL
@@ -439,7 +440,7 @@ class InspectionFrame(wx.Frame):
             pts[idx] = [int(point[0]), int(point[1])]
         pts = np.array(pts, np.int32)
         
-        return plot, results[0].boxes.xyxy[0], flag
+        return plot, results[0].boxes.xyxy[0], name_obj, flag
 
     def on_close(self, event):
         if hasattr(self, 'camera_panel') and self.camera_panel:
