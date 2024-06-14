@@ -124,7 +124,7 @@ class VisionModule():
         print(image.shape)
         if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
             #predict
-            # img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2R GB)
             img_resize = cv2.resize(image, (640, 640), interpolation= cv2.INTER_CUBIC)
             dict_re = self.model.predict(img_resize, conf=0.65)   
 
@@ -132,19 +132,20 @@ class VisionModule():
             plot = dict_re[0].plot() 
 
             #coordinates
-            listCoordinateReal = lib.transform_coordinates(dict_re)
+            listCoordinateReal, listModelWeld = lib.transform_coordinates(dict_re)
             print('Coordinate for robot ', listCoordinateReal)
+            print('Model Weld for robot ', listModelWeld)
 
             #save data
             label_out = lib.save_data_scan(dict_re, plot, listCoordinateReal)
 
             # default have weld
-            weld_model = lib.getWeldModel(dict_re= dict_re)
+            # weld_model = lib.getWeldModel(dict_re= dict_re)
 
-            return listCoordinateReal, weld_model
+            return listCoordinateReal, listModelWeld
     
 def getCoordinates(model, image, flag=True):
     vision = VisionModule()
     vision.load_model(model)
-    coordinate_list, model_weld = vision._getInfoObject_(image)
-    return coordinate_list, model_weld
+    coordinate_list, model_weld_list = vision._getInfoObject_(image)
+    return coordinate_list, model_weld_list

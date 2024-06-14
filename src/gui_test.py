@@ -351,6 +351,7 @@ class InspectionFrame(wx.Frame):
     def run_inspection_point(self, img):
         detected_img, boxes, name_obj, flag = self.run_ai_model(img)
         print('boxes', boxes)
+        print('Model weld  ', name_obj)
         if flag == 1:
             if boxes is not None and len(boxes) > 0:
                 box = boxes.tolist()  
@@ -424,10 +425,13 @@ class InspectionFrame(wx.Frame):
         
         plot = results[0].plot()
 
+        print(1)
+
         #save data
         label_out = lib.getLabels(results)
-        name_obj = lib.getWeldModel(results)
+        name_obj = 'Object test' #lib.findContainingPairs(results)
         print(label_out)
+        print(name_obj)
 
         flag = 1 if 1 in label_out else 0 #NEW MODEL
         # flag = 0 if 0 in label_out else 1

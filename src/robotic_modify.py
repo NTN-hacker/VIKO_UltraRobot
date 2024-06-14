@@ -315,7 +315,9 @@ class VisionRobot:
         return dis_cameraToObject, dis_pixel
 
     def getTarget(self, coordinate_pixel, shape):
+        target01, target02, theta_laser = None, None, None
 
+        print(f'shape', shape)
         theta_laser = self.robot_module.rotLaser(coordinate_pixel)
 
         coordinate_pixel_1 = coordinate_pixel[0]
@@ -353,7 +355,6 @@ class VisionRobot:
         real_target01 = np.array([x_to_camera_01, y_to_camera_01, z_laser_to_camera])
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
-
         if shape == "90_degree":
             alpha = 40
             if alpha < 0:
@@ -364,12 +365,14 @@ class VisionRobot:
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
         elif shape == "30_degree":
-            alpha = -20
+            alpha = 20
             if alpha < 0:
                 backOx = -np.tan(np.radians(20)) * 150
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
                 backOx = np.tan(np.radians(20)) * 150
+                target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
+
 
         elif shape == "0_degree":
             alpha = backOx = 0
@@ -432,11 +435,12 @@ def run(model, image, pos_status = 'home'):
         stop()
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
 
-    coordinate_pixel_list, model_weld = vis.getCoordinates(model, image, True)
-    print(f'Weld model {model_weld}')
+    coordinate_pixel_list, model_weld_list = vis.getCoordinates(model, image, True)
+    print(f'Weld model {model_weld_list}')
     # coordinate_pixel = coordinate_pixel_list[0]
-    for coordinate_pixel in coordinate_pixel_list:
-        target01, target02, theta_laser = VisRob.getTarget(coordinate_pixel, model_weld)
+    for index, coordinate_pixel in enumerate(coordinate_pixel_list):
+        print(f'Weld model {model_weld_list[index]}')
+        target01, target02, theta_laser = VisRob.getTarget(coordinate_pixel, model_weld_list[index])
         VisRob.runMoveJ(target01)
         
         # VisRob.sleep_seconds(5)

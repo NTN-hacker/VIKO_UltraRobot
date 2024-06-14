@@ -318,14 +318,21 @@ def transform_coordinates(dict_re) -> list:
 
     listCoordinateView = list([])
     listCoordinateReal = list([])
+    listModelWeld = list([])
     
-    list_label = lib.getLabels(dict_re)
-    indices = [idx for idx, label in enumerate(list_label) if label == 1]
-
-    for index in indices:
-        coordinateView, coordinateReal = lib.find_centerLine(dict_re= dict_re, index_obj = index)
+    # list_label = lib.getLabels(dict_re)
+    # indices = [idx for idx, label in enumerate(list_label) if label == 1]
+    container_pairs = getWeldModelMulti(dict_re= dict_re)
+    for obj in container_pairs:
+        print(obj[0][0])
+        print(obj[1][1])
+        coordinateView, coordinateReal = lib.find_centerLine(dict_re= dict_re, index_obj = obj[0][0])
         listCoordinateView.append(coordinateView)
         listCoordinateReal.append(coordinateReal)
+        listModelWeld.append(obj[1][1])
+    
+    # mac dinh chi 1 mau voi 1 bouding box
+    # listModelWeld = np.unique(listModelWeld).tolist()
     
     #View image all weld
     img_re = draw_coordinates_on_image(dict_re[0].orig_img, listCoordinateView)    
@@ -333,7 +340,7 @@ def transform_coordinates(dict_re) -> list:
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    return listCoordinateReal
+    return listCoordinateReal, listModelWeld
 
 
     # if tag == 'multi':
@@ -403,18 +410,35 @@ def getWeldModel(dict_re) -> str:
     Label for single object
     """
     label_conf_model_weld = []
-    dict_model_weld = {0: '0_degree', 1: 'weld', 2: '90_degree', 3: 'other', 4: '30_degree'}
+    dict_model_weld = CFG.MODEL_WELD
     for idx, result in enumerate(dict_re):
         boxes = result.boxes  
         for box in boxes:
             label = int(box.cls.item()) 
             confidence = float(box.conf.item())
-            if (label != 1) and (label != 3) and confidence > 0.6:
+            if (label != 1) and (label != 3) and confidence > CFG.CONF_MODEL_WELD: #1: weld, 3: other
     
                 label_conf_model_weld.append([dict_model_weld[label], confidence])
 
     shape = label_conf_model_weld[0][0]
     return shape
+
+def getWeldModelMulti(dict_re) -> list:
+    label_box_model_weld = []
+    dict_model_weld = CFG.MODEL_WELD
+    for idx, result in enumerate(dict_re):
+        boxes = result.boxes  
+        for index, box in enumerate(boxes):
+            label = int(box.cls.item()) 
+            confidence = float(box.conf.item())
+            box = box.xyxy.detach().cpu().numpy().tolist()[0]
+            if (label != 3) and confidence > CFG.CONF_MODEL_WELD: #3: other
+                label_box_model_weld.append([index, dict_model_weld[label], confidence, box])
+    print(label_box_model_weld)
+    containing_pairs = findContainingPairs(label_box_model_weld)
+    print(containing_pairs)
+
+    return containing_pairs
 
 def save_data_scan(results, image_re, coordinates):
     """
@@ -471,3 +495,35 @@ def save_data_scan(results, image_re, coordinates):
     new_df = pd.DataFrame(new_rows)
     df = pd.concat([df, new_df], ignore_index=True)
     df.to_csv(csv_file_path, index=False)
+
+def isContained(outer_rect, inner_rect):
+    x1_outer, y1_outer, x2_outer, y2_outer = outer_rect
+    x1_inner, y1_inner, x2_inner, y2_inner = inner_rect
+
+    return (
+        x1_outer <= x1_inner
+        and x2_inner <= x2_outer
+        and y1_outer <= y1_inner
+        and y2_inner <= y2_outer
+    )
+
+def findContainingPairs(data):
+    containing_pairs = list([])
+
+    for label_item in data:
+        idx, label, confidence, box = label_item
+        if label in ['0_degree', '30_degree', '90_degree']:
+            x1, y1, x2, y2 = box
+            label_rect = (x1, y1, x2, y2)
+
+            for weld_item in data:
+                weld_idx, weld_label, weld_confidence, weld_box = weld_item
+                if weld_label == 'weld':
+                    weld_x1, weld_y1, weld_x2, weld_y2 = weld_box
+                    weld_rect = (weld_x1, weld_y1, weld_x2, weld_y2)
+
+                    if isContained(label_rect, weld_rect):
+                        containing_pairs.append([weld_item, label_item])
+
+    return containing_pairs
+
