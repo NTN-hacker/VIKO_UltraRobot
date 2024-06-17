@@ -8,14 +8,15 @@ config file
 
 
 ########################################################### ROBOTIC ###################################################################
-PIXEL_SIZE = 3.45
+PIXEL_SIZE = 3.45  ## unit: micrometer
 LINEAR_SPEEDS = [50, 100]
 JOINT_SPEEDS = [20, 120]
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
-HORIZONTAL_BASELINE = 55 # 65: best value with object is black dot
-VERTICAL_BASELINE = 450 # best value with object is black dot
+HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
+VERTICAL_BASELINE = 450  # best value with object is black dot
+SAFE_DISTANCE = 600
 
 DISTANCE_LASERtoOBJECT = 180
 DISTANCE_CAMERA2OBJECT = 569
@@ -41,22 +42,22 @@ MODEL = {
         "OVERLAP": 50,
     },
     "HQ_SAM": {
-        "WEIGHT": 'D:\\nhan\\viko\src\weight\sam_hq_vit_tiny.pth',
+        "WEIGHT": "D:\\nhan\\viko\src\weight\sam_hq_vit_tiny.pth",
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": 'D:\\nhan\\viko\src\weight\\best.pt'
+        "WEIGHT": "D:\\nhan\\viko\src\weight\\best.pt"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
-    }
+    },
 }
 
 ########################################################## COORDINATE #######################################################################
-X_RATIO = 2048/640 
-Y_RATIO = 2448/640
+X_RATIO = 2048 / 640
+Y_RATIO = 2448 / 640
 
 
 ######################################################### LABEL #############################################################################
-MODEL_WELD = {0: '0_degree', 1: 'weld', 2: '90_degree', 3: 'other', 4: '30_degree'}
+MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degree"}
 
 ######################################################### LABEL #############################################################################
 CONF_MODEL_WELD = 0.6
