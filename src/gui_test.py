@@ -232,14 +232,17 @@ class InspectionFrame(wx.Frame):
         self.run_inspection_plan_btn = wx.Button(right_panel, label="Run Inspection Plan")
         self.start_robot_btn = wx.Button(right_panel, label="Start Robot")
         self.stop_robot_btn = wx.Button(right_panel, label="Stop Robot")
+        self.save_image_btn = wx.Button(right_panel, label = "Save Image")
 
         self.run_inspection_plan_btn.Bind(wx.EVT_BUTTON, self.on_run_inspection_plan)
         self.start_robot_btn.Bind(wx.EVT_BUTTON, self.on_start_robot)
         self.stop_robot_btn.Bind(wx.EVT_BUTTON, self.on_stop_robot)
+        self.save_image_btn.Bind(wx.EVT_BUTTON, self.on_save)
 
         button_sizer.Add(self.run_inspection_plan_btn, 0, wx.ALL, 5)
         button_sizer.Add(self.start_robot_btn, 0, wx.ALL, 5)
         button_sizer.Add(self.stop_robot_btn, 0, wx.ALL, 5)
+        button_sizer.Add(self.save_image_btn, 0, wx.ALL, 5)
 
         right_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER)
 
@@ -301,6 +304,9 @@ class InspectionFrame(wx.Frame):
         button.Refresh()
     ###################################################
     ################# NEW FUNCTION ####################
+        
+    def on_save(self, event):
+        self.save()
 
     def on_run_center(self, event):
         self.robot_running = True
@@ -468,6 +474,21 @@ class InspectionFrame(wx.Frame):
         rm.movR()
         print('Testing')
         return True
+
+    def save(self):
+        from datetime import datetime
+        from PIL import Image
+        img_arr = self.camera_panel.capture_image()  
+        img_arr = cv2.cvtColor(img_arr, cv2.COLOR_BGR2RGB)
+        print(img_arr.shape)
+        img = Image.fromarray(img_arr)
+        current_time = datetime.now()
+        timestamp = current_time.strftime("%Y%m%d_%H%M%S")
+        new_filename = f"data/AI/Data_Label/image_{timestamp}.png"
+        img.save(new_filename)
+        
+        print(f"Ảnh đã được lưu với tên: {new_filename}")
+
     ###################################
 
 app = wx.App(False)

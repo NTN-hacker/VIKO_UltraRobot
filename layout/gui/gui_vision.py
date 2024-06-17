@@ -139,6 +139,10 @@ class BaslerGuiWindow(wx.Frame):
         self.preview_btn.Bind(wx.EVT_BUTTON, self.OnPreview)
         sizer.Add(self.preview_btn, pos=(2, 1),
                   flag=wx.EXPAND | wx.ALL, border=5)
+        
+        self.save_btn = wx.Button(panel, label = "Save Image")
+        self.save_btn.Bind(wx.EVT_BUTTON, self.OnSaveImage)
+        sizer.Add(self.save_btn, pos = (2, 2), flag = wx.EXPAND | wx.ALL, border = 5)
 
         capmode_ctrl_label = wx.StaticText(panel, label="Capture mode:")
         sizer.Add(capmode_ctrl_label, pos=(13, 0), flag=wx.EXPAND | wx.ALL, border=5)
@@ -778,6 +782,12 @@ class BaslerGuiWindow(wx.Frame):
                 self.StopPreview()
             else:
                 self.StartPreview()
+    
+    ###############################
+    def OnSaveImage(self, event):
+        if self.camera_connected is True:
+            self.SaveImage()
+    ###############################
 
     def OnCapture(self, event):
         if self.current_step == 0:

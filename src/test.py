@@ -159,15 +159,8 @@ theta1 = np.arctan2(A[1] - B[1], A[0] - B[0])
 theta2 = np.arctan2(B[1] - A[1], B[0] - A[0])
 print(f"theta1: {np.degrees(theta1)}, theta2: {np.degrees(theta2)}")
 
-# Dữ liệu mẫu
-# x = np.array([1, 2, 3, 4])
-# y = np.array([3, 5, 7, 9])
-
-# # Thêm cột chứa toàn giá trị 1 vào x
-# A = np.vstack([x, np.ones(len(x))]).T
-
-# # Tính toán các hệ số a và b
-# a, b = np.linalg.lstsq(A, y, rcond=None)[0]
-
-# print(f"Hệ số a: {a}")
-# print(f"Hệ số b: {b}")
+rot01 = [-3.1416, 7.8829e-17, -0.6993]
+degree_rot01 = np.rad2deg(rot01)
+rot02 = [-3.1416, 0.34907, -0.78145]
+degree_rot02 = np.rad2deg(rot02)
+print(degree_rot01, '\n' ,degree_rot02)

@@ -145,19 +145,6 @@ class VisionRobot:
         target01ToLaser = np.dot(np.linalg.inv(self.rf_laser2camera), target01ToCamera)
         target02ToLaser = np.dot(np.linalg.inv(self.rf_laser2camera), target02ToCamera)
 
-        """
-        # rot_Laser = rotz(np.radians(theta_laser))
-        # posT_Laser, rotT_laser = self.robot_module.rotPos(rf_target2laserOrg)
-        # rotT_laser[:2] = np.radians(theta_laser)
- 
-        # rf_target2laser = self.robot_module.createRef(posT_Laser, rotT_laser)
-        # rf_target2laser = np.dot(rf_target2laserOrg, rot_Laser)
-        # posT_Laser, rotT_laser = self.robot_module.rotPos(rf_target2laser)
-        # posT_Laser[1] = posT_Laser[1] + 60      ### configure the y-position manually
-        # posT_Laser[0] = posT_Laser[0] - 30      ### configure the x-position manually
-
-        # rf_target2laser = self.robot_module.createRef(posT_Laser, rotT_laser)
-        """
 
         target01toRf = np.dot(self.rf_laser2rf, target01ToLaser)
         pos1, rot1 = self.robot_module.rotPos(target01toRf)
@@ -194,18 +181,27 @@ class VisionRobot:
 
         # target01 with respect to reference frame
         target01toRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
-        newtarget01 = np.dot(target01toRf,roty(np.radians(alpha)))           #### config the alpha
+        newTarget01 = np.dot(target01toRf,roty(np.radians(alpha)))           #### config the alpha
 
         # target02 with respect to reference frame
         target02_toRF = self.robot_module.createRef(pos_target02, rot2)
-        newtarget02 = np.dot(target02_toRF,roty(np.radians(alpha)))         #### config the alpha
+        newTarget02 = np.dot(target02_toRF,roty(np.radians(alpha)))         #### config the alpha
 
         
-        Pos1, Rot1 = self.robot_module.rotPos(newtarget01)
+        Pos1, Rot1 = self.robot_module.rotPos(newTarget01)
         Pos1[0] +=  backOx
+        new01 = self.robot_module.createRef(Pos1, Rot1)
+        new01toBase = np.dot(target01ToBase, new01)
+        newPos01toBase, newRot01toBase = self.robot_module.rotPos(new01toBase)
+        print(f'newPos01toBase:{newPos01toBase}, \n newRot01toBase:{newRot01toBase}')
         
-        Pos2, Rot2 = self.robot_module.rotPos(newtarget02)
+        Pos2, Rot2 = self.robot_module.rotPos(newTarget02)
         Pos2[0] +=  backOx
+        new02 = self.robot_module.createRef(Pos2, Rot2)
+        new02toBase = np.dot(target01ToBase, new02)
+        newPos02toBase, newRot02toBase = self.robot_module.rotPos(new02toBase)
+        print(f'newPos02toBase:{newPos02toBase}, \n newRot02toBase:{newRot02toBase}')
+
         print(f'Pos1, Rot1: {Pos1}, {Rot1}')
         print(f'Pos2, Rot2: {Pos2}, {Rot2}')
 
@@ -356,21 +352,26 @@ class VisionRobot:
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_camera])
 
         if shape == "90_degree":
-            alpha = 40
+            alpha = -40
             if alpha < 0:
                 backOx = -np.tan(np.radians(40)) * 150
+                # backOx = 0
+
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
                 backOx = np.tan(np.radians(40)) * 150
+                # backOx = 0
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
         elif shape == "30_degree":
             alpha = 20
             if alpha < 0:
                 backOx = -np.tan(np.radians(20)) * 150
+                # backOx = 0
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
                 backOx = np.tan(np.radians(20)) * 150
+                # backOx = 0
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
 
