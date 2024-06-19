@@ -187,11 +187,6 @@ pixel_y1 = p1[0]
 pixel_x2 = p2[1]
 pixel_y2 = p2[0]
 
-pixel_focalLength = 16 * 1000 / CFG.PIXEL_SIZE
-o1o2 = 65
-res_width = 2448
-res_height = 2048
-
 focal_length = 16
 # x1, y1 = convertCoordinates(res_width, res_height, pixel_x1, pixel_y1, pixel_focalLength, 558.45, -90)
 # x2, y2 = convertCoordinates(res_width, res_height, pixel_x2, pixel_y2, pixel_focalLength, 563.45, -90)
@@ -209,16 +204,3 @@ focal_length = 16
 
 fov_600 = FoV(600)
 print(f"fov_600:{fov_600} \n")
-
-# Dữ liệu mẫu
-# x = np.array([1, 2, 3, 4])
-# y = np.array([3, 5, 7, 9])
-
-# # Thêm cột chứa toàn giá trị 1 vào x
-# A = np.vstack([x, np.ones(len(x))]).T
-
-# # Tính toán các hệ số a và b
-# a, b = np.linalg.lstsq(A, y, rcond=None)[0]
-
-# print(f"Hệ số a: {a}")
-# print(f"Hệ số b: {b}")

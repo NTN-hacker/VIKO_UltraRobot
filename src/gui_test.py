@@ -315,12 +315,12 @@ class InspectionFrame(wx.Frame):
 
     def on_run_left(self, event):
         self.robot_running = True
-        self.pos_status = 'left'
+        self.pos_status = 'home'
         self.move_left()
     
     def on_run_right(self, event):
         self.robot_running = True
-        self.pos_status = 'right'
+        self.pos_status = 'home'
         self.move_right()
     #####################################
     def run_inspection(self):
@@ -390,7 +390,7 @@ class InspectionFrame(wx.Frame):
 
     def run_robot(self):
         img = cv2.imread('temp.png', cv2.IMREAD_ANYCOLOR)
-        rm.run(self.model, img, self.pos_status)
+        rm.run(self.model, img, self._suf_,  self.pos_status)
 
     def stop_robot(self):
         print('Testing')
@@ -466,13 +466,15 @@ class InspectionFrame(wx.Frame):
         return True
     
     def move_left(self):
-        rm.movL()
-        print('Testing')
+        # rm.movL()
+        self._suf_ = 1
+        print('Positive')
         return True
     
     def move_right(self):
-        rm.movR()
-        print('Testing')
+        # rm.movR()
+        self._suf_ = -1
+        print('Negative')
         return True
 
     def save(self):

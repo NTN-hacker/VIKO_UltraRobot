@@ -37,8 +37,8 @@ class VisionRobot:
         self.RDK.setRunMode(RUNMODE_RUN_ROBOT)
         if RUN_ON_ROBOT:
             # Connect to the robot using default IP
-            self.robot.Connect("192.168.10.111")  # Try to connect once
-            self.robot.ConnectSafe("192.168.10.111")  # Try to connect multiple times
+            self.robot.Connect("192.168.10.102")  # Try to connect once
+            self.robot.ConnectSafe("192.168.10.102")  # Try to connect multiple times
             self.status, status_msg = self.robot.ConnectedState()
 
             if self.status != ROBOTCOM_READY:
@@ -186,15 +186,16 @@ class VisionRobot:
 
         # target01 with respect to reference frame
         target01toRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
-        newTarget01 = np.dot(target01toRf,roty(np.radians(alpha)))           #### config the alpha
+        newTarget01 = np.dot(np.dot(target01toRf,roty(np.radians(alpha))), rotx(np.radians(-20)))         #### config the alpha
 
         # target02 with respect to reference frame
-        target02_toRF = self.robot_module.createRef(pos_target02, rot2)
-        newTarget02 = np.dot(target02_toRF,roty(np.radians(alpha)))         #### config the alpha
+        target02toRf = self.robot_module.createRef(pos_target02, rot2)
+        newTarget02 = np.dot(np.dot(target02toRf,roty(np.radians(alpha))), rotx(np.radians(-20)))         #### config the alpha
 
         
         Pos1, Rot1 = self.robot_module.rotPos(newTarget01)
         Pos1[0] +=  backOx
+        Pos1[1] +=  np.tan(np.radians(20)) * 130
         new01 = self.robot_module.createRef(Pos1, Rot1)
         new01toBase = np.dot(target01ToBase, new01)
         newPos01toBase, newRot01toBase = self.robot_module.rotPos(new01toBase)
@@ -202,6 +203,7 @@ class VisionRobot:
         
         Pos2, Rot2 = self.robot_module.rotPos(newTarget02)
         Pos2[0] +=  backOx
+        Pos2[1] +=  np.tan(np.radians(20)) * 130
         new02 = self.robot_module.createRef(Pos2, Rot2)
         new02toBase = np.dot(target01ToBase, new02)
         newPos02toBase, newRot02toBase = self.robot_module.rotPos(new02toBase)
@@ -313,7 +315,7 @@ class VisionRobot:
 
         return dis_cameraToObject, dis_pixel
 
-    def getTarget(self, coordinate_pixel, shape):
+    def getTarget(self, coordinate_pixel, shape, _suf_: int):
         target01, target02, theta_laser = None, None, None
 
         print(f"shape", shape)
@@ -355,19 +357,21 @@ class VisionRobot:
         real_target02 = np.array([x_to_camera_02, y_to_camera_02, z_laser_to_object])
 
         if shape == "90_degree":
-            alpha = -40
+            alpha = 30*_suf_
+            print(f'alpha:{alpha}')
             if alpha < 0:
-                backOx = -np.tan(np.radians(40)) * 150
+                backOx = -np.tan(np.radians(30)) * 150
                 # backOx = 0
 
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
-                backOx = np.tan(np.radians(40)) * 150
+                backOx = np.tan(np.radians(30)) * 150
                 # backOx = 0
                 target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
         elif shape == "30_degree":
-            alpha = 20
+            alpha = 20*_suf_
+            print(f'alpha:{alpha}')
             if alpha < 0:
                 backOx = -np.tan(np.radians(20)) * 150
                 # backOx = 0
@@ -433,7 +437,7 @@ def movHome():
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
 
-def run(model, image, pos_status="home"):
+def run(model, image, _suf_, pos_status="home"):
     VisRob = VisionRobot()
     if pos_status == "home":
         VisRob.fixedRef(0)
@@ -451,11 +455,11 @@ def run(model, image, pos_status="home"):
     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
         print(f"Weld model {model_weld_list[index]}")
         target01, target02, theta_laser = VisRob.getTarget(
-            coordinate_pixel, model_weld_list[index]
+            coordinate_pixel, model_weld_list[index], _suf_
         )
         VisRob.runMoveJ(target01)
 
-        # VisRob.sleep_seconds(5)
+        VisRob.sleep_seconds(4)
         VisRob.runMoveL(target02)
 
         # VisRob.sleep_seconds(0)
@@ -473,7 +477,7 @@ def run(model, image, pos_status="home"):
         # "y1_pixel": dis_pixel[0][1],
         # "x2_pixel": dis_pixel[1][0],
         # "y2_pixel": dis_pixel[1][1],
-        "theta_laser": theta_laser,
+        "theta_laser": theta_laser
         #### add if need
     }
     # print(f"data_export:{data_export}")
