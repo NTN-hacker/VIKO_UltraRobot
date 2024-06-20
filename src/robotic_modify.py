@@ -220,7 +220,7 @@ class VisionRobot:
         target02 = TxyzRxyz_2_Pose(target02_none_mat)
         # print(f"target02:{target02}")
 
-        return target01, target02
+        return target01, target02, pos_target02_oy
 
     ### measure distance manually
     def movLeft(self):
@@ -363,11 +363,11 @@ class VisionRobot:
                 backOx = -np.tan(np.radians(30)) * 150
                 # backOx = 0
 
-                target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
+                target01, target02, length_weld = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
                 backOx = np.tan(np.radians(30)) * 150
                 # backOx = 0
-                target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
+                target01, target02, length_weld = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
         elif shape == "30_degree":
             alpha = 20*_suf_
@@ -375,16 +375,16 @@ class VisionRobot:
             if alpha < 0:
                 backOx = -np.tan(np.radians(20)) * 150
                 # backOx = 0
-                target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
+                target01, target02, length_weld = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
             else:
                 backOx = np.tan(np.radians(20)) * 150
                 # backOx = 0
-                target01, target02 = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
+                target01, target02, length_weld = self.createPoint(real_target01, real_target02, theta_laser, backOx, alpha)
 
 
         elif shape == "0_degree":
             alpha = backOx = 0
-            target01, target02 = self.createPoint(
+            target01, target02, length_weld = self.createPoint(
                 real_target01, real_target02, theta_laser, backOx, alpha
             )
 
@@ -393,7 +393,7 @@ class VisionRobot:
 
         # target01, target02 = self.createPoint(real_target01, real_target02, theta_laser)  # fix
 
-        return target01, target02, theta_laser
+        return target01, target02, theta_laser, length_weld
         # return target01
 
     def runMoveL(self, target_laser_mat):
@@ -403,6 +403,8 @@ class VisionRobot:
     def runMoveJ(self, target_laser_mat):
         self.setRobot(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
         self.robot.MoveJ(target_laser_mat)
+
+        return True
 
     def setRobot(self, linearSpeed, jointSpeed):
         self.robot.setRounding(5)  # Set the rounding parameter
@@ -448,19 +450,31 @@ def run(model, image, _suf_, pos_status="home"):
     else:
         stop()
     # dis_cameraToObject, dis_pixel = VisRob.disCameraToObject()
+    
+    ## trigger and length to scan
+    def trigger(length_weld):
+        if os.path.exists("trigger.txt") and os.path.exists("length.txt"):
+            os.remove("trigger.txt") 
+            os.remove("length.txt")       
+        with open("trigger.txt", "w") as f:
+            f.write("True")
+        with open("length.txt", "w") as f:
+            f.write(str(length_weld))
 
     coordinate_pixel_list, model_weld_list = vis.getCoordinates(model, image, True)
     print(f"Weld model {model_weld_list}")
     # coordinate_pixel = coordinate_pixel_list[0]
     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
         print(f"Weld model {model_weld_list[index]}")
-        target01, target02, theta_laser = VisRob.getTarget(
+        target01, target02, theta_laser, length_weld = VisRob.getTarget(
             coordinate_pixel, model_weld_list[index], _suf_
         )
         VisRob.runMoveJ(target01)
-
-        VisRob.sleep_seconds(4)
-        VisRob.runMoveL(target02)
+        if VisRob.runMoveJ(target01) == True:
+            trigger(length_weld)
+            VisRob.runMoveL(target02)
+        else:
+            print("Error: Failed to reach target01")
 
         # VisRob.sleep_seconds(0)
 
