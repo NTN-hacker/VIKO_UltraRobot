@@ -8,7 +8,7 @@ from pypylon import genicam
 from ultralytics import YOLO
 import sys
 sys.path.append(
-    "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
+    "E:\Quan\VIKO_UltraRobot"
 )
 from config import config as CFG
 from library import viko_lib as lib

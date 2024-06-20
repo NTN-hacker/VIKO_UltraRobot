@@ -20,11 +20,11 @@ try:
     import time
     from datetime import datetime
     from PIL import Image
-    from  segment_anything import sam_model_registry, SamPredictor, SamAutomaticMaskGenerator
-    from  mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
-    from segment_anything_hq import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
-    from roboflow import Roboflow
-    import supervision as sv
+    # from  segment_anything import sam_model_registry, SamPredictor, SamAutomaticMaskGenerator
+    # from  mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+    # from segment_anything_hq import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+    # from roboflow import Roboflow
+    # import supervision as sv
     from ultralytics import YOLO
 except ImportError:
     print('Vision module bindings requires "numpy", "cv2", "torch", "matplotlib.pyplot", "pypylon", "threading", "time", "pillow", "sam", "datetime" package.')

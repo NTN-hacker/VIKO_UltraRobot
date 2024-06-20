@@ -5,7 +5,7 @@ from robodk.robolink import *
 from robodk.robomath import *
 import numpy as np
 import time
-from layout import app_robot as app
+# from layout import app_robot as app
 
 from library import vision_robotic as vis
 from library import robot_lib_modify as rob

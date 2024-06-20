@@ -46,7 +46,7 @@ MODEL = {
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": "D:\\nhan\\viko\src\weight\\best.pt"
+        "WEIGHT": "D:\\nhan\\viko\\VIKO_UltraRobot\\weight\\best.pt"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
 }
