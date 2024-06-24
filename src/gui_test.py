@@ -181,6 +181,7 @@ class InspectionFrame(wx.Frame):
         notebook.AddPage(tab2, "Settings")
 
         self.pos_status = 'home'
+        self._suf_ = 1
 
         # Setup tab1 layout
         main_sizer = wx.BoxSizer(wx.HORIZONTAL)
