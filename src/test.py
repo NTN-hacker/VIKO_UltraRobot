@@ -204,3 +204,96 @@ focal_length = 16
 
 fov_600 = FoV(600)
 print(f"fov_600:{fov_600} \n")
+
+
+def createPoint(self, target_01, target_02, theta_laser, backOx, alpha):
+
+    orgTarget01ToCamera = self.robot_module.intialTarget(
+        target_01[0], target_01[1], target_01[2]
+    )
+    orgTarget012oCamera = self.robot_module.intialTarget(
+        target_02[0], target_02[1], target_02[2]
+    )
+
+    orgTarget01ToLaser = np.dot(
+        np.linalg.inv(self.rf_laser2camera), orgTarget01ToCamera
+    )
+    orgTarget02ToLaser = np.dot(
+        np.linalg.inv(self.rf_laser2camera), orgTarget012oCamera
+    )
+
+    targetToOrgTarget = rotz(theta_laser)
+
+    target01toLaser = np.dot(orgTarget01ToLaser, targetToOrgTarget)
+    target02toLaser = np.dot(orgTarget02ToLaser, targetToOrgTarget)
+
+    target01ToRf = np.dot(self.rf_laser2rf, target01toLaser)
+    target02ToRf = np.dot(self.rf_laser2rf, target02toLaser)
+
+    pos1toRf, rot1toRf = self.robot_module.rotPos(target01ToRf)
+    pos2toRf, rot2toRf = self.robot_module.rotPos(target02ToRf)
+    pos2ToPos1_rf = pos2toRf - pos1toRf
+    pos_target02_oy_rf = sqrt(pos2ToPos1[0] ** 2 + pos2ToPos1[1] ** 2)
+    print(f'pos_target02_oy_rf:{pos_target02_oy_rf}')
+
+    rfToBase = self.robot_module.createRef([0, 0, 0], [np.radians(180), 0, 0])
+    target01ToBase = np.dot(rfToBase, target01ToRf)
+    target02ToBase = np.dot(rfToBase, target02ToRf)
+
+    pos1toBase, _ = self.robot_module.rotPos(target01ToBase)
+    pos2toBase, _ = self.robot_module.rotPos(target02ToBase)
+    pos2ToPos1 = pos2toBase - pos1toBase
+    pos_target02_oy = sqrt(pos2ToPos1[0] ** 2 + pos2ToPos1[1] ** 2)
+    print(f'pos_target02_oy:{pos_target02_oy}')
+
+    if theta_laser > 0:
+        newPos2 = np.array([0, pos_target02_oy, 0])
+    elif theta_laser <= 0:
+        newPos2 = np.array([0, -pos_target02_oy, 0])
+    else:
+        print(f"check the angle of laser:{theta_laser}")
+
+    newRef = target01ToBase
+    posRef, rotRef = self.robot_module.rotPos(newRef)
+    newRef_nonMat = np.concatenate((posRef, rotRef), axis=0)
+    setRef = TxyzRxyz_2_Pose(newRef_nonMat)
+    self.robot_module.setPoseFrame(setRef)
+
+    target01toRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
+    target02toRf = self.robot_module.createRef(newPos2, rot2toRf)
+
+    if alpha != 0:
+        newT1toRf = np.dot(np.dot(target01toRf, roty(np.radians(alpha))), rotx(np.radians(0)))
+        newT2toRf = np.dot(np.dot(target02toRf, roty(np.radians(alpha))), rotx(np.radians(0)))
+    else:
+        newT1toRf = np.dot(np.dot(target01toRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
+        newT2toRf = np.dot(np.dot(target02toRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
+
+    Pos1, Rot1 = self.robot_module.rotPos(newT1toRf)
+    Pos2, Rot2 = self.robot_module.rotPos(newT2toRf)
+
+    Pos1[0] += backOx
+    Pos2[0] += backOx
+    if alpha != 0:
+        Pos1[1] += 0
+        Pos2[1] += 0
+    else:
+        # pass
+        print(f"Pos1 and Pos2 changed:{Pos1}, {Pos2}")
+
+    new01 = self.robot_module.createRef(Pos1, Rot1)
+    new01toBase = np.dot(newRef, new01)
+    newPos01toBase, newRot01toBase = self.robot_module.rotPos(new01toBase)
+    print(f"newPos01toBase:{newPos01toBase}, \n newRot01toBase:{newRot01toBase}")
+
+    new02 = self.robot_module.createRef(Pos2, Rot2)
+    new02toBase = np.dot(newRef, new02)
+    newPos02toBase, newRot02toBase = self.robot_module.rotPos(new02toBase)
+    print(f"newPos02toBase:{newPos02toBase}, \n newRot02toBase:{newRot02toBase}")
+
+    target01_none_mat = np.concatenate((Pos1, Rot1), axis=0)
+    target02_none_mat = np.concatenate((Pos2, Rot2), axis=0)
+    target01 = TxyzRxyz_2_Pose(target01_none_mat)
+    target02 = TxyzRxyz_2_Pose(target02_none_mat)
+
+    return target01, target02, pos_target02_oy
