@@ -524,7 +524,7 @@ class VisionRobot:
         # print(f'testTarget01:{test_target01}, \n, testTarget02:{test_target02}, \n, test_length_weld:{test_length_weld}')
 
         # return target01, target02, theta_laser, length_weld
-        return test_target01, test_target02, theta_laser, test_length_weld
+        return test_target01, test_target02, theta_laser , test_length_weld
         # return target01
 
     def runMoveL(self, target_laser_mat):

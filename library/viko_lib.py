@@ -434,9 +434,9 @@ def getWeldModelMulti(dict_re) -> list:
             box = box.xyxy.detach().cpu().numpy().tolist()[0]
             if (label != 3) and confidence > CFG.CONF_MODEL_WELD: #3: other
                 label_box_model_weld.append([index, dict_model_weld[label], confidence, box])
-    print(label_box_model_weld)
+    print(f'Label: ', label_box_model_weld)
     containing_pairs = findContainingPairs(label_box_model_weld)
-    print(containing_pairs)
+    print(f'Pair: ', containing_pairs)
 
     return containing_pairs
 
@@ -496,16 +496,40 @@ def save_data_scan(results, image_re, coordinates):
     df = pd.concat([df, new_df], ignore_index=True)
     df.to_csv(csv_file_path, index=False)
 
-def isContained(outer_rect, inner_rect):
-    x1_outer, y1_outer, x2_outer, y2_outer = outer_rect
-    x1_inner, y1_inner, x2_inner, y2_inner = inner_rect
+# def isContained(outer, inner):
+#     x, y, x_w, y_h = outer
+#     x_, y_, x_w_, y_h_ = inner
+#     return (x < x_ and y < y_ and (x_w > x_w_ or y_h > y_h_))
 
-    return (
-        x1_outer <= x1_inner
-        and x2_inner <= x2_outer
-        and y1_outer <= y1_inner
-        and y2_inner <= y2_outer
-    )
+def check_intersection(polygon1, polygon2):
+    """
+    Update to replace 
+    """
+    print(polygon1)
+    intersection = list()
+    for point in polygon2:
+        result = cv2.pointPolygonTest(np.array(polygon1, dtype=np.float32), (float(point[0]), float(point[1])), measureDist=False)
+        # if point inside return 1
+        # if point outside return -1
+        # if point on the contour return 0
+        intersection.append(result)
+  
+    internal = 0
+    external = 0
+
+    for value in intersection:
+        if value == -1:
+            external += 1
+        elif value == 1:
+            internal += 1
+        elif value == 0:
+            internal += 1
+
+    print(internal)
+
+    if internal >= 3:
+        return True
+    return False
 
 def findContainingPairs(data):
     containing_pairs = list([])
@@ -522,7 +546,14 @@ def findContainingPairs(data):
                     weld_x1, weld_y1, weld_x2, weld_y2 = weld_box
                     weld_rect = (weld_x1, weld_y1, weld_x2, weld_y2)
 
-                    if isContained(label_rect, weld_rect):
+                    object = list(label_rect)
+                    weld = list(weld_rect)
+                    object = np.array([[object[0] - CFG.PIXEL_UNION, object[1]], [object[2] + CFG.PIXEL_UNION, object[1]], 
+                                       [object[2] + CFG.PIXEL_UNION, object[3] + CFG.PIXEL_UNION], 
+                                       [object[0] - CFG.PIXEL_UNION, object[3] + CFG.PIXEL_UNION]]).astype(int)  #config because some case the coordinate weld higher object
+                    weld = np.array([[weld[0], weld[1]], [weld[2], weld[1]], [weld[2], weld[3]], [weld[0], weld[3]]]).astype(int)
+
+                    if check_intersection(object, weld):
                         containing_pairs.append([weld_item, label_item])
 
     return containing_pairs

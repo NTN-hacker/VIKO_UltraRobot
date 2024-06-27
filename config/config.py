@@ -67,3 +67,4 @@ MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degre
 
 ######################################################### LABEL #############################################################################
 CONF_MODEL_WELD = 0.6
+PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. Sử dụng trong trường hợp mối hàn nằm trên khung obj
