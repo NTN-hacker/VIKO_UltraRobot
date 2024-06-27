@@ -306,16 +306,16 @@ class VisionRobot:
         setRef = TxyzRxyz_2_Pose(newRef_nonMat)
         self.robot.setPoseFrame(setRef)
 
-        target01toNewRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
-        pos01toNewRf, rot01ToNewRf = self.robot_module.rotPos(target01toNewRf)
+        target01ToNewRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
+        pos01toNewRf, rot01ToNewRf = self.robot_module.rotPos(target01ToNewRf)
         target02toNewRf = self.robot_module.createRef(newPos2, rot01ToNewRf)
         pos02toNewRf, rot02ToNewRf = newPos2, rot01ToNewRf
 
         if alpha != 0:
-            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))
+            newT1toNewRf = np.dot(np.dot(target01ToNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))
             newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))
         else:
-            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
+            newT1toNewRf = np.dot(np.dot(target01ToNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
             newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
 
         newPos1ToNewRf, newRot1ToNewRf = self.robot_module.rotPos(newT1toNewRf)
@@ -323,22 +323,32 @@ class VisionRobot:
 
         newPos1ToNewRf[0] += backOx
         newPos2ToNewRf[0] += backOx
+
+        ##### calculate the target to base
+        pos01toNewRf[0] += backOx
+        pos02toNewRf[0] += backOx
+        rot01ToNewRf[0], rot01ToNewRf[1] = np.radians(0), np.radians(alpha)
+        rot02ToNewRf[0], rot02ToNewRf[1] = np.radians(0), np.radians(alpha)
+        newT1toNewRf = np.concatenate((pos01toNewRf, rot01ToNewRf), axis=0)
+        newT2toNewRf = np.concatenate((pos02toNewRf, rot02ToNewRf), axis=0)
+
+        new01 = self.robot_module.createRef(pos01toNewRf, rot01ToNewRf)
+        new01toBase = np.dot(newRef, new01)
+        newPos01toBase, newRot01toBase = self.robot_module.rotPos(new01toBase)
+        print(f"newPos01toBase:{newPos01toBase},\n newRot01toBase:{newRot01toBase} \n")
+
+        new02 = self.robot_module.createRef(pos02toNewRf, rot02ToNewRf)
+        new02toBase = np.dot(newRef, new02)
+        newPos02toBase, newRot02toBase = self.robot_module.rotPos(new02toBase)
+        print(f"newPos02toBase:{newPos02toBase},\n newRot02toBase:{newRot02toBase} \n")
+        #######################################################################
+
         if alpha != 0:
             newPos1ToNewRf[1] += 0
             newPos2ToNewRf[1] += 0
         else:
             # pass
             print(f"Pos1 and Pos2 changed:{newPos1ToNewRf}, {newPos2ToNewRf}")
-
-        new01 = self.robot_module.createRef(newPos1ToNewRf, newRot1ToNewRf)
-        new01toBase = np.dot(newRef, new01)
-        newPos01toBase, newRot01toBase = self.robot_module.rotPos(new01toBase)
-        print(f"newPos01toBase:{newPos01toBase},\n newRot01toBase:{newRot01toBase} \n")
-
-        new02 = self.robot_module.createRef(newPos2ToNewRf, newRot2ToNewRf)
-        new02toBase = np.dot(newRef, new02)
-        newPos02toBase, newRot02toBase = self.robot_module.rotPos(new02toBase)
-        print(f"newPos02toBase:{newPos02toBase},\n newRot02toBase:{newRot02toBase} \n")
 
         target01_none_mat = np.concatenate((newPos1ToNewRf, newRot1ToNewRf), axis=0)
         target02_none_mat = np.concatenate((newPos2ToNewRf, newRot2ToNewRf), axis=0)
