@@ -8,7 +8,7 @@ from pypylon import genicam
 from ultralytics import YOLO
 import sys
 sys.path.append(
-    "E:\\AutoRoboticInspection\VIKO_UltraRobot"
+    "E:\\Quan\\AutoRoboticInspection-V1\VIKO_UltraRobot"
 )
 from config import config as CFG
 from library import viko_lib as lib
@@ -211,7 +211,7 @@ class InspectionFrame(wx.Frame):
         #     left_sizer.Add(wx.Button(left_panel, label=point), 0, wx.EXPAND | wx.ALL, 5)
 
         # Load icon
-        icon = wx.Bitmap("layout/png/lab.png", wx.BITMAP_TYPE_PNG)
+        icon = wx.Bitmap("layout/lab.png", wx.BITMAP_TYPE_PNG)
 
         # Create an icon above the buttons
         

@@ -376,17 +376,6 @@ def run(model, image, _suf_, pos_status="home"):
 
     # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
-    current_joint_values, limit = VisRob.getParam()
-    data_export = {
-        "id": str(datetime.now()),
-        "pixel_01": coordinate_pixel_1,
-        "pixel_02": coordinate_pixel_2,
-        "theta_laser": theta_laser,
-        #### add if need
-    }
-    # print(f"data_export:{data_export}")
-    rob.RobotModule.export_csv(data_export)
-
 
 if __name__ == "__main__":
     # app.main()

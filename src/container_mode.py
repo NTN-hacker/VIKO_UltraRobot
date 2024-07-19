@@ -9,7 +9,6 @@ from datetime import datetime
 from scipy.ndimage import median_filter
 from config import config as CFG
 from matplotlib import pyplot as plt
-from alive_progress import alive_bar
 
 class Laser():
     def __init__(self) -> None:        
@@ -23,6 +22,14 @@ class Laser():
         self.available_interfaces = (ct.c_uint * 6)()
         self.lost_profiles = ct.c_int(0) 
         self.exposure_time = CFG.EXPOSURE_TIME
+
+        # Null pointer if data not necessary
+        self.null_ptr_short = ct.POINTER(ct.c_short)()
+        self.null_ptr_int = ct.POINTER(ct.c_uint)()
+
+        # Variable to store data after scan
+        self.data_scan = []
+        self.num_profile = 0
     
     def connect(self):
         # Get available interfaces
@@ -53,10 +60,8 @@ class Laser():
 
         # Declare measuring data arrays
         self.profile_buffer = (ct.c_ubyte * (self.resolution * 2 * self.container_size))()
-        x = (ct.c_double * self.resolution)()
-        # print('X value 1: ', x)
-        z = (ct.c_double * self.resolution)()
-        # print('X value 1: ', x)
+        self.X_value = (ct.c_double * self.resolution)()
+        self.Z_value = (ct.c_double * self.resolution)()
         self.intensities = (ct.c_ushort * self.resolution)()
 
         # Equidistant ranges
@@ -120,8 +125,15 @@ class Laser():
         ret = llt.get_actual_profile(self.hllt, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.CONTAINER, ct.byref(self.lost_profiles))
         if ret != len(self.profile_buffer):
             print("Error get profile buffer data: " + str(ret))
-        print("Finish get profile!")
-        print("Finish the process scanning!")   
+        print("Finish get profile!") 
+
+        print("Start convert profile to value!")
+        ret = llt.convert_profile_2_values(self.hllt, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1, self.null_ptr_short,
+                                           self.intensities, self.null_ptr_short, self.X_value, self.Z_value, self.null_ptr_int, self.null_ptr_int)
+        if ret & llt.CONVERT_X is 0 or ret & llt.CONVERT_Z is 0 or ret & llt.CONVERT_MAXIMUM is 0:
+            raise ValueError("Error converting data: " + str(ret))
+        print("Finish convert profile to value!")
+        print("Finish scanning!")
 
         # Stop transmission
         ret = llt.transfer_profiles(self.hllt, llt.TTransferProfileType.NORMAL_CONTAINER_MODE, 0)
@@ -130,14 +142,14 @@ class Laser():
 
         # Get Z value from buffer
         # Convert buffer to big-endian ushort values and reshape them to 2D array
-        self.Z = np.frombuffer(self.profile_buffer, dtype='>H').reshape((self.container_size, self.resolution))
+        #self.Z = np.frombuffer(self.profile_buffer, dtype='>H').reshape((self.container_size, self.resolution))        
         print("Z")
-        print(self.Z)
-        print(f"Lines: {len(self.Z)}")
+        print(self.Z_value)
+        print(f"Lines: {len(self.Z_value)}")
 
         # Process data
         # Remove lines contains value 0
-        Z_remove_0_overflow = self.Z[~np.any((self.Z == 0) | (self.Z > 36000), axis=1)]
+        Z_remove_0_overflow = self.Z[~np.any((self.Z == 0), axis=1)]
 
         # Invert value of Z, flip each column in the up/down direction
         Z_inverted = np.flipud(Z_remove_0_overflow)  
@@ -164,8 +176,11 @@ class Laser():
         current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig.savefig(f'laser/figure_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.png', dpi=300, bbox_inches='tight')
         # fig.savefig(f'result_temp.png', dpi=300, bbox_inches='tight')
-        np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.txt_post-process', self.Z, fmt='%d')
-        np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.txt_pre-process', Z_processed, fmt='%d')
+        np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i_post-process.txt', self.Z, fmt='%d')
+        np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i_pre-process.txt', Z_processed, fmt='%d')
+
+        self.num_profile = len(Z_processed)
+        self.data_scan = Z_processed
 
         # Gray scale image
         min_val = np.min(Z_processed)
@@ -175,12 +190,33 @@ class Laser():
         normalized_Z = (Z_processed - min_val) / (max_val - min_val)
 
         # Convert to gray scale (same RGB)
-        gray_image = np.stack((normalized_Z, normalized_Z, normalized_Z), axis=-1)
+        # gray_image = np.stack((normalized_Z, normalized_Z, normalized_Z), axis=-1)
+
+        # gray_image = cv2.resize(gray_image, (640, 640), cv2.INTER_CUBIC)
+        # image_rgb = (gray_image * 255).astype(np.uint8)  
+        # image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_BGR2RGB) 
+        gray_image = np.stack((normalized_Z), axis=-1)
 
         gray_image = cv2.resize(gray_image, (640, 640), cv2.INTER_CUBIC)
-        image_rgb = (gray_image * 255).astype(np.uint8)  # Chuyển đổi về đơn vị 0-255 và kiểu dữ liệu uint8
+        image_rgb = (gray_image * 255).astype(np.uint8) 
         image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_BGR2RGB) 
-        return image_rgb
+
+        x, y, _= np.gradient(image_rgb)
+
+        slope = np.pi /2. - np.arctan(np.sqrt(x * x + y * y))
+        aspect = np.arctan2(-x, y)
+        altitude = np.pi / 4.
+        azimuth = np.pi /2.
+        shaded = np.sin(altitude) * np.sin(slope) + np.cos(altitude) * np.cos(slope) * np.cos((azimuth - np.pi / 2.) - aspect)
+
+        img_shaded = (shaded * 255).astype(np.uint8)
+        image_rgb_shaded = cv2.cvtColor(img_shaded, cv2.COLOR_BGR2RGB) 
+
+        print('shape ', image_rgb_shaded.shape)
+        return image_rgb_shaded
+
+    def get_data_scan(self):
+        return self.num_profile, self.data_scan
 
     def disconnect(self):
         # Disconnect
@@ -190,7 +226,7 @@ class Laser():
 
         ret = llt.del_device(self.hllt)
         if ret < 1:
-            raise ConnectionAbortedError("Error while delete: " + str(ret))    
+            raise ConnectionAbortedError("Error while delete: " + str(ret))
 
     def process_data() -> np.array:
         file_path = 'E:\\AutoRoboticInspection\\VIKO_UltraRobot\\laser\\datascan.txt'

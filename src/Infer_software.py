@@ -1,6 +1,6 @@
 import sys
 sys.path.append(
-    "E:\\Quan\\AutoRoboticInspection\VIKO_UltraRobot"
+    "E:\\Quan\\AutoRoboticInspection-V1\VIKO_UltraRobot"
 )
 
 import wx
@@ -57,9 +57,8 @@ def move_center():
 
 
 
-global status, idx,idx_Coord, status_time, result_image
+global status, idx, idx_Coord, status_time, result_image
 global image
-
 
 class CameraPanel(wx.Panel):
     def __init__(self, parent):

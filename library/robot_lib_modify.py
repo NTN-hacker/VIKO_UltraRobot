@@ -6,7 +6,7 @@ from robodk.robomath import *  # basic matrix operations
 import sys
 
 
-sys.path.append("E:\Quan\AutoRoboticInspection\VIKO_UltraRobot") # config path
+sys.path.append("E:\Quan\AutoRoboticInspection-V1\VIKO_UltraRobot") # config path
 from config import config as CFG
 
 
