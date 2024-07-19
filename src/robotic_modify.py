@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("E:\Quan\AutoRoboticInspection\VIKO_UltraRobot")
+sys.path.append("E:\Quan\AutoRoboticInspection-V1\VIKO_UltraRobot")
 # sys.path.append("E:\Project\Robot-6DOF\VIKO_UltraRobot")
 from robodk.robolink import *
 from robodk.robomath import *
@@ -192,9 +192,13 @@ class VisionRobot:
 
         H_target01ToCamera = self.robot_module.createRef([target_01[0], target_01[1], target_01[2]],[0, 0, np.radians(theta_laser)])
         H_target02ToCamera = self.robot_module.createRef([target_02[0], target_02[1], target_02[2]],[0, 0, np.radians(theta_laser)])
-        R_Oy_target01ToCamera = np.dot(H_target01ToCamera, rob.roty(alpha))
-        R_Oy_target02ToCamera = np.dot(H_target02ToCamera, rob.roty(alpha))
 
+        R_target01ToCamera = self.robot_module.createRef([0, 0, 0], [rotx(np.radians(0)), roty(np.radians(alpha)), 0])
+        R_target02ToCamera = self.robot_module.createRef([0, 0, 0], [rotx(np.radians(0)), roty(np.radians(alpha)), 0])
+
+
+        # pos01ToCamera, rot01ToCamera = self.robot_module.rotPos(H_target01ToCamera)
+        # pos02ToCamera, rot02ToCamera = self.robot_module.rotPos(H_target02ToCamera)
         # print(f'pos01ToCamera:{pos01ToCamera}, {rot01ToCamera},\n pos02ToCamera:{pos02ToCamera}, {rot02ToCamera}\n')
         # print(theta_laser)
         H_target01ToLaser = np.dot(np.linalg.inv(self.test_rf_laser2camera), H_target01ToCamera)
