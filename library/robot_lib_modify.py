@@ -180,3 +180,43 @@ class RobotModule:
             ]
         )
         return target_pose
+
+
+
+def rotx(rx: float) -> 'Mat':
+    r"""Returns a rotation matrix around the X axis (radians)
+    """
+    ct = math.cos(np.radians(rx))
+    st = math.sin(np.radians(rx))
+    return Mat([
+        [1, 0, 0, 0],
+        [0, ct, -st, 0],
+        [0, st, ct, 0],
+        [0, 0, 0, 1],
+    ])
+
+
+def roty(ry: float) -> 'Mat':
+    r"""Returns a rotation matrix around the Y axis (radians)
+    """
+    ct = math.cos(np.radians(ry))
+    st = math.sin(np.radians(ry))
+    return Mat([
+        [ct, 0, st, 0],
+        [0, 1, 0, 0],
+        [-st, 0, ct, 0],
+        [0, 0, 0, 1],
+    ])
+
+
+def rotz(rz: float) -> 'Mat':
+    r"""Returns a rotation matrix around the Z axis (radians)
+    """
+    ct = math.cos(np.radians(rz))
+    st = math.sin(np.radians(rz))
+    return Mat([
+        [ct, -st, 0, 0],
+        [st, ct, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ])
