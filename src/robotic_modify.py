@@ -188,11 +188,13 @@ class VisionRobot:
 
 
     def test_target(self, target_01, target_02, theta_laser, backOx, alpha):
+        
 
         H_target01ToCamera = self.robot_module.createRef([target_01[0], target_01[1], target_01[2]],[0, 0, np.radians(theta_laser)])
         H_target02ToCamera = self.robot_module.createRef([target_02[0], target_02[1], target_02[2]],[0, 0, np.radians(theta_laser)])
-        # pos01ToCamera, rot01ToCamera = self.robot_module.rotPos(H_target01ToCamera)
-        # pos02ToCamera, rot02ToCamera = self.robot_module.rotPos(H_target02ToCamera)
+        R_Oy_target01ToCamera = np.dot(H_target01ToCamera, rob.roty(alpha))
+        R_Oy_target02ToCamera = np.dot(H_target02ToCamera, rob.roty(alpha))
+
         # print(f'pos01ToCamera:{pos01ToCamera}, {rot01ToCamera},\n pos02ToCamera:{pos02ToCamera}, {rot02ToCamera}\n')
         # print(theta_laser)
         H_target01ToLaser = np.dot(np.linalg.inv(self.test_rf_laser2camera), H_target01ToCamera)

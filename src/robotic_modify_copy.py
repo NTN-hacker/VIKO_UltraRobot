@@ -169,23 +169,6 @@ class VisionRobot:
         newPos1ToNewRf[0] += backOx
         newPos2ToNewRf[0] += backOx
 
-        ################################################### test the target to base (method 2)
-        newToOld_01 = self.robot_module.createRef([backOx, 0, 0], [0, np.radians(alpha), 0])
-        newToOld_02 = self.robot_module.createRef([backOx, 0, 0], [0, np.radians(alpha), 0])
-
-        newToRf_01 = np.dot(target01ToRf, newToOld_01)
-        newToRf_02 = np.dot(target02ToRf, newToOld_02)
-        newPosToRf_01, newRotToRf_01 = self.robot_module.rotPos(newToRf_01)
-        newPosToRf_02, newRotToRf_02 = self.robot_module.rotPos(newToRf_02)
-        # print(f'newToRf_01:{newPosToRf_01}, {newRotToRf_01},\n newToRf_02:{newPosToRf_02}, {newRotToRf_02}\n')
-
-        newToBase_01 = np.dot(rfToBase, newToRf_01)
-        newToBase_02 = np.dot(rfToBase, newToRf_02)
-        newPosToBase_01, newRotToBase_01 = self.robot_module.rotPos(newToBase_01)
-        newPosToBase_02, newRotToBase_02 = self.robot_module.rotPos(newToBase_02)
-        # print(f'newToBase_01:{newPosToBase_01}, {newRotToBase_01},\n newToBase_02:{newPosToBase_02}, {newRotToBase_02}\n')
-        ######################################################## END OF MEDTHOD 2
-
         #######################################
         ####################################### (METHOD 3) test the target to base
         H_target01ToCamera = self.robot_module.createRef([target_01[0], target_01[1], target_01[2]],[0, 0, np.radians(theta_laser)])
