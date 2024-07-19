@@ -110,7 +110,7 @@ class VisionModule():
 
             #point end
             coordinate_end, length = lib.find_point_end(pts)
-            print(coordinate_end)
+            # print(coordinate_end)
             coordinate = [[int(pts[0][0]* y_ratio) , int(pts[0][1]* x_ratio)], 
                           [int(coordinate_end[0]* y_ratio), int(coordinate_end[1]* x_ratio)]]
             cv2.circle(img_cp, (int(pts[0][0]), int(pts[0][1])), color = (255, 0, 0), radius = 10, thickness = 5)
@@ -121,7 +121,7 @@ class VisionModule():
         return coordinate 
     
     def _getInfoObject_(self, image):
-        print(image.shape)
+        # print(image.shape)
         if self.MODEL_CONFIG == CFG.MODEL['YOLOV9']:
             #predict
             # img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2R GB)
@@ -132,9 +132,9 @@ class VisionModule():
             plot = dict_re[0].plot() 
 
             #coordinates
-            listCoordinateReal, listModelWeld = lib.transform_coordinates(dict_re)
-            print('Coordinate for robot ', listCoordinateReal)
-            print('Model Weld for robot ', listModelWeld)
+            listCoordinateReal, listModelWeld, img_re = lib.transform_coordinates(dict_re)
+            # print('Coordinate for robot ', listCoordinateReal)
+            # print('Model Weld for robot ', listModelWeld)
 
             #save data
             label_out = lib.save_data_scan(dict_re, plot, listCoordinateReal)
@@ -142,10 +142,10 @@ class VisionModule():
             # default have weld
             # weld_model = lib.getWeldModel(dict_re= dict_re)
 
-            return listCoordinateReal, listModelWeld
+            return listCoordinateReal, listModelWeld, img_re
     
 def getCoordinates(model, image, flag=True):
     vision = VisionModule()
     vision.load_model(model)
-    coordinate_list, model_weld_list = vision._getInfoObject_(image)
-    return coordinate_list, model_weld_list
+    coordinate_list, model_weld_list, img_re = vision._getInfoObject_(image)
+    return coordinate_list, model_weld_list, img_re

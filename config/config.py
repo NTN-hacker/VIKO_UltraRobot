@@ -9,25 +9,25 @@ config file
 
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
-LINEAR_SPEEDS = [100, 100]
-JOINT_SPEEDS = [20, 20] ### Not over 120
+LINEAR_SPEEDS = [30, 100]
+JOINT_SPEEDS = [20, 40] ### Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
 HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
 SAFE_DISTANCE = 500
-ROTATE_OY_LASER = 30
-ROTATE_OX_LASER = -20    ### NOT USED
+ROTATE_OY_LASER = 25
+ROTATE_OX_LASER = 0    ### NOT USED
 OX_POS_LASER_POSITIVE = 110
-OX_POS_LASER_NEGATIVE = 70
+OX_POS_LASER_NEGATIVE = 80
 OY_POS_LASER = 130   ### NOT USED
 ERROR_POS = 3
 
-DISTANCE_LASERtoOBJECT = 135
+DISTANCE_LASER2OBJECT = 135
 DISTANCE_CAMERA2OBJECT = 569
 
-
+TEST_TARGET = [[1878, 598], [470, 1162]]
 ########################################################## AI MODEL ###################################################################
 
 
@@ -52,7 +52,7 @@ MODEL = {
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": "D:\\nhan\\viko\\VIKO_UltraRobot\\weight\\best.pt"
+        "WEIGHT": "E:\\Quan\\AutoRoboticInspection\\VIKO_UltraRobot\\weight\\best.pt"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
 }
@@ -65,6 +65,15 @@ Y_RATIO = 2448 / 640
 ######################################################### LABEL #############################################################################
 MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degree"}
 
-######################################################### LABEL #############################################################################
+
 CONF_MODEL_WELD = 0.6
 PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. Sử dụng trong trường hợp mối hàn nằm trên khung obj
+
+######################################################### LASER #############################################################################
+PATH_LASER_PROGRAM = 'C:\\Users\\Admin\\Downloads\\scanCONTROL-Windows-SDK-4-1-1\\scanCONTROL Windows SDK 4.1.1\\C# SDK\\examples\\bin_x64\\Release\\ContainerMode.exe'
+
+EXPOSURE_TIME = 5000 #us
+IDLE_TIME = 3900 #us
+CONTAINER_SIZE = 2000 #lines
+TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
+SLEEP = TIME_SCAN + 0.1 #s

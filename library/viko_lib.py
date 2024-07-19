@@ -2,7 +2,7 @@ import os.path as osp
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-import datetime
+from datetime import datetime
 import pandas as pd
 import os
 import sys
@@ -12,6 +12,8 @@ sys.path.append(
 from config import config as CFG
 from library import viko_lib as lib
 from scipy.linalg import lstsq
+import numpy as np
+import matplotlib.pyplot as plt
 
 MAX_AREA = 2048*2448
 #Preprocessing
@@ -241,7 +243,7 @@ def find_centerLine(dict_re, index_obj):
         coordinateYStart = y_start
         coordinateYEnd = y_end
     
-    print(flag)
+    # print(flag)
 
     print(F'coordinateXStart ', coordinateXStart)
     print(F'coordinateYStart ', coordinateYStart)
@@ -324,8 +326,8 @@ def transform_coordinates(dict_re) -> list:
     # indices = [idx for idx, label in enumerate(list_label) if label == 1]
     container_pairs = getWeldModelMulti(dict_re= dict_re)
     for obj in container_pairs:
-        print(obj[0][0])
-        print(obj[1][1])
+        # print(obj[0][0])
+        # print(obj[1][1])
         coordinateView, coordinateReal = lib.find_centerLine(dict_re= dict_re, index_obj = obj[0][0])
         listCoordinateView.append(coordinateView)
         listCoordinateReal.append(coordinateReal)
@@ -335,12 +337,15 @@ def transform_coordinates(dict_re) -> list:
     # listModelWeld = np.unique(listModelWeld).tolist()
     
     #View image all weld
+    current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     img_re = draw_coordinates_on_image(dict_re[0].orig_img, listCoordinateView)    
-    cv2.imshow('Image Re', img_re)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv2.imwrite(f'laser/image_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.jpg', img_re)
+    # cv2.imwrite('result_temp.png', img_re)
+    # cv2.imshow('Image Re', img_re)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-    return listCoordinateReal, listModelWeld
+    return listCoordinateReal, listModelWeld, img_re
 
 
     # if tag == 'multi':
@@ -459,7 +464,7 @@ def save_data_scan(results, image_re, coordinates):
             'CoordinateStart', 'CoordinateEnd', 'ScanLength'
         ])
 
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+    timestamp = datetime.now().strftime("%Y-%m-%d")
     
     for idx, result in enumerate(results):
         boxes = result.boxes  
@@ -505,7 +510,7 @@ def check_intersection(polygon1, polygon2):
     """
     Update to replace 
     """
-    print(polygon1)
+    # print(polygon1)
     intersection = list()
     for point in polygon2:
         result = cv2.pointPolygonTest(np.array(polygon1, dtype=np.float32), (float(point[0]), float(point[1])), measureDist=False)
@@ -525,7 +530,7 @@ def check_intersection(polygon1, polygon2):
         elif value == 0:
             internal += 1
 
-    print(internal)
+    # print(internal)
 
     if internal >= 3:
         return True
@@ -557,4 +562,90 @@ def findContainingPairs(data):
                         containing_pairs.append([weld_item, label_item])
 
     return containing_pairs
+
+def process_data_laser(data_path: str):
+
+    dataraw =  np.loadtxt(data_path)
+
+    count_lines = dataraw.shape[0]//1024
+
+    data_z = dataraw.T[2]
+
+    non_zero_values = data_z[data_z > 0]
+    min_non_zero_value = non_zero_values.min() if non_zero_values.size > 0 else 0
+    data_z[data_z == 0] = min_non_zero_value
+
+    subarr_z = np.split(data_z, indices_or_sections= count_lines)
+
+    def hillshade(array, azimuth, angle_altitude):
+        azimuth = 360.0 - azimuth
+
+        x, y = np.gradient(array)
+        slope = np.pi/2. - np.arctan(np.sqrt(x*x + y*y))
+        aspect = np.arctan2(-x, y)
+        
+        azimuthrad = azimuth*np.pi/180.
+        altituderad = angle_altitude*np.pi/180.
+        
+        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(altituderad) * np.cos(slope) * np.cos((azimuthrad - np.pi/2.) - aspect)
+        return 255*(shaded + 1)/2
+
+    raw_data = subarr_z
+
+    # Remove zeros
+    height_map = np.ma.masked_where(raw_data == 0, raw_data)
+
+    # Normalize the data to 0-255 range
+    height_map_normalized = ((height_map - np.min(height_map)) / (np.max(height_map) - np.min(height_map)) * 255).astype(np.uint8)
+
+    normalized_height_map = height_map_normalized
+
+
+    azimuth = 200
+    angle_altitude = 45  
+    hillshade_image = hillshade(normalized_height_map, azimuth, angle_altitude)
+
+
+    blended = 0.6 * normalized_height_map + 0.4 * hillshade_image
+
+    # blended =  cv2.resize(blended, (100, 1024))
+
+    cv2.imwrite('result_laser.png', blended)
+
+def process_temp(data_path):
+    dataraw = np.loadtxt(data_path)
+
+    def hillshade(array, azimuth, angle_altitude):
+        azimuth = 360.0 - azimuth
+
+        x, y = np.gradient(array)
+        slope = np.pi/2. - np.arctan(np.sqrt(x*x + y*y))
+        aspect = np.arctan2(-x, y)
+        
+        azimuthrad = azimuth*np.pi/180.
+        altituderad = angle_altitude*np.pi/180.
+        
+        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(altituderad) * np.cos(slope) * np.cos((azimuthrad - np.pi/2.) - aspect)
+        return 255*(shaded + 1)/2
+
+    raw_data = dataraw
+
+    # Remove zeros
+    height_map = np.ma.masked_where(raw_data == 0, raw_data)
+
+    # Normalize the data to 0-255 range
+    height_map_normalized = ((height_map - np.min(height_map)) / (np.max(height_map) - np.min(height_map)) * 255).astype(np.uint8)
+
+    normalized_height_map = height_map_normalized
+
+
+    azimuth = 200
+    angle_altitude = 45  
+    hillshade_image = hillshade(normalized_height_map, azimuth, angle_altitude)
+
+
+    blended = 0.6 * normalized_height_map + 0.4 * hillshade_image
+
+    cv2.imwrite('laser/laser_shader-.png', blended)
+
 

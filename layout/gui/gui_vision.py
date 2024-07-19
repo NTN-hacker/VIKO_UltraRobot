@@ -731,7 +731,7 @@ class BaslerGuiWindow(wx.Frame):
             self.camera.Close()
 
         self.Destroy()
-        print("Closing BaslerGUI")
+        # print("Closing BaslerGUI")
         return
 
     def OnEnableAutoExposure(self, event):

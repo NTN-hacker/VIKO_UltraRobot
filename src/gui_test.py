@@ -8,12 +8,15 @@ from pypylon import genicam
 from ultralytics import YOLO
 import sys
 sys.path.append(
-    "E:\Quan\VIKO_UltraRobot"
+    "E:\\AutoRoboticInspection\VIKO_UltraRobot"
 )
 from config import config as CFG
 from library import viko_lib as lib
 from src import robotic_modify as rm
 from layout.gui import gui_vision 
+import subprocess
+import os
+import signal
 
 import math
 
@@ -85,7 +88,8 @@ class CameraPanel(wx.Panel):
     def update_camera(self):
         self.camera.Open()
         self.camera.GainAuto.SetValue("Off")  
-        self.camera.Gain.SetValue(8.0)
+        self.camera.Gain.SetValue(5.0)
+        self.camera.ExposureTime.SetValue(2000.0)
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
         converter = pylon.ImageFormatConverter()
         converter.OutputPixelFormat = pylon.PixelType_BGR8packed
@@ -157,15 +161,29 @@ class ConfirmationDialog(wx.Dialog):
         
     def on_not_ok(self, event):
         self.EndModal(wx.ID_CANCEL)
-
-
+global IDProcessLaser
+def LaserTrigger():
+    global IDProcessLaser
+    try:
+        if IDProcessLaser.poll() is None:  # Check if process is still running
+            os.kill(IDProcessLaser.pid, signal.SIGTERM)  
+    except:
+        print ("Nothing")
+    IDProcessLaser = subprocess.Popen([CFG.PATH_LASER_PROGRAM])
 
 class InspectionFrame(wx.Frame):
     def __init__(self, parent, title):
         super(InspectionFrame, self).__init__(parent, title=title, size=(1400, 700))  # Tăng kích thước của khung để chứa cả panel camera
         self.h, self.w = 640, 640
 
+        # Start the process     
+
         self.load_model()
+
+        # Connect Laser obj
+
+        #self.
+
 
         #Distance
         self.distance_calculator = DistanceCalculator(
@@ -234,16 +252,19 @@ class InspectionFrame(wx.Frame):
         self.start_robot_btn = wx.Button(right_panel, label="Start Robot")
         self.stop_robot_btn = wx.Button(right_panel, label="Stop Robot")
         self.save_image_btn = wx.Button(right_panel, label = "Save Image")
+        self.view_datalaser_btn = wx.Button(right_panel, label = "View Laser")
 
         self.run_inspection_plan_btn.Bind(wx.EVT_BUTTON, self.on_run_inspection_plan)
         self.start_robot_btn.Bind(wx.EVT_BUTTON, self.on_start_robot)
         self.stop_robot_btn.Bind(wx.EVT_BUTTON, self.on_stop_robot)
         self.save_image_btn.Bind(wx.EVT_BUTTON, self.on_save)
+        self.view_datalaser_btn.Bind(wx.EVT_BUTTON, self.on_view)
 
         button_sizer.Add(self.run_inspection_plan_btn, 0, wx.ALL, 5)
         button_sizer.Add(self.start_robot_btn, 0, wx.ALL, 5)
         button_sizer.Add(self.stop_robot_btn, 0, wx.ALL, 5)
         button_sizer.Add(self.save_image_btn, 0, wx.ALL, 5)
+        button_sizer.Add(self.view_datalaser_btn, 0, wx.ALL, 5)
 
         right_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER)
 
@@ -279,6 +300,7 @@ class InspectionFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def on_run_inspection_plan(self, event):
+        # LaserTrigger()
         self.robot_running = True
         self.inspection_thread = threading.Thread(target=self.run_inspection)
         self.inspection_thread.start()
@@ -308,6 +330,9 @@ class InspectionFrame(wx.Frame):
         
     def on_save(self, event):
         self.save()
+
+    def on_view(self, event):
+        self.view()
 
     def on_run_center(self, event):
         self.robot_running = True
@@ -357,8 +382,8 @@ class InspectionFrame(wx.Frame):
 
     def run_inspection_point(self, img):
         detected_img, boxes, name_obj, flag = self.run_ai_model(img)
-        print('boxes', boxes)
-        print('Model weld  ', name_obj)
+        # print('boxes', boxes)
+        # print('Model weld  ', name_obj)
         if flag == 1:
             if boxes is not None and len(boxes) > 0:
                 box = boxes.tolist()  
@@ -414,7 +439,7 @@ class InspectionFrame(wx.Frame):
         def update_gauge():
             for i in range(0, 101, 20):
                 time.sleep(0.2)  # loading steps
-                wx.CallAfter(self.progress_bar.SetValue, i)
+                # wx.CallAfter(self.progress_bar.SetValue, i)
         
         gauge_thread = threading.Thread(target=update_gauge)
         gauge_thread.start()
@@ -426,23 +451,23 @@ class InspectionFrame(wx.Frame):
         # wx.CallAfter(self.progress_bar.SetValue, 100)
 
     def run_ai_model(self, img):
-        print(img.shape)
+        # print(img.shape)
         img = cv2.resize(img, (640, 640), interpolation=cv2.INTER_CUBIC)
         results = self.model.predict(source=img, conf=0.65)
         
         plot = results[0].plot()
 
-        print(1)
+        # print(1)
 
         #save data
         label_out = lib.getLabels(results)
         name_obj = 'Object test' #lib.findContainingPairs(results)
-        print(label_out)
-        print(name_obj)
+        # print(label_out)
+        # print(name_obj)
 
         flag = 1 if 1 in label_out else 0 #NEW MODEL
         # flag = 0 if 0 in label_out else 1
-        print(flag)
+        # print(flag)
 
         coordinate_re = results[0].masks.xy[0]
         pts = np.zeros((len(coordinate_re), 2))
@@ -483,7 +508,7 @@ class InspectionFrame(wx.Frame):
         from PIL import Image
         img_arr = self.camera_panel.capture_image()  
         img_arr = cv2.cvtColor(img_arr, cv2.COLOR_BGR2RGB)
-        print(img_arr.shape)
+        # print(img_arr.shape)
         img = Image.fromarray(img_arr)
         current_time = datetime.now()
         timestamp = current_time.strftime("%Y%m%d_%H%M%S")
@@ -493,6 +518,14 @@ class InspectionFrame(wx.Frame):
         print(f"Ảnh đã được lưu với tên: {new_filename}")
 
     ###################################
+
+    def view(self):
+        # data_path = 'E:\\AutoRoboticInspection\\VIKO_UltraRobot\\laser\\datascan.txt'
+        # lib.process_data_laser(data_path= data_path)
+        img = cv2.imread('result_laser.png', cv2.IMREAD_ANYCOLOR)
+        cv2.imshow('Image Laser', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 app = wx.App(False)
 frame = InspectionFrame(None, "Robot Inspection System")
