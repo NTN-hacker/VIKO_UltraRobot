@@ -1,0 +1,27 @@
+Timestamp,ImageName,OutputPath,Label,Confidence
+2024-05-31 14:54:55,sample_1.png,runs/segment/result\sample_1.png,0,0.7579774260520935
+2024-05-31 15:02:25,sample_2.png,runs/segment/result\sample_2.png,0,0.7614364624023438
+2024-05-31 15:05:01,sample_3.png,runs/segment/result\sample_3.png,0,0.7709760665893555
+2024-05-31 15:07:40,sample_4.png,runs/segment/result\sample_4.png,0,0.7068273425102234
+2024-05-31 15:08:19,sample_5.png,runs/segment/result\sample_5.png,0,0.8958211541175842
+2024-05-31 16:46:52,sample_6.png,runs/segment/result\sample_6.png,0,0.7078336477279663
+2024-05-31 16:47:03,sample_7.png,runs/segment/result\sample_7.png,0,0.7078336477279663
+2024-05-31 16:47:47,sample_8.png,runs/segment/result\sample_8.png,0,0.8871472477912903
+2024-05-31 16:48:22,sample_9.png,runs/segment/result\sample_9.png,0,0.8871472477912903
+2024-05-31 16:56:04,sample_10.png,runs/segment/result\sample_10.png,1,0.7123947739601135
+2024-05-31 16:57:34,sample_11.png,runs/segment/result\sample_11.png,0,0.8971400856971741
+2024-05-31 16:57:34,sample_12.png,runs/segment/result\sample_12.png,1,0.661440372467041
+2024-05-31 16:58:06,sample_13.png,runs/segment/result\sample_13.png,0,0.8971400856971741
+2024-05-31 16:58:06,sample_14.png,runs/segment/result\sample_14.png,1,0.661440372467041
+2024-05-31 16:59:18,sample_15.png,runs/segment/result\sample_15.png,0,0.8971400856971741
+2024-05-31 16:59:18,sample_16.png,runs/segment/result\sample_16.png,1,0.661440372467041
+2024-05-31 17:04:04,sample_17.png,runs/segment/result\sample_17.png,0,0.8971400856971741
+2024-05-31 17:04:04,sample_18.png,runs/segment/result\sample_18.png,1,0.661440372467041
+2024-05-31 17:35:52,sample_19.png,runs/segment/result\sample_19.png,0,0.8999379873275757
+2024-05-31 17:36:09,sample_20.png,runs/segment/result\sample_20.png,0,0.8999379873275757
+2024-05-31 17:36:48,sample_21.png,runs/segment/result\sample_21.png,0,0.8734119534492493
+2024-05-31 17:36:57,sample_22.png,runs/segment/result\sample_22.png,0,0.8734119534492493
+2024-05-31 17:38:25,sample_23.png,runs/segment/result\sample_23.png,0,0.9276772737503052
+2024-05-31 17:38:25,sample_24.png,runs/segment/result\sample_24.png,1,0.7815360426902771
+2024-05-31 17:38:40,sample_25.png,runs/segment/result\sample_25.png,0,0.9276772737503052
+2024-05-31 17:38:40,sample_26.png,runs/segment/result\sample_26.png,1,0.7815360426902771

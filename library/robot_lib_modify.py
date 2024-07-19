@@ -6,7 +6,7 @@ from robodk.robomath import *  # basic matrix operations
 import sys
 
 
-sys.path.append("D:\Quan\\roboDK\Vision-Machine-collab-Nhan\VIKO_UltraRobot") # config path
+sys.path.append("E:\Quan\AutoRoboticInspection-v1\VIKO_UltraRobot") # config path
 from config import config as CFG
 
 
@@ -88,11 +88,15 @@ class RobotModule:
         pixel_2 = coordinate_pixel[1]
 
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
-        degree_angle = math.degrees(angle)
-        if degree_angle > 90:
-            theta_laser = 180 - degree_angle
-        else:
-            theta_laser = degree_angle
+        theta_laser = math.degrees(angle)
+        # print(f"theta_laser_before:{theta_laser}")
+        if theta_laser < -90:
+            theta_laser = 180 + theta_laser
+        # print(f"theta_laser_after:{theta_laser}")
+        # else:
+        #     theta_laser = degree_angle
+        
+        # print(f"theta_laser:{theta_laser}")
 
         return theta_laser
 
@@ -126,44 +130,8 @@ class RobotModule:
         # Save the updated DataFrame to the CSV file
         updated_dataframe.to_csv(filename, index=False)
 
-    def cameraPosLeft(self, matcamera2base):
-        # move the left position to capture
-        camera2base_posLeft = matcamera2base
-        pos, rot = self.rotPos(camera2base_posLeft)
-        rot = [rot[0], rot[1], rot[2]]
-        pos = [pos[0], pos[1] + CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        # pos = [pos[0] + CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
+    def convertCoordinates(self, res_width, res_height, pixel_x, pixel_y, pixel_focalLength, dis_cameraToObject, theta):
 
-        camera2base_left_nonmat = np.concatenate((pos, rot))
-        camera2base_left = TxyzRxyz_2_Pose(camera2base_left_nonmat)
-
-        print(f'camera2base_left:{camera2base_left}')
-        self.robot.MoveJ(camera2base_left)
-
-    def cameraPosRight(self, matcamera2base):
-        # move the right position to capture
-        camera2base_posRight = matcamera2base
-        pos, rot = self.rotPos(camera2base_posRight)
-        rot = [rot[0], rot[1], rot[2]]
-        pos = [pos[0], pos[1] - CFG.HORIZONTAL_BASELINE / 2, pos[2]]
-        # pos = [pos[0] - CFG.FORWARD_BASELINE / 2, pos[1], pos[2]]
-
-        camera2base_right_nonmat = np.concatenate((pos, rot))
-        camera2base_right = TxyzRxyz_2_Pose(camera2base_right_nonmat)
-
-        print(f'camera2base_right:{camera2base_right}')
-        self.robot.MoveJ(camera2base_right)
-
-    def convertCoordinates(
-        self,
-        res_width,
-        res_height,
-        pixel_x,
-        pixel_y,
-        pixel_focalLength,
-        dis_cameraToObject,
-        theta,
-    ):
         xpixel_to_center = pixel_x - res_width / 2
         ypixel_to_center = pixel_y - res_height / 2
 
