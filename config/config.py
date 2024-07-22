@@ -77,3 +77,7 @@ IDLE_TIME = 3900 #us
 CONTAINER_SIZE = 500 #lines
 TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
 SLEEP = TIME_SCAN + 0.1 #s
+
+# Define the azimuth (direction) and altitude (angle) of the light source
+AZIMUTH = 315  # angle between the light source and north, in degrees
+ALTITUDE = 45  # angle above the horizon

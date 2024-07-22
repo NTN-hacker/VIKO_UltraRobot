@@ -207,14 +207,22 @@ class Laser():
         image_rgb = (gray_image * 255).astype(np.uint8) 
         image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_BGR2RGB) 
 
-        x, y, _= np.gradient(image_rgb)
+        grad_x, grad_y, _ = np.gradient(image_rgb)
 
-        slope = np.pi /2. - np.arctan(np.sqrt(x * x + y * y))
-        aspect = np.arctan2(-x, y)
-        altitude = np.pi / 4.
-        azimuth = np.pi /2.
-        shaded = np.sin(altitude) * np.sin(slope) + np.cos(altitude) * np.cos(slope) * np.cos((azimuth - np.pi / 2.) - aspect)
+        slope = np.pi/2. - np.arctan(np.sqrt(grad_x**2 + grad_y**2))
+        aspect = np.arctan2(-grad_y, grad_x)
 
+        azimuth = CFG.AZIMUTH  
+        altitude = CFG.ALTITUDE  
+
+        azimuth_rad = np.radians(azimuth)
+        altitude_rad = np.radians(altitude)
+
+        shaded = np.sin(altitude_rad) * np.sin(slope) + \
+                np.cos(altitude_rad) * np.cos(slope) * np.cos(azimuth_rad - np.pi/2. - aspect)
+
+        shaded = (shaded - shaded.min()) / (shaded.max() - shaded.min())
+        
         img_shaded = (shaded * 255).astype(np.uint8)
         image_rgb_shaded = cv2.cvtColor(img_shaded, cv2.COLOR_BGR2RGB) 
 
