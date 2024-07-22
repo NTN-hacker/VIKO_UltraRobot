@@ -24,7 +24,7 @@ class Laser():
         self.exposure_time = CFG.EXPOSURE_TIME
 
         # Null pointer if data not necessary
-        self.null_ptr_short = ct.POINTER(ct.c_short)()
+        self.null_ptr_short = ct.POINTER(ct.c_ushort)()
         self.null_ptr_int = ct.POINTER(ct.c_uint)()
 
         # Variable to store data after scan
@@ -61,7 +61,7 @@ class Laser():
         # Declare measuring data arrays
         self.profile_buffer = (ct.c_ubyte * (self.resolution * 2 * self.container_size))()
         self.X_value = (ct.c_double * self.resolution)()
-        self.Z_value = (ct.c_double * self.resolution)()
+        self.Z_value = (ct.c_double * (self.resolution * self.container_size))()
         self.intensities = (ct.c_ushort * self.resolution)()
 
         # Equidistant ranges
@@ -125,37 +125,30 @@ class Laser():
         ret = llt.get_actual_profile(self.hllt, self.profile_buffer, len(self.profile_buffer), llt.TProfileConfig.CONTAINER, ct.byref(self.lost_profiles))
         if ret != len(self.profile_buffer):
             print("Error get profile buffer data: " + str(ret))
-        print("Finish get profile!") 
-
-        print("Start convert profile to value!")
-        ret = llt.convert_profile_2_values(self.hllt, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1, self.null_ptr_short,
-                                           self.intensities, self.null_ptr_short, self.X_value, self.Z_value, self.null_ptr_int, self.null_ptr_int)
-        if ret & llt.CONVERT_X is 0 or ret & llt.CONVERT_Z is 0 or ret & llt.CONVERT_MAXIMUM is 0:
-            raise ValueError("Error converting data: " + str(ret))
-        print("Finish convert profile to value!")
+        print("Finish get profile!")         
         print("Finish scanning!")
 
         # Stop transmission
         ret = llt.transfer_profiles(self.hllt, llt.TTransferProfileType.NORMAL_CONTAINER_MODE, 0)
         if ret < 1:
-            raise ValueError("Error stopping transfer profiles: " + str(ret))
+            raise ValueError("Error stopping transfer profiles: " + str(ret))        
 
         # Get Z value from buffer
         # Convert buffer to big-endian ushort values and reshape them to 2D array
-        #self.Z = np.frombuffer(self.profile_buffer, dtype='>H').reshape((self.container_size, self.resolution))        
+        self.Z = np.frombuffer(self.profile_buffer, dtype='>H').reshape((self.container_size, self.resolution))
+
         print("Z")
-        print(self.Z_value)
-        print(f"Lines: {len(self.Z_value)}")
+        print(self.Z)
+        print(f"Lines: {len(self.Z)}")
 
         # Process data
         # Remove lines contains value 0
         Z_remove_0_overflow = self.Z[~np.any((self.Z == 0), axis=1)]
-
         # Invert value of Z, flip each column in the up/down direction
         Z_inverted = np.flipud(Z_remove_0_overflow)  
-
         # This filter replaces each point with the median of its neighborhood, effectively removing outliers
         Z_processed = median_filter(Z_inverted, size=3)
+
         print("\nZ_processed")
         print(Z_processed)
         print(f"Lines: {len(Z_processed)}")
@@ -179,6 +172,19 @@ class Laser():
         np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i_post-process.txt', self.Z, fmt='%d')
         np.savetxt(f'laser/datascan-python_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i_pre-process.txt', Z_processed, fmt='%d')
 
+
+        # Start convert profile to double value
+        # print("Start convert profile to value!")
+        # ret = llt.convert_profile_2_values(self.hllt, self.profile_buffer, self.resolution, llt.TProfileConfig.PROFILE, self.scanner_type, 0, 1, self.null_ptr_short,
+        #                                    self.intensities, self.null_ptr_short, self.X_value, self.Z_value, self.null_ptr_int, self.null_ptr_int)
+        # if ret & llt.CONVERT_X is 0 or ret & llt.CONVERT_Z is 0 or ret & llt.CONVERT_MAXIMUM is 0:
+        #     raise ValueError("Error converting data: " + str(ret))
+        # print("Finish convert profile to value!")
+
+        # self.Z = np.ctypeslib.as_array(self.Z_value)
+        # self.Z_value_double = self.Z.reshape(self.container_size, self.resolution)
+
+        # Ship data to software to draw 3D
         self.num_profile = len(Z_processed)
         self.data_scan = Z_processed
 

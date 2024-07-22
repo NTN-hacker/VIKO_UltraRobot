@@ -187,15 +187,23 @@ class VisionRobot:
         self.test_rf_laser2rf = test_rf_laser2rf
 
 
-    def test_target(self, target_01, target_02, theta_laser, backOx, alpha):
-        
+    def test_target(self, target_01, target_02, theta_laser, backOx, alpha_rot_Oy):
 
         H_target01ToCamera = self.robot_module.createRef([target_01[0], target_01[1], target_01[2]],[0, 0, np.radians(theta_laser)])
         H_target02ToCamera = self.robot_module.createRef([target_02[0], target_02[1], target_02[2]],[0, 0, np.radians(theta_laser)])
 
-        R_target01ToCamera = self.robot_module.createRef([0, 0, 0], [rotx(np.radians(0)), roty(np.radians(alpha)), 0])
-        R_target02ToCamera = self.robot_module.createRef([0, 0, 0], [rotx(np.radians(0)), roty(np.radians(alpha)), 0])
+        # R_target01ToCamera = self.robot_module.createRef([0, 0, 0], [rob.rotx(CFG.ROTATE_OX_LASER), rob.roty(alpha_rot_Oy), 0])
+        # R_target02ToCamera = self.robot_module.createRef([0, 0, 0], [rob.rotx(CFG.ROTATE_OX_LASER), rob.roty(alpha_rot_Oy), 0])
+        
+        if alpha_rot_Oy < 0:
+            L1 = (np.tan(np.radians(alpha_rot_Oy)) * CFG.DISTANCE_LASER2OBJECT)
 
+        else:
+            L1 = (-np.tan(np.radians(alpha_rot_Oy)) * CFG.OX_POS_LASER_NEGATIVE)
+        
+        L2 = (np.tan(np.radians(CFG.ROTATE_OX_LASER)) * CFG.DISTANCE_LASER2OBJECT)
+
+        delta_x = L1 * np.sin(np.radians(theta_laser))     
 
         # pos01ToCamera, rot01ToCamera = self.robot_module.rotPos(H_target01ToCamera)
         # pos02ToCamera, rot02ToCamera = self.robot_module.rotPos(H_target02ToCamera)
@@ -440,7 +448,6 @@ class VisionRobot:
 
         elif shape == "0_degree":
             alpha = backOx = 0
-            # target01, target02, length_weld = self.createPoint(realTarget01, realTarget02, theta_laser, backOx, alpha)
             testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
 
             obj = VisionRobot()
@@ -450,6 +457,11 @@ class VisionRobot:
         else:
             stop()
         
+        
+        # target01, target02 = self.createPoint(realTarget01, realTarget02, theta_laser)  # fix
+
+
+    
         # target01, target02 = self.createPoint(realTarget01, realTarget02, theta_laser)  # fix
 
 
