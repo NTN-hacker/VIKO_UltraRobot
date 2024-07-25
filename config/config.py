@@ -52,11 +52,11 @@ MODEL = {
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\weight\\best.onnx"
+        "WEIGHT": "weight\\best.onnx"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\weight\\inspection.onnx"
+        "WEIGHT": "weight\\inspection.onnx"
     }
 }
 

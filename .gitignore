@@ -1,0 +1,10 @@
+# skip txt files
+*.txt
+
+# skip png files
+.png
+
+
+# skip model files
+*.pt
+*.onnx
