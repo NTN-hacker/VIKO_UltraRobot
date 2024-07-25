@@ -1,0 +1,12 @@
+#skips
+*.png
+*.txt
+*.pt
+*.txt_post-process
+*.txt_pre-process
+*.html
+*.obj
+*.rar
+*.jpg
+*.lnk
+src/data_process.ipynb
