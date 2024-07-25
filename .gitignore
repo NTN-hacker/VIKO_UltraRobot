@@ -1,10 +1,18 @@
 # skip txt files
 *.txt
+*.txt_post-process
+*.txt_pre-process
 
 # skip png files
 *.png
-
+*.jpg
 
 # skip model files
 *.pt
 *.onnx
+
+#skips
+*.html
+*.obj
+*.rar
+*.lnk
