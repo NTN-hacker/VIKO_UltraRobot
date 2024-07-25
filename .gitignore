@@ -2,7 +2,7 @@
 *.txt
 
 # skip png files
-.png
+*.png
 
 
 # skip model files
