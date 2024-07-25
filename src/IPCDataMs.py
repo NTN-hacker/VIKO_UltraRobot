@@ -23,7 +23,10 @@ class IPCData:
         self.shm_img.seek(0)
         self.shm_img.write(img_encoded.tobytes())
 
-
+    def send_chart(self, keyid, valContent: list):
+        """valContent: list[[float, str],]"""
+        print('Id', keyid)
+        print('Send', valContent)
 
     def send_robot_positions(self, positions):
         # print('send_pos')
