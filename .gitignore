@@ -1,18 +1,18 @@
-# skip txt files
-*.txt
-*.txt_post-process
-*.txt_pre-process
-
-# skip png files
 *.png
 *.jpg
-
-# skip model files
-*.pt
-*.onnx
-
-#skips
+*.toc
+*.txt
+*.cpython-310.pyc
+*.pyc
+*.txt_pre-process
+*.txt_post-process
 *.html
-*.obj
+*.txts
+*.zip
 *.rar
-*.lnk
+*.pt 
+*.onnx
+*.pkg
+*.pyz
+*.csv
+library/_pycache_/*.*
