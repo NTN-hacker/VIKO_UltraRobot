@@ -76,7 +76,11 @@ def inspection(model, image):
 
     defects = np.array(ref_label)
     Inpection_Dict =  vl.count_defects(defects)
-    
+
+    total = sum(Inpection_Dict.values())
+    for key in Inpection_Dict:
+        Inpection_Dict[key] = (Inpection_Dict[key] / total) * 100
+
     return result_image
 
 
