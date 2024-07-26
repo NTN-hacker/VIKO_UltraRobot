@@ -6,7 +6,7 @@ from robodk.robomath import *  # basic matrix operations
 import sys
 
 
-sys.path.append("E:\Quan\AutoRoboticInspection-v1\VIKO_UltraRobot") # config path
+sys.path.append("E:\Quan\AutoRoboticInspection-V1\VIKO_UltraRobot") # config path
 from config import config as CFG
 
 
@@ -130,8 +130,16 @@ class RobotModule:
         # Save the updated DataFrame to the CSV file
         updated_dataframe.to_csv(filename, index=False)
 
-    def convertCoordinates(self, res_width, res_height, pixel_x, pixel_y, pixel_focalLength, dis_cameraToObject, theta):
-
+    def convertCoordinates(
+        self,
+        res_width,
+        res_height,
+        pixel_x,
+        pixel_y,
+        pixel_focalLength,
+        dis_cameraToObject,
+        theta,
+    ):
         xpixel_to_center = pixel_x - res_width / 2
         ypixel_to_center = pixel_y - res_height / 2
 
@@ -172,3 +180,43 @@ class RobotModule:
             ]
         )
         return target_pose
+
+
+
+def rotx(rx: float) -> 'Mat':
+    r"""Returns a rotation matrix around the X axis (radians)
+    """
+    ct = math.cos(np.radians(rx))
+    st = math.sin(np.radians(rx))
+    return Mat([
+        [1, 0, 0, 0],
+        [0, ct, -st, 0],
+        [0, st, ct, 0],
+        [0, 0, 0, 1],
+    ])
+
+
+def roty(ry: float) -> 'Mat':
+    r"""Returns a rotation matrix around the Y axis (radians)
+    """
+    ct = math.cos(np.radians(ry))
+    st = math.sin(np.radians(ry))
+    return Mat([
+        [ct, 0, st, 0],
+        [0, 1, 0, 0],
+        [-st, 0, ct, 0],
+        [0, 0, 0, 1],
+    ])
+
+
+def rotz(rz: float) -> 'Mat':
+    r"""Returns a rotation matrix around the Z axis (radians)
+    """
+    ct = math.cos(np.radians(rz))
+    st = math.sin(np.radians(rz))
+    return Mat([
+        [ct, -st, 0, 0],
+        [st, ct, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ])

@@ -14,6 +14,8 @@ from library import viko_lib as lib
 from scipy.linalg import lstsq
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import Counter
+
 
 MAX_AREA = 2048*2448
 #Preprocessing
@@ -647,5 +649,8 @@ def process_temp(data_path):
     blended = 0.6 * normalized_height_map + 0.4 * hillshade_image
 
     cv2.imwrite('laser/laser_shader-.png', blended)
+
+def count_defects(defects):
+    return dict(Counter(defects))
 
 

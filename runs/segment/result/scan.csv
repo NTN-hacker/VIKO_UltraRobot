@@ -1951,3 +1951,5 @@ Timestamp,ImageName,OutputPath,Label,Confidence,CoordinateStart,CoordinateEnd,Sc
 2024-07-19,sample_1950.png,runs/segment/result/image\2024-07-19\sample_1950.png,0,0.9012442827224731,"[1847, 877]","[409, 1731]",1672.471225462489
 2024-07-19,sample_1951.png,runs/segment/result/image\2024-07-19\sample_1951.png,0,0.9440796971321106,"[1843, 878]","[393, 1736]",1684.833522933349
 2024-07-19,sample_1952.png,runs/segment/result/image\2024-07-19\sample_1952.png,0,0.907989501953125,"[1847, 879]","[393, 1735]",1687.2616868761052
+2024-07-26,sample_1953.png,runs/segment/result/image\2024-07-26\sample_1953.png,0,0.9482004642486572,"[1240, 662]","[2342, 1712]",1522.1379700933815
+2024-07-26,sample_1953.png,runs/segment/result/image\2024-07-26\sample_1953.png,0,0.8871210813522339,"[1731, 1113]","[2407, 1792]",958.1320368299977

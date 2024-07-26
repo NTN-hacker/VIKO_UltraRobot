@@ -6,7 +6,7 @@ from config import config as CFG
 from library import viko_lib as lib
 import sys
 sys.path.append(
-    "E:\Quan\AutoRoboticInspection-v1\VIKO_UltraRobot"
+    "D:\\Quan\\roboDK\\Vision-Machine-collab-Nhan\\VIKO_UltraRobot"
 )
 
 try:
