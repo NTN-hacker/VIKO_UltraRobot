@@ -9,14 +9,14 @@ config file
 
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
-LINEAR_SPEEDS = [30, 100]
+LINEAR_SPEEDS = [30, 30]
 JOINT_SPEEDS = [20, 40] ### Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
 HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
-SAFE_DISTANCE = 500
+SAFE_DISTANCE = 565
 ROTATE_OY_LASER = 40
 ROTATE_OX_LASER = 0    ### Negative degrees
 OX_POS_LASER_POSITIVE = 110
@@ -24,8 +24,9 @@ OX_POS_LASER_NEGATIVE = 80
 OY_POS_LASER = 130   ### NOT USED
 ERROR_POS = 3
 
-DISTANCE_LASER2OBJECT = 135
-DISTANCE_CAMERA2OBJECT = 569
+HOME_LASER = 611
+DISTANCE_LASER2OBJECT = 150
+DISTANCE_CAMERA2OBJECT = 651
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
 ########################################################## AI MODEL ###################################################################

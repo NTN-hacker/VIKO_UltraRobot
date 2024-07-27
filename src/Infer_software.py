@@ -222,7 +222,7 @@ class CameraPanel(wx.Panel):
                             #send data
                             if self.data_laser:
                                 data = []
-                                filepath = 'laser/datascan.txt'
+                                filepath = 'laser/datascan/datascan.txt'
                                 with open(filepath, 'r') as file:
                                     for line in file:
                                         row = list(map(float, line.split()))

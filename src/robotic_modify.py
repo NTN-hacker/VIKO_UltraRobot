@@ -58,8 +58,8 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         if startWeld:
             trigger(lengthWeld, 1)
             def robot_movement():
-                VisRob.runMoveL(target02, speeedScan)
-                # VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
+                # VisRob.runMoveL(target02, speeedScan)
+                VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
                 trigger(lengthWeld, 0)
 
             robot_movement()  
@@ -128,13 +128,13 @@ class VisionRobot:
         self.rf_flange2rf = self.robot_module.createRef(pos_flange2rf, rot_flange2rf)
 
         # reference frame camera to flange
-        pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(59, 0, 190, 0, 0, 0)
+        pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(-70.5, 0, 88, 0, 0, 0)
         rf_camera2flange = self.robot_module.createRef(pos_camera2flange, rot_camera2flange)
 
         rf_camera2rf = np.dot(self.rf_flange2rf, rf_camera2flange)
 
         # reference laser to camera
-        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(-54.43, 57, 0, 0, 0, 0)
+        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(151, 0, 12, 0, 0, 0)
         self.rf_laser2camera = self.robot_module.createRef(pos_laser2camera, rot_laser2camera)
 
         self.rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
@@ -409,16 +409,19 @@ class VisionRobot:
         ####
 
         xToCamera01, yToCamera01 = self.robot_module.convertCoordinates(CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coorPixel1[0], coorPixel1[1],\
-                                                                        self.pixelFocalLength, self.disCameraToObject, theta=90,)  # cfg
+                                                                        self.pixelFocalLength, self.disCameraToObject, theta=180,)  # cfg
 
         xToCamera02, yToCamera02 = self.robot_module.convertCoordinates(CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coorPixel2[0], coorPixel2[1],\
-                                                                        self.pixelFocalLength, self.disCameraToObject, theta=90,)  # cfg
+                                                                        self.pixelFocalLength, self.disCameraToObject, theta=180,)  # cfg
         
-        zLaserToObject = self.disCameraToObject - CFG.DISTANCE_LASER2OBJECT
+        print("xToCamera01, yToCamera01:", xToCamera01, yToCamera01)
+        print("xToCamera02, yToCamera02:", xToCamera02, yToCamera02)
+
+        zLaserToObject = CFG.HOME_LASER - CFG.DISTANCE_LASER2OBJECT
         print(f"zLaserToObject:{zLaserToObject}")
         if zLaserToObject > CFG.SAFE_DISTANCE:
             zLaserToObject = 330
-            print("check the distance")
+            print("Warning the collision. Check the distance")
         realTarget01 = np.array([xToCamera01, yToCamera01, zLaserToObject])
         realTarget02 = np.array([xToCamera02, yToCamera02, zLaserToObject])
 

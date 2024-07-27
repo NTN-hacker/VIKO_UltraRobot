@@ -89,10 +89,10 @@ class RobotModule:
 
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
         theta_laser = math.degrees(angle)
-        # print(f"theta_laser_before:{theta_laser}")
-        if theta_laser < -90:
-            theta_laser = 180 + theta_laser
-        # print(f"theta_laser_after:{theta_laser}")
+        print(f"theta_laser_before:{theta_laser}")
+        # if theta_laser < -90:
+        theta_laser = 90 + theta_laser
+        print(f"theta_laser_after:{theta_laser}")
         # else:
         #     theta_laser = degree_angle
         
