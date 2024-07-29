@@ -25,7 +25,7 @@ OY_POS_LASER = 130   ### NOT USED
 ERROR_POS = 3
 
 HOME_LASER = 611
-DISTANCE_LASER2OBJECT = 150
+DISTANCE_LASER2OBJECT = 135
 DISTANCE_CAMERA2OBJECT = 651
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
@@ -75,17 +75,29 @@ CONF_MODEL_WELD = 0.6
 PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. Sử dụng trong trường hợp mối hàn nằm trên khung obj
 
 ######################################################### LASER #############################################################################
-PATH_LASER_PROGRAM = 'C:\\Users\\Admin\\Downloads\\scanCONTROL-Windows-SDK-4-1-1\\scanCONTROL Windows SDK 4.1.1\\C# SDK\\examples\\bin_x64\\Release\\ContainerMode.exe'
-
-EXPOSURE_TIME = 5000 #us
-IDLE_TIME = 3900 #us
-CONTAINER_SIZE = 2000 #lines
-# TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
-Denom = 100000
-
-TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 100000 #s
-SLEEP = TIME_SCAN + 1 #s
-
 # Define the azimuth (direction) and altitude (angle) of the light source
 AZIMUTH = 315  # angle between the light source and north, in degrees
 ALTITUDE = 45  # angle above the horizon
+
+EXPOSURE_TIME = 1000 #us
+IDLE_TIME = 3900 #us
+SLEEP = 0.1
+CONTAINER_SIZE = 2000 #lines
+TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
+
+
+
+
+###### optimize speed #######
+
+# # Define the azimuth (direction) and altitude (angle) of the light source
+# AZIMUTH = 315  # angle between the light source and north, in degrees
+# ALTITUDE = 45  # angle above the horizon
+
+# EXPOSURE_TIME = 1000 #us
+# IDLE_TIME = 3900 #us
+# SLEEP = 0.1
+# NO_PROFILES = 650
+# RESOLUTION_LASER_Y = 100 #(um)
+# TIME_SCAN = 200000/100/650
+

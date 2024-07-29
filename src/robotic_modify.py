@@ -53,14 +53,18 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         print(f"Weld model {model_weld_list[index]}")
         target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         speeedScan = lengthWeld / CFG.TIME_SCAN
+        print('The information robotic laser ')
+        print('Speed scan: ', speeedScan)
+        print('Length planing ', lengthWeld)
+        
         startWeld = VisRob.runMoveJ(target01)
         # startWeld = True
 
         if startWeld:
             trigger(lengthWeld, 1)
             def robot_movement():
-                # VisRob.runMoveL(target02, speeedScan)
-                VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
+                VisRob.runMoveL(target02, speeedScan)
+                # VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
                 trigger(lengthWeld, 0)
 
             robot_movement()  
@@ -351,13 +355,7 @@ class VisionRobot:
         # change_OX = CFG.DISTANCE_LASER2OBJECT * tan(np.radians(CFG.ROTATE_OX_LASER))
         # pos_target02_oy_rf -= change_OX
 
-        # if theta_laser > 0:
         newPos2 = np.array([0, -pos_target02_oy_rf, 0])
-        # elif theta_laser <= 0:
-            # newPos2 = np.array([0, pos_target02_oy_rf, 0])
-        # else:
-        #     print(f"check the angle of laser:{theta_laser} \n")
-
         newRef = target01ToBase
         posRef, rotRef = self.robot_module.rotPos(newRef)
         newRef_nonMat = np.concatenate((posRef, rotRef), axis=0)
