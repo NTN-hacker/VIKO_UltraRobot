@@ -54,6 +54,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         speeedScan = lengthWeld / CFG.TIME_SCAN
         startWeld = VisRob.runMoveJ(target01)
+        # startWeld = True
 
         if startWeld:
             trigger(lengthWeld, 1)
@@ -128,13 +129,13 @@ class VisionRobot:
         self.rf_flange2rf = self.robot_module.createRef(pos_flange2rf, rot_flange2rf)
 
         # reference frame camera to flange
-        pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(-70.5, 0, 88, 0, 0, 0)
+        pos_camera2flange, rot_camera2flange = self.robot_module.rotPosRef(0, -70.5, 88, 0, 0, 0)
         rf_camera2flange = self.robot_module.createRef(pos_camera2flange, rot_camera2flange)
 
         rf_camera2rf = np.dot(self.rf_flange2rf, rf_camera2flange)
 
         # reference laser to camera
-        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(151, 0, 12, 0, 0, 0)
+        pos_laser2camera, rot_laser2camera = self.robot_module.rotPosRef(0, 151, 12, 0, 0, 0)
         self.rf_laser2camera = self.robot_module.createRef(pos_laser2camera, rot_laser2camera)
 
         self.rf_laser2flange = np.dot(rf_camera2flange, self.rf_laser2camera)
@@ -221,7 +222,7 @@ class VisionRobot:
         # print(f'rf_laser2flange:{self.rf_laser2flange}')
         newFlangePos01, newFlangeRot01 = self.robot_module.rotPos(H_flangeToBase01)
         newFlangePos02, newFlangeRot02 = self.robot_module.rotPos(H_flangeToBase02)
-        print(f'newFlangePos01:{newFlangePos01}, {newFlangeRot01},\n newFlangePos02:{newFlangePos02}, {newFlangeRot02}\n')
+        # print(f'newFlangePos01:{newFlangePos01}, {newFlangeRot01},\n newFlangePos02:{newFlangePos02}, {newFlangeRot02}\n')
 
 
    
@@ -330,12 +331,16 @@ class VisionRobot:
 
         target01toLaser = np.dot(orgTarget01ToLaser, targetToOrgTarget)
         target02toLaser = np.dot(orgTarget02ToLaser, targetToOrgTarget)
+        posTarget01toLaser, _ = self.robot_module.rotPos(target01toLaser)
+        posTarget02toLaser, _ = self.robot_module.rotPos(target02toLaser)
+        # print(f'posTarget01toLaser, posTarget02toLaser:{posTarget01toLaser}, {posTarget02toLaser}')
 
         target01ToRf = np.dot(self.rf_laser2rf, target01toLaser)
         target02ToRf = np.dot(self.rf_laser2rf, target02toLaser)
 
         pos1toRf, _ = self.robot_module.rotPos(target01ToRf)
         pos2toRf, _ = self.robot_module.rotPos(target02ToRf)
+        print(f'pos1toRf, pos2toRf:{pos1toRf}, {pos2toRf}')
 
         pos2ToPos1_rf = pos2toRf - pos1toRf
         pos_target02_oy_rf = sqrt(pos2ToPos1_rf[0] ** 2 + pos2ToPos1_rf[1] ** 2)
@@ -346,12 +351,12 @@ class VisionRobot:
         # change_OX = CFG.DISTANCE_LASER2OBJECT * tan(np.radians(CFG.ROTATE_OX_LASER))
         # pos_target02_oy_rf -= change_OX
 
-        if theta_laser > 0:
-            newPos2 = np.array([0, pos_target02_oy_rf, 0])
-        elif theta_laser <= 0:
-            newPos2 = np.array([0, -pos_target02_oy_rf, 0])
-        else:
-            print(f"check the angle of laser:{theta_laser} \n")
+        # if theta_laser > 0:
+        newPos2 = np.array([0, -pos_target02_oy_rf, 0])
+        # elif theta_laser <= 0:
+            # newPos2 = np.array([0, pos_target02_oy_rf, 0])
+        # else:
+        #     print(f"check the angle of laser:{theta_laser} \n")
 
         newRef = target01ToBase
         posRef, rotRef = self.robot_module.rotPos(newRef)
