@@ -25,8 +25,28 @@ class IPCData:
 
     def send_chart(self, keyid, valContent: list):
         """valContent: list[[float, str],]"""
-        print('Id', keyid)
-        print('Send', valContent)
+
+        self.shm_chart = mmap.mmap(-1, 8*260+4, tagname="Local\\ChartInspection")
+        if not isinstance(keyid, int) or keyid < 0:
+            raise ValueError("Status key must be a non-negative integer")
+        self.shm_chart.seek(0)
+        keyidEndcode = struct.pack('I', keyid)
+        self.shm_chart.write(keyidEndcode.ljust(4,b'\x00'))
+        id = 1
+        for chartVal, chartContent in valContent:
+            if (id >8): break
+            id += 1
+            chartValEncode = struct.pack("f",chartVal)
+            ChartcontentEncode = str(chartContent).encode('utf-8')
+            self.shm_chart.write(chartValEncode.ljust(4,b'\x00'))
+            self.shm_chart.write(ChartcontentEncode.ljust(256,b'\x00'))
+        for _ in range(id, 9):
+            chartValEncode = struct.pack("f", 0.0)
+            ChartcontentEncode = b'\x00' * 256
+            self.shm_chart.write(chartValEncode.ljust(4, b'\x00'))
+            self.shm_chart.write(ChartcontentEncode.ljust(256, b'\x00'))
+
+        self.shm_chart.close()
 
     def send_robot_positions(self, positions):
         # print('send_pos')
@@ -47,12 +67,17 @@ class IPCData:
             for _ in range(remaining_positions):
                 self.shm_rospos.write(struct.pack('6f', *filler))
         self.shm_rospos.close()
-    def send_frame_below(self, img_np, float1=-1, float2=-1):
+    def send_frame_below(self, keyid, img_np, float1=-1, float2=-1):
         # print('send_frame_bl')
+        if not isinstance(keyid, int) or keyid < 0:
+            raise ValueError("Status key must be a non-negative integer")
+        status_key_encoded = struct.pack('I', keyid)
 
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)  
         _, img_encoded = cv2.imencode('.jpg', img_bgr)
+
         self.shm_img_below.seek(0)
+        self.shm_img_below.write(status_key_encoded.ljust(4, b'\x00'))  # 4 bytes for the key (unsigned int)
         self.shm_img_below.write(img_encoded.tobytes())
 
     def send_status(self, status_key, status_value):
