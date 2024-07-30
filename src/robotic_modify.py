@@ -71,7 +71,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         else:
             print("Error: Failed to reach target01")
 
-    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     data_export = {
         "id": str(datetime.now()),
@@ -271,12 +271,15 @@ class VisionRobot:
         ########## Not yet use the rotx(CFG.ROTATE_OX_LASER) and roty(alpha_rot_Oy)
         H_newLaser01 = self.robot_module.createRef(posLaser01, rotLaser01)
         H_newLaser02 = self.robot_module.createRef(posLaser02, rotLaser02)
-    
-        # H_flangeToBase01 = np.dot(H_newLaser01, np.linalg.inv(self.test_rf_laser2flange))
-        # H_flangeToBase02 = np.dot(H_newLaser02, np.linalg.inv(self.test_rf_laser2flange))
 
-        H_flangeToBase01 = np.dot(H_target01tobase, np.linalg.inv(self.test_rf_laser2flange))
-        H_flangeToBase02 = np.dot(H_target02tobase, np.linalg.inv(self.test_rf_laser2flange))
+        R_newLaser01 = np.dot(H_newLaser01, roty(np.radians(alpha_rot_Oy)))
+        R_newLaser02 = np.dot(H_newLaser02, roty(np.radians(alpha_rot_Oy)))
+
+        H_flangeToBase01 = np.dot(R_newLaser01, np.linalg.inv(self.test_rf_laser2flange))
+        H_flangeToBase02 = np.dot(R_newLaser02, np.linalg.inv(self.test_rf_laser2flange))
+
+        # H_flangeToBase01 = np.dot(H_target01tobase, np.linalg.inv(self.test_rf_laser2flange))
+        # H_flangeToBase02 = np.dot(H_target02tobase, np.linalg.inv(self.test_rf_laser2flange))
         # print(f'rf_laser2flange:{self.rf_laser2flange}')
         newFlangePos01, newFlangeRot01 = self.robot_module.rotPos(H_flangeToBase01)
         newFlangePos02, newFlangeRot02 = self.robot_module.rotPos(H_flangeToBase02)
@@ -326,8 +329,14 @@ class VisionRobot:
         self.robot.setPoseFrame(setRef)
 
         target01toNewRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
-        _, rot01ToNewRf = self.robot_module.rotPos(target01toNewRf)
+        pos01toNewRf, rot01ToNewRf = self.robot_module.rotPos(target01toNewRf)
         target02toNewRf = self.robot_module.createRef(newPos2, rot01ToNewRf)
+        pos02toNewRf, rot02ToNewRf = self.robot_module.rotPos(target02toNewRf)
+
+        pos01toNewRf[0] += backOx
+        pos02toNewRf[0] += backOx
+        target01toNewRf = self.robot_module.createRef(pos01toNewRf, rot01ToNewRf)
+        target02toNewRf = self.robot_module.createRef(pos02toNewRf, rot02ToNewRf)
 
         if alpha != 0:
             newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(CFG.ROTATE_OX_LASER)))
@@ -338,15 +347,18 @@ class VisionRobot:
 
         newPos1ToNewRf, newRot1ToNewRf = self.robot_module.rotPos(newT1toNewRf)
         newPos2ToNewRf, newRot2ToNewRf = self.robot_module.rotPos(newT2toNewRf)
+        print(f'backOx:{backOx}')
 
-        newPos1ToNewRf[0] += backOx
-        newPos2ToNewRf[0] += backOx
-        if alpha != 0:
-            newPos1ToNewRf[1] += 0
-            newPos2ToNewRf[1] += 0
-        else:
-            # pass
-            print(f"Pos1 and Pos2 changed:{newPos1ToNewRf}, {newPos2ToNewRf}")
+        # newPos1ToNewRf[0] += backOx
+        # newPos2ToNewRf[0] += backOx
+        print(f'newPos1ToNewRf, newRot1ToNewRf:{newPos1ToNewRf}, {newRot1ToNewRf}\n newPos2ToNewRf, newRot2ToNewRf:{newPos2ToNewRf}, {newRot2ToNewRf}')
+        
+        # if alpha != 0:
+        #     newPos1ToNewRf[1] += 0
+        #     newPos2ToNewRf[1] += 0
+        # else:
+        #     # pass
+        #     print(f"Pos1 and Pos2 changed:{newPos1ToNewRf}, {newPos2ToNewRf}")
 
         target01_none_mat = np.concatenate((newPos1ToNewRf, newRot1ToNewRf), axis=0)
         target02_none_mat = np.concatenate((newPos2ToNewRf, newRot2ToNewRf), axis=0)
@@ -362,6 +374,8 @@ class VisionRobot:
 
     def getTarget(self, pixel, shape, _suf_: int):
         # target01, target02, theta_laser = None, None, None
+        obj = VisionRobot()
+        obj.test_fixedRef()
         testTarget01, testTarget02, angleLaserToObject = None, None, None
         angleLaserToObject = self.robot_module.rotLaser(pixel)
 
@@ -395,28 +409,30 @@ class VisionRobot:
             alpha = CFG.ROTATE_OY_LASER * _suf_
             print(f"alpha:{alpha}")
             if alpha < 0:
-                backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.OX_POS_LASER_NEGATIVE)
+                backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)
                 testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
             else:
-                backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.OX_POS_LASER_POSITIVE)
+                backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)
                 testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
 
         elif shape == "30_degree":
             alpha = CFG.ROTATE_OY_LASER * _suf_
             print(f"alpha:{alpha}")
             if alpha < 0:
-                backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.OX_POS_LASER_NEGATIVE)  #### need more condition
+                backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)  #### need more condition
                 testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
             else:
-                backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.OX_POS_LASER_POSITIVE)  #### need more condition
+                backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)  #### need more condition
                 testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
 
         elif shape == "0_degree":
             alpha = backOx = 0
             testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
 
-            obj = VisionRobot()
-            obj.test_fixedRef()
             obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
 
         else:

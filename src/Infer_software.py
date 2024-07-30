@@ -14,7 +14,7 @@ import time
 from pypylon import pylon
 from ultralytics import YOLO
 from datetime import datetime
-from optimize_speed_laser import Laser
+from laser import Laser
 
 from config import config as CFG
 from src import robotic_modify as rm
@@ -145,7 +145,7 @@ class CameraPanel(wx.Panel):
 
         self.camera_thread = threading.Thread(target=self.update_camera) #setter
         self.button_thread = threading.Thread(target=self.check_buttons) #getter
-        self.laser_thread  = threading.Thread(target=self.scan_laser)
+        # self.laser_thread  = threading.Thread(target=self.scan_laser)
 
         self.camera_thread.daemon = True
         self.camera_thread.start()
@@ -153,8 +153,8 @@ class CameraPanel(wx.Panel):
         self.button_thread.daemon = True
         self.button_thread.start()
 
-        self.laser_thread.daemon = True
-        self.laser_thread.start()
+        # self.laser_thread.daemon = True
+        # self.laser_thread.start()
 
     def update_image(self, img):
         if self:                          
