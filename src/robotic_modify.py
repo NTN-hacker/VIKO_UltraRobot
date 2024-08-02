@@ -274,26 +274,19 @@ class VisionRobot:
         pos_targetToLaser02[1] = newXY_02[1]
 
         # create the H matrix about new laser position and new rotation
-        H_newTargettoLaser01 = self.robot_module.createRef(pos_targetToLaser01, rot_targetToLaser01)
-        H_newTargettoLaser02 = self.robot_module.createRef(pos_targetToLaser02, rot_targetToLaser02)
+        H_newTargetToLaser01 = self.robot_module.createRef(pos_targetToLaser01, rot_targetToLaser01)
+        H_newTargetToLaser02 = self.robot_module.createRef(pos_targetToLaser02, rot_targetToLaser02)
 
-        R_targetToLaser01 = np.dot(np.dot(H_newTargettoLaser01, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
-        R_targetToLaser02 = np.dot(np.dot(H_newTargettoLaser02, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
+        refTarget = self.robot_module.createRef([0, 0, 0], [0, 0, 0])
+        R_refTarget = np.dot(np.dot(refTarget, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
+
+        R_targetToLaser01 = np.dot(H_newTargetToLaser01, R_refTarget)
+        R_targetToLaser02 = np.dot(H_newTargetToLaser02, R_refTarget)
         
         # create the H matrix new target to base
         H_newTarget01tobase = np.dot(self.test_rf_laser2rf, R_targetToLaser01)
         H_newTarget02tobase = np.dot(self.test_rf_laser2rf, R_targetToLaser02)
 
-
-        ########## Not yet use the rotx(CFG.ROTATE_OX_LASER) and roty(alpha_rot_Oy)
-        # H_newLaser01 = self.robot_module.createRef(posLaser01, rotLaser01)
-        # H_newLaser02 = self.robot_module.createRef(posLaser02, rotLaser02)
-
-        # R_newLaser01 = np.dot(H_newLaser01, roty(np.radians(alpha_rot_Oy)))
-        # R_newLaser02 = np.dot(H_newLaser02, roty(np.radians(alpha_rot_Oy)))
-
-        # H_flangeToBase01 = np.dot(R_newLaser01, np.linalg.inv(self.test_rf_laser2flange))
-        # H_flangeToBase02 = np.dot(R_newLaser02, np.linalg.inv(self.test_rf_laser2flange))
 
         # new flange position
         H_flangeToBase01 = np.dot(H_newTarget01tobase, np.linalg.inv(self.test_rf_laser2flange))
