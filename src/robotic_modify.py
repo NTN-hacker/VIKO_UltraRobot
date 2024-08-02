@@ -67,7 +67,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
                 # VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
                 trigger(lengthWeld, 0)
 
-            robot_movement()  
+            # robot_movement()  
         else:
             print("Error: Failed to reach target01")
 
@@ -277,8 +277,8 @@ class VisionRobot:
         H_newTargettoLaser01 = self.robot_module.createRef(pos_targetToLaser01, rot_targetToLaser01)
         H_newTargettoLaser02 = self.robot_module.createRef(pos_targetToLaser02, rot_targetToLaser02)
 
-        R_targetToLaser01 = np.dot(H_newTargettoLaser01, roty(np.radians(alpha_rot_Oy)))
-        R_targetToLaser02 = np.dot(H_newTargettoLaser02, roty(np.radians(alpha_rot_Oy)))
+        R_targetToLaser01 = np.dot(np.dot(H_newTargettoLaser01, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
+        R_targetToLaser02 = np.dot(np.dot(H_newTargettoLaser02, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
         
         # create the H matrix new target to base
         H_newTarget01tobase = np.dot(self.test_rf_laser2rf, R_targetToLaser01)
@@ -336,32 +336,38 @@ class VisionRobot:
         rfToBase = self.robot_module.createRef([0, 0, 0], [np.radians(180), 0, 0])
         target01ToBase = np.dot(rfToBase, target01ToRf)
 
-        # change_OX = CFG.DISTANCE_LASER2OBJECT * tan(np.radians(CFG.ROTATE_OX_LASER))
-        # pos_target02_oy_rf -= change_OX
-
-        newPos2 = np.array([0, -pos_target02_oy_rf, 0])
+        change_OX = CFG.DISTANCE_LASER2OBJECT * tan(np.radians(CFG.ROTATE_OX_LASER))
+        
+  
+        # newPos2 = np.array([0, -pos_target02_oy_rf + change_OX, 0])
         newRef = target01ToBase
         posRef, rotRef = self.robot_module.rotPos(newRef)
         newRef_nonMat = np.concatenate((posRef, rotRef), axis=0)
         setRef = TxyzRxyz_2_Pose(newRef_nonMat)
         self.robot.setPoseFrame(setRef)
 
-        target01toNewRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
-        pos01toNewRf, rot01ToNewRf = self.robot_module.rotPos(target01toNewRf)
-        target02toNewRf = self.robot_module.createRef(newPos2, rot01ToNewRf)
-        pos02toNewRf, rot02ToNewRf = self.robot_module.rotPos(target02toNewRf)
+        
+        # target01toNewRf = np.dot(target01ToBase, np.linalg.inv(target01ToBase))
+        # pos01toNewRf, rot01ToNewRf = self.robot_module.rotPos(target01toNewRf)
+        # target02toNewRf = self.robot_module.createRef(newPos2, rot01ToNewRf)
+        # pos02toNewRf, rot02ToNewRf = self.robot_module.rotPos(target02toNewRf)
 
-        pos01toNewRf[0] += backOx
-        pos02toNewRf[0] += backOx
+        pos01toNewRf = np.array([backOx, change_OX, 0])
+        rot01ToNewRf = np.array([0, 0, 0])
+        pos02toNewRf = np.array([backOx, -pos_target02_oy_rf + change_OX, 0])
+        rot02ToNewRf = np.array([0, 0, 0])
+        # pos01toNewRf[0] += backOx
+        # pos01toNewRf[1] = change_OX
+        # pos02toNewRf[0] += backOx
         target01toNewRf = self.robot_module.createRef(pos01toNewRf, rot01ToNewRf)
         target02toNewRf = self.robot_module.createRef(pos02toNewRf, rot02ToNewRf)
 
         if alpha != 0:
-            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(CFG.ROTATE_OX_LASER)))
-            newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(CFG.ROTATE_OX_LASER)))
+            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
+            newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
         else:
-            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(CFG.ROTATE_OX_LASER)))  ## not config rotx
-            newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(CFG.ROTATE_OX_LASER)))  ## not config rotx
+            newT1toNewRf = np.dot(np.dot(target01toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
+            newT2toNewRf = np.dot(np.dot(target02toNewRf, roty(np.radians(alpha))), rotx(np.radians(0)))  ## not config rotx
 
         newPos1ToNewRf, newRot1ToNewRf = self.robot_module.rotPos(newT1toNewRf)
         newPos2ToNewRf, newRot2ToNewRf = self.robot_module.rotPos(newT2toNewRf)
