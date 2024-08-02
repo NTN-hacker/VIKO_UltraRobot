@@ -31,12 +31,14 @@ class RobotModule:
 
     @staticmethod
     def rotPosRef(x, y, z, roll, pitch, yaw)->list:
-        rotRef = np.array([np.radians(roll), np.radians(pitch), np.radians(yaw)])
+        "The rotation degrees is in radian"
+        rotRef = np.array([roll, pitch, yaw])
         posRef = np.array([x, y, z])
         return posRef, rotRef
 
     @staticmethod
     def createRef(translation, rotation):
+        "The rotation degrees is in radian"
         # Translation matrix
         translation_matrix = np.array(
             [
@@ -134,6 +136,7 @@ class RobotModule:
         dis_cameraToObject,
         theta,
     ):
+        "theta is in degrees"
         xpixel_to_center = pixel_x - res_width / 2
         ypixel_to_center = pixel_y - res_height / 2
 
