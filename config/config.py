@@ -76,14 +76,14 @@ PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. S
 
 ######################################################### LASER #############################################################################
 # Define the azimuth (direction) and altitude (angle) of the light source
-# AZIMUTH = 315  # angle between the light source and north, in degrees
-# ALTITUDE = 45  # angle above the horizon
+AZIMUTH = 315  # angle between the light source and north, in degrees
+ALTITUDE = 45  # angle above the horizon
 
-# EXPOSURE_TIME = 1000 #us
-# IDLE_TIME = 3900 #us
-# SLEEP = 0.1
+EXPOSURE_TIME = 1000 #us
+IDLE_TIME = 3900 #us
+SLEEP = 0.1
 CONTAINER_SIZE = 2000 #lines
-# TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
+TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
 
 
 
@@ -91,14 +91,14 @@ CONTAINER_SIZE = 2000 #lines
 ###### optimize speed #######
 
 # # Define the azimuth (direction) and altitude (angle) of the light source
-AZIMUTH = 315  # angle between the light source and north, in degrees
-ALTITUDE = 45  # angle above the horizon
+# AZIMUTH = 315  # angle between the light source and north, in degrees
+# ALTITUDE = 45  # angle above the horizon
 
-EXPOSURE_TIME = 1000 #us
-IDLE_TIME = 3900 #us
-SLEEP = 0.1
-NO_PROFILES = 650
-RESOLUTION_LASER_Y = 100 #(um)
-TIME_SCAN = 200000/100/650
-CONTAINER_SIZE = 2000 # to save
+# EXPOSURE_TIME = 1000 #us
+# IDLE_TIME = 3900 #us
+# SLEEP = 0.1
+# NO_PROFILES = 650
+# RESOLUTION_LASER_Y = 100 #(um)
+# TIME_SCAN = 200000/100/650
+# CONTAINER_SIZE = 2000 # to save
 
