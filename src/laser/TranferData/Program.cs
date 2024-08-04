@@ -189,7 +189,7 @@ namespace MEScanControl
                             bOK = false;
                         }
                         // test: 6 - 1000mm/s - 100 us; 5-800mm/s - 500 us
-                        uint uiWorkingUserMode = 2;
+                        uint uiWorkingUserMode = 3;
                         if ((iRetValue = CLLTI.ReadWriteUserModes(hLLT, 0, uiWorkingUserMode)) < CLLTI.GENERAL_FUNCTION_OK)
                         {
                             OnError("Error during loading UM 4", iRetValue);

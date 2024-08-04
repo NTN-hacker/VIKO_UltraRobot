@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import pyllt as llt
 from datetime import datetime
-from scipy.ndimage import median_filter
+median_filterfrom scipy.ndimage import 
 from config import config as CFG
 from matplotlib import pyplot as plt
 
