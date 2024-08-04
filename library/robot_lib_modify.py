@@ -31,12 +31,14 @@ class RobotModule:
 
     @staticmethod
     def rotPosRef(x, y, z, roll, pitch, yaw)->list:
+        "The rotation degrees is in degree"
         rotRef = np.array([np.radians(roll), np.radians(pitch), np.radians(yaw)])
         posRef = np.array([x, y, z])
         return posRef, rotRef
 
     @staticmethod
     def createRef(translation, rotation):
+        "The rotation degrees is in radian"
         # Translation matrix
         translation_matrix = np.array(
             [
@@ -89,14 +91,8 @@ class RobotModule:
 
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
         theta_laser = math.degrees(angle)
-        # print(f"theta_laser_before:{theta_laser}")
-        if theta_laser < -90:
-            theta_laser = 180 + theta_laser
-        # print(f"theta_laser_after:{theta_laser}")
-        # else:
-        #     theta_laser = degree_angle
-        
-        # print(f"theta_laser:{theta_laser}")
+        print(f"theta_laser_before:{theta_laser}")
+        theta_laser = 90 + theta_laser    ### theta_laser always negative      
 
         return theta_laser
 
@@ -140,6 +136,7 @@ class RobotModule:
         dis_cameraToObject,
         theta,
     ):
+        "theta is in degrees"
         xpixel_to_center = pixel_x - res_width / 2
         ypixel_to_center = pixel_y - res_height / 2
 

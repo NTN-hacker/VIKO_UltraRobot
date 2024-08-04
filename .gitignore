@@ -1,3 +1,4 @@
+#skips
 *.png
 *.jpg
 *.toc
@@ -15,4 +16,5 @@
 *.pkg
 *.pyz
 *.csv
+*.exe
 library/_pycache_/*.*

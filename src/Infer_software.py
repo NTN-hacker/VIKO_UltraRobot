@@ -26,6 +26,7 @@ from IPCDataMs import IPCData
 
 global IDProcessLaser
 global Inpection_Dict
+
 def LaserTrigger():
     global IDProcessLaser
     try:
@@ -84,7 +85,7 @@ def inspection(model, image):
     return result_image
 
 
-global status, idx, idx_Coord, status_time, result_image
+global status, idx, idx_Coord, status_time, result_image, idx_below_frame
 global image
 
 class CameraPanel(wx.Panel):
@@ -98,10 +99,11 @@ class CameraPanel(wx.Panel):
         #IPC Time
         # Create IPCData object
 
-        global idx, idx_Coord, idx_Chart
+        global idx, idx_Coord, idx_Chart, idx_below_frame
         idx = 0
         idx_Coord = 0
         idx_Chart = 0
+        idx_below_frame = 0 
         global status
         status = None
 
@@ -143,7 +145,7 @@ class CameraPanel(wx.Panel):
 
         self.camera_thread = threading.Thread(target=self.update_camera) #setter
         self.button_thread = threading.Thread(target=self.check_buttons) #getter
-        self.laser_thread  = threading.Thread(target=self.scan_laser)
+        # self.laser_thread  = threading.Thread(target=self.scan_laser)
 
         self.camera_thread.daemon = True
         self.camera_thread.start()
@@ -151,8 +153,8 @@ class CameraPanel(wx.Panel):
         self.button_thread.daemon = True
         self.button_thread.start()
 
-        self.laser_thread.daemon = True
-        self.laser_thread.start()
+        # self.laser_thread.daemon = True
+        # self.laser_thread.start()
 
     def update_image(self, img):
         if self:                          
@@ -169,8 +171,9 @@ class CameraPanel(wx.Panel):
                 if content == '1':
                     # sleep to start scan
                     #time.sleep(1)
-                    global result_image
+                    global result_image, idx_below_frame
                     result_image_ = self.laser.start_scan()
+                    idx_below_frame += 1
                     self.response_result == True
                     result_image = result_image_.copy()
 
@@ -214,7 +217,7 @@ class CameraPanel(wx.Panel):
                         if self.response_result:
                             #### send result image
                             result_image_np = np.frombuffer(result_image, dtype=np.uint8).reshape((640, 640, 3))
-                            self.ipc_data.send_frame_below(result_image_np)  
+                            self.ipc_data.send_frame_below(idx_below_frame, result_image_np)  
 
                             #send status
                             self.ipc_data.send_status(idx,f'Machine Vision: {status}' )   #dict {'index': 'context}
@@ -222,7 +225,7 @@ class CameraPanel(wx.Panel):
                             #send data
                             if self.data_laser:
                                 data = []
-                                filepath = 'laser/datascan.txt'
+                                filepath = 'laser/datascan/datascan.txt'
                                 with open(filepath, 'r') as file:
                                     for line in file:
                                         row = list(map(float, line.split()))
@@ -270,7 +273,7 @@ class CameraPanel(wx.Panel):
             
     def process_button(self, button_idx):
         global result_image
-        global idx, idx_Coord, idx_Chart
+        global idx, idx_Coord, idx_Chart, idx_below_frame
         global status
         global image
         global Inpection_Dict
@@ -278,7 +281,8 @@ class CameraPanel(wx.Panel):
         self.result_image = None
         if  button_idx == 0:
             status = "Processing" 
-            idx+=1                      
+            idx+=1
+            idx_below_frame+= 1                      
             result_image = run_inspection(self.model, image)
             if not isinstance(result_image, np.ndarray):
                 status = 'No image'
@@ -292,7 +296,8 @@ class CameraPanel(wx.Panel):
             status = "Planning weld..." 
             self.response_result = True
             coordinate_pixel_list, model_weld_list, planning_img = get_coordinate(model = self.model, img = image)
-            result_image = planning_img.copy()
+            idx_below_frame += 1
+            result_image = planning_img.copy()           
 
             idx+=1
             status = "Moving..."
@@ -307,6 +312,7 @@ class CameraPanel(wx.Panel):
             status = "Planning weld..." 
             self.response_result = True
             coordinate_pixel_list, model_weld_list, planning_img = get_coordinate(model = self.model, img = image)
+            idx_below_frame += 1
             result_image = planning_img.copy()
             
             idx+=1
@@ -323,6 +329,7 @@ class CameraPanel(wx.Panel):
 
             path_img = 'laser/depthmap/datascan-python.png'
             image = cv2.imread(path_img, cv2.IMREAD_COLOR)
+            idx_below_frame+= 1
             result_image = inspection(self.model_inspection, image)
 
             idx_Chart += 1
