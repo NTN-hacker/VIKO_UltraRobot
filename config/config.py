@@ -18,7 +18,7 @@ HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
 SAFE_DISTANCE = 565
 ROTATE_OY_LASER = 40
-ROTATE_OX_LASER = 10    ### Negative degrees
+ROTATE_OX_LASER = 10  ### Negative degrees
 ERROR_POS = 3
 
 HOME_LASER = 611

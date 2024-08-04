@@ -31,8 +31,8 @@ class RobotModule:
 
     @staticmethod
     def rotPosRef(x, y, z, roll, pitch, yaw)->list:
-        "The rotation degrees is in radian"
-        rotRef = np.array([roll, pitch, yaw])
+        "The rotation degrees is in degree"
+        rotRef = np.array([np.radians(roll), np.radians(pitch), np.radians(yaw)])
         posRef = np.array([x, y, z])
         return posRef, rotRef
 

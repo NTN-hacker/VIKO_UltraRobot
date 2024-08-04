@@ -16,4 +16,5 @@
 *.pkg
 *.pyz
 *.csv
+*.exe
 library/_pycache_/*.*
