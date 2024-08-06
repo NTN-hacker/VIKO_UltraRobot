@@ -18,7 +18,7 @@ HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
 SAFE_DISTANCE = 565
 ROTATE_OY_LASER = 40
-ROTATE_OX_LASER = 10  ### Negative degrees
+ROTATE_OX_LASER = 0  ### Negative degrees
 ERROR_POS = 3
 
 HOME_LASER = 611
@@ -72,15 +72,18 @@ CONF_MODEL_WELD = 0.6
 PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. Sử dụng trong trường hợp mối hàn nằm trên khung obj
 
 ######################################################### LASER #############################################################################
+PATH_LASER_PROGRAM = 'E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\laser\\TranferData\\bin\Release\\net8.0\\win-x64\\publish\\TranferData.exe'
 # Define the azimuth (direction) and altitude (angle) of the light source
 AZIMUTH = 315  # angle between the light source and north, in degrees
 ALTITUDE = 45  # angle above the horizon
+RESOLUTION_Y_LASER = 0.1 #mm
+FREQUENCY = 650 #Hz
 
-EXPOSURE_TIME = 1000 #us
-IDLE_TIME = 3900 #us
-SLEEP = 0.1
-CONTAINER_SIZE = 2000 #lines
-TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
+# EXPOSURE_TIME = 1000 #us
+# IDLE_TIME = 3900 #us
+# SLEEP = 0.1
+# CONTAINER_SIZE = 2000 #lines
+# TIME_SCAN = 200/0.1/650 
 
 
 

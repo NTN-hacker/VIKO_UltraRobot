@@ -6,6 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.IO.MemoryMappedFiles;
+using System.Text.Json;
+
 // using DevExpress.Mvvm;
 // using SciChart.Charting.Model.DataSeries;
 
@@ -66,12 +69,11 @@ namespace MEScanControl
         private Queue<ProfileData> dataQueue = new Queue<ProfileData>();
         private Thread dataProcessingThread;
         private ManualResetEvent dataAvailable = new ManualResetEvent(false);
+        static public List<List<Double>> LIDARdat = new List<List<double>>();
 
         private string outputFilePath = null;
-
-        static void Main(string[] args)
+        static public void AllSettings()
         {
-            Console.WriteLine("Hello");
             double resolutionY = 0.1; // 100 micromet = 1 profile -> convert to mm or 50 micromet = 1 profile and resY * len(weld) = total profiles
             double lengthWeld = 200;
             ScanControl scancontrol = new ScanControl(resolutionY, lengthWeld);
@@ -81,10 +83,67 @@ namespace MEScanControl
             // scancontrol.LoadProfile(3);
             scancontrol.TransferData();
             scancontrol.StopTransfer();
+        }
+        static void Main(string[] args)
+        {
+            // IPC Setting with keyword: "LIDAR_LAEER_RESULT"
+            // IPC Getting trigger "LIDAR_LASER_START"
 
-            Console.WriteLine("Done");
+            const string mapName = "LIDAR_LASER_START";
+            const string mapRes = "LIDAR_LAEER_RESULT";
+            const long mapSizeRes = 1024 * 2016 * 8;
+            const uint mapSize = 4;
+            DateTime startTime = DateTime.Now;
+            using (var mmf = MemoryMappedFile.CreateOrOpen(mapName, mapSize))
+            {
+                while (true)
+                {
+                    bool isTriggered = CheckLidarLaserStart(mmf);
+                    DateTime currentTime = DateTime.Now;
+                    TimeSpan durTime = currentTime - startTime;
+
+                    if (isTriggered && durTime.TotalSeconds > 2)
+                    {
+                        LIDARdat.Clear();
+                        AllSettings();
+                        var mmres = MemoryMappedFile.CreateOrOpen(mapRes, mapSizeRes); // data with matrix 1024x2016 double
+                        SendMatrixData(mmres);
+                        Console.WriteLine("Data sent to LIDAR_LASER_RESULT.");
+                        startTime = DateTime.Now;
+                    }
+
+                    Thread.Sleep(33); // nghỉ 33ms ~ 30 lần một giây
+                }
+            }
 
         }
+        static bool CheckLidarLaserStart(MemoryMappedFile mmf)
+        {
+            using (var accessor = mmf.CreateViewAccessor(0, 4))
+            {
+                byte[] buffer = new byte[4];
+                accessor.ReadArray(0, buffer, 0, 4);
+                return buffer[0] == 1;  // Kiểm tra giá trị byte đầu tiên
+            }
+        }
+        static void SendMatrixData(MemoryMappedFile mmf)
+        {
+            byte[] data = SerializeLIDARData(LIDARdat);
+            using (var accessor = mmf.CreateViewAccessor(0, data.Length))
+            {
+                accessor.WriteArray(0, data, 0, data.Length);
+            }
+        }
+
+       static byte[] SerializeLIDARData(List<List<double>> data)
+        {
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = false
+            };
+            return JsonSerializer.SerializeToUtf8Bytes(data, options);
+        }
+
 
         public ScanControl(double LengthWeld, double ResolutionY)
         {
@@ -542,9 +601,11 @@ namespace MEScanControl
                         // Console.WriteLine("No Profiles {0}", count_data);
 
                         // Console.WriteLine("----Extract the X/Z data and Timestamp information from container ----");
+                        Console.WriteLine("Start to write: ");
+
                         for (int iProfile = 0; iProfile < uiProfileCount; iProfile++)
                         {
-                            Console.WriteLine(iProfile);
+                            // Console.WriteLine(iProfile);
                             // count_data += 1;
                             Buffer.BlockCopy(profile.ContainerBuffer, (int)(2 * (iProfile + 1) * uiResolution * uiFieldCount - 16), abyTimestamp, 0, 16);
                             Buffer.BlockCopy(adValueX, (int)(uiResolution * iProfile * 8), DisplayX, 0, DisplayX.Length * 8);
@@ -552,8 +613,13 @@ namespace MEScanControl
                             CLLTI.Timestamp2TimeAndCount(abyTimestamp, ref dTimeShutterOpen, ref dTimeShutterClose, ref uiProfileCounter);
                             // DisplayProfile(DisplayX, DisplayZ, 1, dTimeShutterOpen, dTimeShutterClose, uiProfileCounter);
                             // Save X and Z values to file
-                            SaveProfileData(writer, DisplayX, DisplayZ, uiProfileCounter, dTimeShutterOpen, dTimeShutterClose);
+                            //LIDARdat.Append(List(DisplayX,DisplayZ));
+                            for (int i = 0; i < DisplayX.Count(); i++) {
+                                List<double> tempt = new List<double> { DisplayX[i], DisplayZ[i] };
+                                LIDARdat.Append(tempt);
+                            }
                         }
+                        Console.WriteLine("Write Done. ");
 
                         pinnArray.Free();
                         pinnX.Free();
@@ -570,11 +636,14 @@ namespace MEScanControl
         {
             
             // writer.WriteLine($"Profile Counter: {counter}, Time Open: {timeOpen}, Time Close: {timeClose}");
+
             for (int i = 0; i < x.Length; i++)
             {
                 writer.WriteLine($"{x[i]},    {z[i]}"); //4 spacing
             }
             writer.WriteLine(); // Add a blank line between profiles
+            // Console.WriteLine("\n----- SAVE PROFILE -----" + x.Length + "\n");
+
         }
 
         private void DisplayProfile(double[] x, double[] z, int resolution, double timeOpen, double timeClose, uint counter)

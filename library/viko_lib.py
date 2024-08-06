@@ -341,7 +341,7 @@ def transform_coordinates(dict_re) -> list:
     #View image all weld
     current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     img_re = draw_coordinates_on_image(dict_re[0].orig_img, listCoordinateView)    
-    cv2.imwrite(f'laser/image_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.jpg', img_re)
+    # cv2.imwrite(f'laser/image_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.jpg', img_re)
     # cv2.imwrite('result_temp.png', img_re)
     # cv2.imshow('Image Re', img_re)
     # cv2.waitKey(0)
