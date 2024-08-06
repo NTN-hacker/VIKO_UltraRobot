@@ -24,6 +24,7 @@ def stop():
     VisRob.disConnectRobot()
 
 def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
+    length = 0
     try:
         with open("trigger.txt", "r") as f:
             checkData = f.read().strip()
@@ -57,6 +58,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         print('The information robotic laser ')
         print('Speed scan: ', speeedScan)
         print('Length planing ', lengthWeld)
+        length = int(round(lengthWeld))
         
         startWeld = VisRob.runMoveJ(target01)
         # startWeld = True
@@ -66,7 +68,6 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
             def robot_movement():
                 time.sleep(1)
                 VisRob.runMoveL(target02, speeedScan)
-                time.sleep(5)
                 # VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
                 trigger(lengthWeld, 0)
 
@@ -83,6 +84,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     }
     print(f"data_export: {data_export}")
     # rob.RobotModule.export_csv(data_export)   
+    return length
 
 
 ## class for vision robot

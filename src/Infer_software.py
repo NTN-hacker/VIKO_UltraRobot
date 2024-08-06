@@ -26,38 +26,26 @@ from IPCDataMs import IPCData
 
 global IDProcessLaser
 global Inpection_Dict
+global Length_Weld
+
+def save_lidar_data(lidar_data, file_name):
+    # Chuyển đổi dữ liệu thành mảng NumPy để dễ xử lý
+    lidar_data = np.array(lidar_data)
+    print(lidar_data)
+    
+    # Lưu tất cả các giá trị vào tệp văn bản
+    with open(file_name, 'w') as file:
+        for point in lidar_data:
+            file.write(f"{point[0]}, {point[1]}\n")
 
 def LaserTrigger():
-    # global IDProcessLaser
-    # try:
-    #     if IDProcessLaser.poll() is None:  # Check if process is still running
-    #         os.kill(IDProcessLaser.pid, signal.SIGTERM)  
-    # except:
-    #     print ("Nothing")
-    # IDProcessLaser = subprocess.Popen([CFG.PATH_LASER_PROGRAM])
-    # try:
-    # Thực thi file .exe
-    exe_path = CFG.PATH_LASER_PROGRAM
-    working_directory = r"E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot"
-
-    process = subprocess.Popen(
-        [exe_path],
-        cwd=working_directory,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    stdout, stderr = process.communicate()
-    print("Output:", stdout)    
-    print("Error:", stderr)
-
-    # os.system(CFG.PATH_LASER_PROGRAM)
-    # subprocess.run([CFG.PATH_LASER_PROGRAM], check=True)
-    print(CFG.PATH_LASER_PROGRAM)
-    #     print("Output:", result.stdout)
-    # except subprocess.CalledProcessError as e:
-    #     print("Error:", e.stderr)
+    global IDProcessLaser
+    try:
+        if IDProcessLaser.poll() is None:  # Check if process is still running
+            os.kill(IDProcessLaser.pid, signal.SIGTERM)  
+    except:
+        print ("Nothing")
+    IDProcessLaser = subprocess.Popen([CFG.PATH_LASER_PROGRAM])
 
 def load_model(weight):
     model = YOLO(weight, task= 'detect')
@@ -73,8 +61,8 @@ def run_inspection(model, img):
 def get_coordinate(model, img):
     return rm.getCoordinates(model, img) 
 
-def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status):
-    rm.run(coordinate_pixel_list, model_weld_list, _suf_,  pos_status)
+def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status) -> int:
+    return rm.run(coordinate_pixel_list, model_weld_list, _suf_,  pos_status)
 
 def stop_robot():
     print('Stop.')
@@ -118,9 +106,11 @@ class CameraPanel(wx.Panel):
         # #Connect laser
         # self.laser = Laser()
         # self.laser.connect()
+        LaserTrigger()
 
         #IPC Time
         # Create IPCData object
+        # LaserTrigger()
 
         global idx, idx_Coord, idx_Chart, idx_below_frame
         idx = 0
@@ -178,8 +168,10 @@ class CameraPanel(wx.Panel):
 
         self.laser_thread.daemon = True
         self.laser_thread.start()
+        self.LIDAR_data = None 
 
-
+       
+        
     def update_image(self, img):
         if self:                          
             img = cv2.resize(img, (self.h, self.w), cv2.INTER_CUBIC)
@@ -188,26 +180,32 @@ class CameraPanel(wx.Panel):
             self.Refresh()
 
     def scan_laser(self):
-        while self.running:
-            
-            
-            # try:
+        global Length_Weld
+        while self.running:            
             with open('trigger.txt', 'r') as file:
-                content = file.read().strip() 
-            if content == '1':
-                start_time = datetime.now()
-                end_time = start_time + timedelta(seconds=2)  # Xác định thời điểm kết thúc sau 2 giây
-        
+                content = file.read().strip()
+            if content == '1': 
+                end_time = datetime.now() + timedelta(seconds=2)  # Xác định thời điểm kết thúc sau 2 giây
+                self.LIDAR_data = None 
                 while datetime.now() < end_time:
-                    IPCData.sendLIDARcs(1)
+                    length_weld = Length_Weld
+                    IPCData.sendLIDARcs(length_weld) # update y profile [ length ] 
                     # Thêm thời gian nghỉ ngắn để giảm tải cho CPU
                     time.sleep(0.1)
                 
                 IPCData.sendLIDARcs(0)
                 # TODO TASK: test
-                time.sleep(3)
-                data = IPCData.get_data()
-                print(data)
+                start_time2 = datetime.now()
+                end_time2 = start_time2 + timedelta(seconds=100)  # Xác định thời điểm kết thúc sau 2 giây
+                while datetime.now() < end_time2:
+                    temp,self.LIDAR_data = IPCData.get_lidar_data()
+                    if (temp != 0):
+                        break
+                    time.sleep(0.1)
+                
+                save_lidar_data(self.LIDAR_data, 'Lidar_data.txt')
+                # use plotly to draw a linechart
+                # self.Lidar_data: [[x0,z0],[x1,z1],...]
 
 
     def update_camera(self):
@@ -259,7 +257,6 @@ class CameraPanel(wx.Panel):
                                         row = list(map(float, line.split()))
                                         data.append(row)
                                         
-                                print("3D shared memory is updated")
                                 self.ipc_data.send_3Ddata(idx_Coord,3072,data)
                                 self.data_laser = False                            
 
@@ -305,6 +302,7 @@ class CameraPanel(wx.Panel):
         global status
         global image
         global Inpection_Dict
+        global Length_Weld
     
         self.result_image = None
         if  button_idx == 0:
@@ -329,7 +327,7 @@ class CameraPanel(wx.Panel):
 
             idx+=1
             status = "Moving..."
-            run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
+            Length_Weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
                         
             idx+=1
             idx_Coord+=1
@@ -345,7 +343,7 @@ class CameraPanel(wx.Panel):
             
             idx+=1
             status = "Moving..."
-            run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            Length_Weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
                         
             idx+=1    
             idx_Coord+=1
