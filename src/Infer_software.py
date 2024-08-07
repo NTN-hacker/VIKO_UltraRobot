@@ -26,7 +26,7 @@ from IPCDataMs import IPCData
 
 global IDProcessLaser
 global Inpection_Dict
-global Length_Weld
+
 
 def save_lidar_data(lidar_data, file_name):
     # Chuyển đổi dữ liệu thành mảng NumPy để dễ xử lý
@@ -106,7 +106,7 @@ class CameraPanel(wx.Panel):
         # #Connect laser
         # self.laser = Laser()
         # self.laser.connect()
-        LaserTrigger()
+        # LaserTrigger()
 
         #IPC Time
         # Create IPCData object
@@ -138,6 +138,7 @@ class CameraPanel(wx.Panel):
         self.data_inspection = False
         self.lock = threading.Lock()
         self.frame_count = 0
+        self.length_weld = 0 
         # model   
         self.model = YOLO(CFG.MODEL['YOLOV9']['WEIGHT'], task= 'segment')
 
@@ -158,7 +159,7 @@ class CameraPanel(wx.Panel):
 
         self.camera_thread = threading.Thread(target=self.update_camera) #setter
         self.button_thread = threading.Thread(target=self.check_buttons) #getter
-        self.laser_thread  = threading.Thread(target=self.scan_laser)
+        # self.laser_thread  = threading.Thread(target=self.scan_laser)
 
         self.camera_thread.daemon = True
         self.camera_thread.start()
@@ -166,9 +167,10 @@ class CameraPanel(wx.Panel):
         self.button_thread.daemon = True
         self.button_thread.start()
 
-        self.laser_thread.daemon = True
-        self.laser_thread.start()
-        self.LIDAR_data = None 
+        # self.laser_thread  = threading.Thread(target=self.scan_laser)
+        # self.laser_thread.daemon = True
+        # self.laser_thread.start()
+        # self.LIDAR_data = None 
 
        
         
@@ -180,16 +182,15 @@ class CameraPanel(wx.Panel):
             self.Refresh()
 
     def scan_laser(self):
-        global Length_Weld
         while self.running:            
             with open('trigger.txt', 'r') as file:
                 content = file.read().strip()
             if content == '1': 
+                print('Laser: ', self.length_weld)
                 end_time = datetime.now() + timedelta(seconds=2)  # Xác định thời điểm kết thúc sau 2 giây
                 self.LIDAR_data = None 
-                while datetime.now() < end_time:
-                    length_weld = Length_Weld
-                    IPCData.sendLIDARcs(length_weld) # update y profile [ length ] 
+                while datetime.now() < end_time:                    
+                    IPCData.sendLIDARcs(200) # update y profile [ length ] 
                     # Thêm thời gian nghỉ ngắn để giảm tải cho CPU
                     time.sleep(0.1)
                 
@@ -302,7 +303,6 @@ class CameraPanel(wx.Panel):
         global status
         global image
         global Inpection_Dict
-        global Length_Weld
     
         self.result_image = None
         if  button_idx == 0:
@@ -327,8 +327,8 @@ class CameraPanel(wx.Panel):
 
             idx+=1
             status = "Moving..."
-            Length_Weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
-                        
+            self.length_weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
+            print("Laser data: ", self.length_weld)
             idx+=1
             idx_Coord+=1
             status = "Completed."
@@ -343,7 +343,7 @@ class CameraPanel(wx.Panel):
             
             idx+=1
             status = "Moving..."
-            Length_Weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            self.length_weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
                         
             idx+=1    
             idx_Coord+=1
@@ -389,6 +389,7 @@ class InspectionFrame(wx.Frame):
         tab1.SetSizer(main_sizer)
         # self.Show()
         #Connect Laser
+        # LaserTrigger()
 
 
 

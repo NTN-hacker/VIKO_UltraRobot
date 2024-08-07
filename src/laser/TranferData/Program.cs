@@ -23,7 +23,7 @@ namespace MEScanControl
 
         public class ScanControl    
     {
-        public double dLengthWeld {get; set;}
+        public int dLengthWeld {get; set;}
         public double dResolutionY  {get; set;}
 
 
@@ -73,11 +73,12 @@ namespace MEScanControl
         static public List<List<Double>> LIDARdat = new List<List<double>>();
 
         private string outputFilePath = null;
-        static public void AllSettings(double glenth)
+        static public void AllSettings(int glenth)
         {
+            int lengthWeld = glenth;
             double resolutionY = 0.1; // 100 micromet = 1 profile -> convert to mm or 50 micromet = 1 profile and resY * len(weld) = total profiles
-            double lengthWeld = glenth;
-            ScanControl scancontrol = new ScanControl(resolutionY, lengthWeld);
+            
+            ScanControl scancontrol = new ScanControl(lengthWeld, resolutionY);
             scancontrol.SetRoi();
             scancontrol.GetRasterResolution();
             // scancontrol.Config();
@@ -89,8 +90,6 @@ namespace MEScanControl
         {
 
             // AllSettings();
-            // IPC Setting with keyword: "LIDAR_LAEER_RESULT"
-            // IPC Getting trigger "LIDAR_LASER_START"
 
             const string mapName = "LIDAR_LASER_START";
             const string mapRes = "LIDAR_LAEER_RESULT";
@@ -99,22 +98,26 @@ namespace MEScanControl
             DateTime startTime = DateTime.Now;
             using (var mmf = MemoryMappedFile.CreateOrOpen(mapName, mapSize))
             {
+                int iLength = 0;
                 while (true)
                 {
                     int getLength = CheckLidarLaserStart(mmf);
+                    
                     DateTime currentTime = DateTime.Now;
                     TimeSpan durTime = currentTime - startTime;
                     var mmres = MemoryMappedFile.CreateOrOpen(mapRes, mapSizeRes);
                     if (getLength != 0 && durTime.TotalSeconds > 2)
                     {
+                        iLength = getLength;
+                        Console.WriteLine("Laser weld from IPC {0}", getLength);
                         LIDARdat.Clear();
                         AllSettings(getLength);
                         startTime = DateTime.Now;
                     }
                     // check if Lidardat size = 1024*2016
-                    if (LIDARdat.Count > 1024*2014)
+                    if (LIDARdat.Count > 1024*iLength*10 && iLength > 0)
                     {
-                        Console.WriteLine("Start sending");
+                        Console.WriteLine("Start sending {0} profiles", iLength);
                         SendMatrixData(mmres);
 
                     }
@@ -145,7 +148,7 @@ namespace MEScanControl
 
             using (var accessor = mmf.CreateViewAccessor(0, mapSize, MemoryMappedFileAccess.Write))
             {
-                for (int i = 0; i < 50; i++)  // Gửi dữ liệu lên IPC liên tục trong vòng 5 giây
+                for (int i = 0; i < 100; i++)  // Gửi dữ liệu lên IPC liên tục trong vòng 5 giây
                 {
                     accessor.WriteArray(0, data, 0, data.Length);
                     System.Threading.Thread.Sleep(100); // Nghỉ 0,1 giây
@@ -178,7 +181,7 @@ namespace MEScanControl
         }
 
 
-        public ScanControl(double LengthWeld, double ResolutionY)
+        public ScanControl(int LengthWeld, double ResolutionY)
         {
             dLengthWeld = LengthWeld;
             dResolutionY = ResolutionY;
@@ -286,6 +289,10 @@ namespace MEScanControl
                         {
                             OnError("Error during loading UM 4", iRetValue);
                             bOK = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Working UM: " + uiWorkingUserMode);
                         }
                     }           
                 }
@@ -506,7 +513,7 @@ namespace MEScanControl
             int counter = 0;
             Console.WriteLine("Start Transfer Data");
 
-            while (continueTransfer && count_data <= (dResolutionY / dLengthWeld / (double)uiProfileCount))
+            while (continueTransfer && count_data <= ((double)dLengthWeld /  dResolutionY / (double)uiProfileCount) + 1)
             {
                 noContainerReceived = true;
                 byte[] abyContainerBuffer = new byte[uiResolution * 2 * uiFieldCount * uiProfileCount]; // 2* because 1 value has 2 bytes

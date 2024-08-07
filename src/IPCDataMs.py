@@ -173,13 +173,6 @@ class IPCData:
         else:
             print("stop sending tlength")
 
-    # def getLidarcsData():
-    #     shm_lidarcs = mmap.mmap(-1, 1024 * 2016 * 8, tagname="Local\\LIDAR_LASER_RESULT")  
-    #     shm_lidarcs.seek(0)
-    #     data = shm_lidarcs.read(1024 * 2016 * 8) 
-    #     print (data.rstrip('\x00'))
-    #     return data
-
     def get_lidar_data():
         map_name = "Local\\LIDAR_LAEER_RESULT"  # Tên IPC của bộ nhớ ánh xạ
         map_size = 1024 * 2016 * 8 * 10  # Kích thước bộ nhớ ánh xạ, điều chỉnh cho phù hợp với dữ liệu thực tế
