@@ -52,7 +52,7 @@ def save_lidar_data(lidar_data, filename):
             x, z = point
             file.write(f"{x}, {z}\n")
 
-def scan_data(length_weld):
+def scan_data(length_weld, result_queue):
     end_time = datetime.now() + timedelta(seconds=2)
     LIDAR_data = None 
     while datetime.now() < end_time:                  
@@ -71,13 +71,12 @@ def scan_data(length_weld):
     lidar_data = np.array(LIDAR_data)
     save_lidar_data(lidar_data, 'Lidar_data.txt')
 
-    # result_queue.put(lidar_data)
+    result_queue.put(lidar_data)
 
 def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
-    #Băt đầu chạy LaserTrigger() đợi tin hiệu gửi về IPC
-    LaserTrigger("start")
-    # Start the laser trigger process
-    length = 0
+    
+    laser_data = None
+    
     VisRob = VisionRobot()      
     
     if pos_status == "home":
@@ -86,26 +85,36 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         stop()
 
     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
+        #Băt đầu chạy LaserTrigger() đợi tin hiệu gửi về IPC
+        LaserTrigger("start")
         print(f"Weld model {model_weld_list[index]}")
+        result_queue = Queue()
         target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         time_scan = lengthWeld / CFG.RESOLUTION_Y_LASER / CFG.FREQUENCY
         speedScan = lengthWeld / time_scan
         print('The information robotic laser')
         print('Speed scan: ', speedScan)
         print('Length planning ', lengthWeld)
-        # length = int(round(lengthWeld))
 
         startWeld = VisRob.runMoveJ(target01)
 
         if startWeld:
-            scan_thread = threading.Thread(target=scan_data, args= (int(round(lengthWeld)),))
+            
+            scan_thread = threading.Thread(target=scan_data, args= (int(round(lengthWeld)), result_queue))
             scan_thread.start()
             time.sleep(1)
             VisRob.runMoveL(target02, speedScan)
 
             scan_thread.join()
+
+            if not result_queue.empty():
+                laser_data = result_queue.get()
+                print("Laser data received:", laser_data)
+            else:
+                print("No laser data received.")
         else:
             print("Error: Failed to reach target01")
+        LaserTrigger("stop")
 
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
@@ -116,70 +125,9 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     print(f"data_export: {data_export}")
     # NGỪNG CHẠY LaserTrigger(), kill chương trình exe LaserTrigger() đang chạy. 
     
-    LaserTrigger("stop")
-    return length
-# def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
-#     length = 0
-#     try:
-#         with open("trigger.txt", "r") as f:
-#             checkData = f.read().strip()
-#     except FileNotFoundError:
-#         checkData = ''  # Set to empty string if file doesn't exist
-
-#     if checkData != '0':
-#         with open("trigger.txt", "w") as f:
-#             f.write('0')
-
-#     VisRob = VisionRobot()
-#     if pos_status == "home":
-#         VisRob.fixedRef(0)
-
-#     else:
-#         stop()
     
-#     # Trigger and length to scan
-#     def trigger(length_weld, trigger=False):
-#         assert length_weld != 0, "No weld to scan. Can not trigger the laser"
-#         with open("trigger.txt", "w") as f:
-#             data = f'{trigger}'
-#             f.write(data)
-#             print(f'trigger:{data}')
+    return laser_data
 
-#     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
-#         print(f"Weld model {model_weld_list[index]}")
-#         target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
-#         time_scan = lengthWeld/CFG.RESOLUTION_Y_LASER/CFG.FREQUENCY
-#         speeedScan = lengthWeld / time_scan
-#         print('The information robotic laser ')
-#         print('Speed scan: ', speeedScan)
-#         print('Length planing ', lengthWeld)
-#         length = int(round(lengthWeld))
-        
-#         startWeld = VisRob.runMoveJ(target01)
-#         # startWeld = True
-
-#         if startWeld:
-#             trigger(lengthWeld, 1)
-#             def robot_movement():
-#                 time.sleep(1)
-#                 VisRob.runMoveL(target02, speeedScan)
-#                 # VisRob.runMoveL(target02, CFG.LINEAR_SPEEDS[1])
-#                 trigger(lengthWeld, 0)
-
-#             robot_movement()  
-#         else:
-#             print("Error: Failed to reach target01")
-
-#     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
-
-#     data_export = {
-#         "id": str(datetime.now()),
-#         "theta_laser": thetaLaser,
-#         # Add additional data to export if needed
-#     }
-#     print(f"data_export: {data_export}")
-#     # rob.RobotModule.export_csv(data_export)   
-#     return length
 def getCoordinates(model, image):
     return vis.getCoordinates(model, image, True)
 

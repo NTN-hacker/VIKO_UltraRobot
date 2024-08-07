@@ -24,28 +24,7 @@ import os
 import signal
 from IPCDataMs import IPCData
 
-global IDProcessLaser
 global Inpection_Dict
-
-
-def save_lidar_data(lidar_data, file_name):
-    # Chuyển đổi dữ liệu thành mảng NumPy để dễ xử lý
-    lidar_data = np.array(lidar_data)
-    print(lidar_data)
-    
-    # Lưu tất cả các giá trị vào tệp văn bản
-    with open(file_name, 'w') as file:
-        for point in lidar_data:
-            file.write(f"{point[0]}, {point[1]}\n")
-
-def LaserTrigger():
-    global IDProcessLaser
-    try:
-        if IDProcessLaser.poll() is None:  # Check if process is still running
-            os.kill(IDProcessLaser.pid, signal.SIGTERM)  
-    except:
-        print ("Nothing")
-    IDProcessLaser = subprocess.Popen([CFG.PATH_LASER_PROGRAM])
 
 def load_model(weight):
     model = YOLO(weight, task= 'detect')
@@ -103,15 +82,6 @@ class CameraPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        # #Connect laser
-        # self.laser = Laser()
-        # self.laser.connect()
-        # LaserTrigger()
-
-        #IPC Time
-        # Create IPCData object
-        # LaserTrigger()
-
         global idx, idx_Coord, idx_Chart, idx_below_frame
         idx = 0
         idx_Coord = 0
@@ -138,7 +108,7 @@ class CameraPanel(wx.Panel):
         self.data_inspection = False
         self.lock = threading.Lock()
         self.frame_count = 0
-        self.length_weld = 0 
+        self.laser_data = None
         # model   
         self.model = YOLO(CFG.MODEL['YOLOV9']['WEIGHT'], task= 'segment')
 
@@ -159,7 +129,6 @@ class CameraPanel(wx.Panel):
 
         self.camera_thread = threading.Thread(target=self.update_camera) #setter
         self.button_thread = threading.Thread(target=self.check_buttons) #getter
-        # self.laser_thread  = threading.Thread(target=self.scan_laser)
 
         self.camera_thread.daemon = True
         self.camera_thread.start()
@@ -167,10 +136,6 @@ class CameraPanel(wx.Panel):
         self.button_thread.daemon = True
         self.button_thread.start()
 
-        # self.laser_thread  = threading.Thread(target=self.scan_laser)
-        # self.laser_thread.daemon = True
-        # self.laser_thread.start()
-        # self.LIDAR_data = None 
 
        
         
@@ -180,33 +145,6 @@ class CameraPanel(wx.Panel):
             buf = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).tobytes()
             self.bitmap.CopyFromBuffer(buf)
             self.Refresh()
-
-    def scan_laser(self):
-        while self.running:            
-            with open('trigger.txt', 'r') as file:
-                content = file.read().strip()
-            if content == '1': 
-                print('Laser: ', self.length_weld)
-                end_time = datetime.now() + timedelta(seconds=2)  # Xác định thời điểm kết thúc sau 2 giây
-                self.LIDAR_data = None 
-                while datetime.now() < end_time:                    
-                    IPCData.sendLIDARcs(200) # update y profile [ length ] 
-                    # Thêm thời gian nghỉ ngắn để giảm tải cho CPU
-                    time.sleep(0.1)
-                
-                IPCData.sendLIDARcs(0)
-                # TODO TASK: test
-                start_time2 = datetime.now()
-                end_time2 = start_time2 + timedelta(seconds=100)  # Xác định thời điểm kết thúc sau 2 giây
-                while datetime.now() < end_time2:
-                    temp,self.LIDAR_data = IPCData.get_lidar_data()
-                    if (temp != 0):
-                        break
-                    time.sleep(0.1)
-                
-                save_lidar_data(self.LIDAR_data, 'Lidar_data.txt')
-                # use plotly to draw a linechart
-                # self.Lidar_data: [[x0,z0],[x1,z1],...]
 
 
     def update_camera(self):
@@ -327,8 +265,8 @@ class CameraPanel(wx.Panel):
 
             idx+=1
             status = "Moving..."
-            self.length_weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
-            print("Laser data: ", self.length_weld)
+            self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
+            print("Laser data at the end: ", self.laser_data)
             idx+=1
             idx_Coord+=1
             status = "Completed."
@@ -343,7 +281,8 @@ class CameraPanel(wx.Panel):
             
             idx+=1
             status = "Moving..."
-            self.length_weld = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            print("Laser data at the end: ", self.laser_data)
                         
             idx+=1    
             idx_Coord+=1
