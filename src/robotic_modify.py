@@ -89,7 +89,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         LaserTrigger("start")
         print(f"Weld model {model_weld_list[index]}")
         result_queue = Queue()
-        target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
+        target01, target02, thetaLaser, lengthWeld, target01ToCamera, target02ToCamera = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         time_scan = lengthWeld / CFG.RESOLUTION_Y_LASER / CFG.FREQUENCY
         speedScan = lengthWeld / time_scan
         print('The information robotic laser')
@@ -118,11 +118,17 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
 
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
+
+    target01ToCamera.tolist()
+    target02ToCamera.tolist()
     data_export = {
         "id": str(datetime.now()),
         "theta_laser": thetaLaser,
+        "t1": target01ToCamera,
+        "t2": target02ToCamera,
     }
-    print(f"data_export: {data_export}")
+
+    rob.RobotModule.export_csv(data_export)
     # NGỪNG CHẠY LaserTrigger(), kill chương trình exe LaserTrigger() đang chạy. 
     
     
@@ -475,43 +481,43 @@ class VisionRobot:
         if zLaserToObject > CFG.SAFE_DISTANCE:
             zLaserToObject = 330
             print("Warning the collision. Check the distance")
-        realTarget01 = np.array([xToCamera01, yToCamera01, zLaserToObject])
-        realTarget02 = np.array([xToCamera02, yToCamera02, zLaserToObject])
+        target01ToCamera = np.array([xToCamera01, yToCamera01, zLaserToObject])
+        target02ToCamera = np.array([xToCamera02, yToCamera02, zLaserToObject])
 
         if shape == "90_degree":
             alpha = CFG.ROTATE_OY_LASER * _suf_
             print(f"alpha:{alpha}")
             if alpha < 0:
                 backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)
-                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
-                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+                obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
             else:
                 backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)
-                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
-                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+                obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
 
         elif shape == "30_degree":
             alpha = CFG.ROTATE_OY_LASER * _suf_
             print(f"alpha:{alpha}")
             if alpha < 0:
                 backOx = (-np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)  #### need more condition
-                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
-                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+                obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
             else:
                 backOx = (np.tan(np.radians(CFG.ROTATE_OY_LASER)) * CFG.DISTANCE_LASER2OBJECT)  #### need more condition
-                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
-                obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+                testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+                obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
 
         elif shape == "0_degree":
             alpha = backOx = 0
-            testTarget01, testTarget02, test_length_weld = self.newcreatePoint(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+            testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
 
-            obj.test_target(realTarget01, realTarget02, angleLaserToObject, backOx, alpha)
+            obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
 
         else:
             stop()
     
-        return testTarget01, testTarget02, angleLaserToObject , test_length_weld
+        return testTarget01, testTarget02, angleLaserToObject , test_length_weld, target01ToCamera, target02ToCamera
 
     def runMoveL(self, target, speedScan):
         self.setRobot(speedScan, CFG.JOINT_SPEEDS[0])
