@@ -15,6 +15,8 @@ class IPCData:
         self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\PosPytoCPP")
         self.shm_coord = None
 
+        
+
 
     def send_frame(self, img_np, float1=-1, float2=-1):
         # print('send_frame')
@@ -150,6 +152,21 @@ class IPCData:
 
     def send_3Ddata_close(self):
         self.shm_coord.close()
+
+    def sendLIDARcs(trigger: bool):
+        shm_lidarcs = mmap.mmap(-1, 1, tagname="Local\\LIDAR_LASER_START")  
+        trigger_encoded = b'\x01' if trigger else b'\x00'
+        shm_lidarcs.seek(0)
+        shm_lidarcs.write(trigger_encoded) 
+
+    def getLidarcsData():
+        shm_lidarcs = mmap.mmap(-1, 1024 * 2016 * 8, tagname="Local\\LIDAR_LASER_RESULT")  
+        shm_lidarcs.seek(0)
+        data = shm_lidarcs.read(1024 * 2016 * 8) 
+        return data
+
+
+
 
     def close(self):
         """
