@@ -1,4 +1,6 @@
 # pip install -r requirements.txt
+#dotnet publish -c Release -r win-x64 --self-contained
+
 ## config the path 
 altgraph==0.17.4
 attrs==23.2.0

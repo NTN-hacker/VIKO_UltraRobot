@@ -2,6 +2,8 @@ import mmap
 import struct
 import cv2
 import numpy as np
+import json
+import sys, time
 class IPCData:
     def __init__(self, img_size=(480, 640)):
         self.img_size = img_size
@@ -153,17 +155,48 @@ class IPCData:
     def send_3Ddata_close(self):
         self.shm_coord.close()
 
-    def sendLIDARcs(trigger: bool):
-        shm_lidarcs = mmap.mmap(-1, 1, tagname="Local\\LIDAR_LASER_START")  
-        trigger_encoded = b'\x01' if trigger else b'\x00'
+    def sendLIDARcs(tlength: int):
+        # Create a memory-mapped file with 4 bytes size
+        shm_lidarcs = mmap.mmap(-1, 4, tagname="Local\\LIDAR_LASER_START")  
+        
+        # Encode the integer tlength into 4 bytes
+        tlength_encoded = struct.pack('I', tlength)
+        
+        # Write the encoded integer to the memory-mapped file
         shm_lidarcs.seek(0)
-        shm_lidarcs.write(trigger_encoded) 
+        shm_lidarcs.write(tlength_encoded) 
+        
+        if tlength:
+            sys.stdout.write("sended tlength to c#")
+            sys.stdout.flush()
+            sys.stdout.write('\r')
+        else:
+            print("stop sending tlength")
 
-    def getLidarcsData():
-        shm_lidarcs = mmap.mmap(-1, 1024 * 2016 * 8, tagname="Local\\LIDAR_LASER_RESULT")  
-        shm_lidarcs.seek(0)
-        data = shm_lidarcs.read(1024 * 2016 * 8) 
-        return data
+    def get_lidar_data():
+        map_name = "Local\\LIDAR_LAEER_RESULT"  # Tên IPC của bộ nhớ ánh xạ
+        map_size = 1024 * 2016 * 8 * 10  # Kích thước bộ nhớ ánh xạ, điều chỉnh cho phù hợp với dữ liệu thực tế
+
+        while True:
+            with mmap.mmap(-1, map_size, tagname=map_name) as mm:
+                data_bytes = mm[:].rstrip(b'\x00')  # Bỏ các byte \x00 dư thừa
+                if data_bytes:
+                    lidar_data = json.loads(data_bytes.decode('utf-8'))                    
+                    # Làm sạch nội dung của bộ nhớ ánh xạ
+                    try:
+                        mm.seek(0)  # Di chuyển con trỏ về đầu bộ nhớ
+                        mm.write(b'\x00' * map_size)  # Ghi các byte mặc định vào bộ nhớ
+                    except Exception as e:
+                        print(f"Error cleaning memory-mapped object: {e}")
+                    return True,lidar_data
+                else:
+                    # In "loading..." trên cùng một dòng
+                    sys.stdout.write("loading...")
+                    sys.stdout.flush()
+                    time.sleep(1)  # Đợi 1 giây trước khi kiểm tra lại
+                    sys.stdout.write('\r')  # Di chuyển con trỏ về đầu dòng
+                    return False,None
+
 
 
 

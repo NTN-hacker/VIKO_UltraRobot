@@ -24,40 +24,7 @@ import os
 import signal
 from IPCDataMs import IPCData
 
-global IDProcessLaser
 global Inpection_Dict
-
-def LaserTrigger():
-    # global IDProcessLaser
-    # try:
-    #     if IDProcessLaser.poll() is None:  # Check if process is still running
-    #         os.kill(IDProcessLaser.pid, signal.SIGTERM)  
-    # except:
-    #     print ("Nothing")
-    # IDProcessLaser = subprocess.Popen([CFG.PATH_LASER_PROGRAM])
-    # try:
-    # Thực thi file .exe
-    exe_path = CFG.PATH_LASER_PROGRAM
-    working_directory = r"E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot"
-
-    process = subprocess.Popen(
-        [exe_path],
-        cwd=working_directory,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    stdout, stderr = process.communicate()
-    print("Output:", stdout)    
-    print("Error:", stderr)
-
-    # os.system(CFG.PATH_LASER_PROGRAM)
-    # subprocess.run([CFG.PATH_LASER_PROGRAM], check=True)
-    print(CFG.PATH_LASER_PROGRAM)
-    #     print("Output:", result.stdout)
-    # except subprocess.CalledProcessError as e:
-    #     print("Error:", e.stderr)
 
 def load_model(weight):
     model = YOLO(weight, task= 'detect')
@@ -73,8 +40,8 @@ def run_inspection(model, img):
 def get_coordinate(model, img):
     return rm.getCoordinates(model, img) 
 
-def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status):
-    rm.run(coordinate_pixel_list, model_weld_list, _suf_,  pos_status)
+def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status) -> int:
+    return rm.run(coordinate_pixel_list, model_weld_list, _suf_,  pos_status)
 
 def stop_robot():
     print('Stop.')
@@ -115,13 +82,6 @@ class CameraPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        # #Connect laser
-        # self.laser = Laser()
-        # self.laser.connect()
-
-        #IPC Time
-        # Create IPCData object
-
         global idx, idx_Coord, idx_Chart, idx_below_frame
         idx = 0
         idx_Coord = 0
@@ -148,6 +108,7 @@ class CameraPanel(wx.Panel):
         self.data_inspection = False
         self.lock = threading.Lock()
         self.frame_count = 0
+        self.laser_data = None
         # model   
         self.model = YOLO(CFG.MODEL['YOLOV9']['WEIGHT'], task= 'segment')
 
@@ -168,7 +129,6 @@ class CameraPanel(wx.Panel):
 
         self.camera_thread = threading.Thread(target=self.update_camera) #setter
         self.button_thread = threading.Thread(target=self.check_buttons) #getter
-        self.laser_thread  = threading.Thread(target=self.scan_laser)
 
         self.camera_thread.daemon = True
         self.camera_thread.start()
@@ -176,38 +136,15 @@ class CameraPanel(wx.Panel):
         self.button_thread.daemon = True
         self.button_thread.start()
 
-        self.laser_thread.daemon = True
-        self.laser_thread.start()
 
-
+       
+        
     def update_image(self, img):
         if self:                          
             img = cv2.resize(img, (self.h, self.w), cv2.INTER_CUBIC)
             buf = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).tobytes()
             self.bitmap.CopyFromBuffer(buf)
             self.Refresh()
-
-    def scan_laser(self):
-        while self.running:
-            
-            
-            # try:
-            with open('trigger.txt', 'r') as file:
-                content = file.read().strip() 
-            if content == '1':
-                start_time = datetime.now()
-                end_time = start_time + timedelta(seconds=2)  # Xác định thời điểm kết thúc sau 2 giây
-        
-                while datetime.now() < end_time:
-                    IPCData.sendLIDARcs(1)
-                    # Thêm thời gian nghỉ ngắn để giảm tải cho CPU
-                    time.sleep(0.1)
-                
-                IPCData.sendLIDARcs(0)
-                # TODO TASK: test
-                time.sleep(3)
-                data = IPCData.get_data()
-                print(data)
 
 
     def update_camera(self):
@@ -259,7 +196,6 @@ class CameraPanel(wx.Panel):
                                         row = list(map(float, line.split()))
                                         data.append(row)
                                         
-                                print("3D shared memory is updated")
                                 self.ipc_data.send_3Ddata(idx_Coord,3072,data)
                                 self.data_laser = False                            
 
@@ -329,8 +265,8 @@ class CameraPanel(wx.Panel):
 
             idx+=1
             status = "Moving..."
-            run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
-                        
+            self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
+            print("Laser data at the end: ", self.laser_data)
             idx+=1
             idx_Coord+=1
             status = "Completed."
@@ -345,7 +281,8 @@ class CameraPanel(wx.Panel):
             
             idx+=1
             status = "Moving..."
-            run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
+            print("Laser data at the end: ", self.laser_data)
                         
             idx+=1    
             idx_Coord+=1
@@ -391,6 +328,7 @@ class InspectionFrame(wx.Frame):
         tab1.SetSizer(main_sizer)
         # self.Show()
         #Connect Laser
+        # LaserTrigger()
 
 
 
