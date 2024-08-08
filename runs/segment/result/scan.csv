@@ -359,3 +359,8 @@ Unnamed: 0,Timestamp,ImageName,OutputPath,Label,Confidence,CoordinateStart,Coord
 ,2024-08-07,sample_358.png,runs/segment/result/image\2024-08-07\sample_358.png,0.0,0.9580583572387696,"[784, 256]","[47, 1568]",1504.829890718549
 ,2024-08-07,sample_358.png,runs/segment/result/image\2024-08-07\sample_358.png,0.0,0.9405413269996644,"[1844, 620]","[1324, 2019]",1492.5149915494987
 ,2024-08-07,sample_360.png,runs/segment/result/image\2024-08-07\sample_360.png,0.0,0.9658436179161072,"[933, 48]","[1292, 1500]",1495.722233571461
+,2024-08-07,sample_361.png,runs/segment/result/image\2024-08-07\sample_361.png,0.0,0.9298290014266968,"[1048, 291]","[1050, 1788]",1497.0013360047478
+,2024-08-07,sample_362.png,runs/segment/result/image\2024-08-07\sample_362.png,0.0,0.9237845540046692,"[1048, 291]","[1050, 1788]",1497.0013360047478
+,2024-08-07,sample_363.png,runs/segment/result/image\2024-08-07\sample_363.png,0.0,0.9519439339637756,"[1038, 291]","[1053, 1788]",1497.0751484144007
+,2024-08-07,sample_364.png,runs/segment/result/image\2024-08-07\sample_364.png,0.0,0.9586805105209352,"[1039, 291]","[1054, 1788]",1497.0751484144007
+,2024-08-07,sample_365.png,runs/segment/result/image\2024-08-07\sample_365.png,0.0,0.8968123197555542,"[1124, 291]","[809, 1750]",1492.617164580389

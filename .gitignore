@@ -26,3 +26,4 @@ library/_pycache_/*.*
 /src/laser/TranferData/bin
 src/laser/TranferData/bin/Debug/net8.0/TranferData.dll
 
+/config/__pycache__
