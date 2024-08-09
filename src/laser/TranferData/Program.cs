@@ -25,10 +25,7 @@ namespace MEScanControl
     {
         public int dLengthWeld {get; set;}
         public double dResolutionY  {get; set;}
-
-
-
-        
+       
         public const int MAX_INTERFACE_COUNT = 5;
         public const int MAX_RESOULUTIONS = 6;
 
@@ -121,7 +118,7 @@ namespace MEScanControl
                         SendMatrixData(mmres);
 
                     }
-                    Thread.Sleep(33); // nghỉ 33ms ~ 30 lần một giây
+                    Thread.Sleep(3); // nghỉ 33ms ~ 30 lần một giây
                 }
             }
 
@@ -152,17 +149,6 @@ namespace MEScanControl
                 {
                     accessor.WriteArray(0, data, 0, data.Length);
                     System.Threading.Thread.Sleep(100); // Nghỉ 0,1 giây
-
-                    // Kiểm tra một phần dữ liệu được gửi
-                    if (i == 0)  // In ra dữ liệu chỉ một lần ở lần đầu tiên
-                    {
-                        string content = " ";
-                        for (int j = 40; j < 50; j++)
-                        {
-                            content += data[j].ToString() + " ";
-                        }
-                        Console.WriteLine(content);
-                    }
                 }
             }
 
@@ -284,7 +270,7 @@ namespace MEScanControl
                             bOK = false;
                         }
                         // test: 6 - 1000mm/s - 100 us; 5-800mm/s - 500 us
-                        uint uiWorkingUserMode = 3;
+                        uint uiWorkingUserMode = 2;
                         if ((iRetValue = CLLTI.ReadWriteUserModes(hLLT, 0, uiWorkingUserMode)) < CLLTI.GENERAL_FUNCTION_OK)
                         {
                             OnError("Error during loading UM 4", iRetValue);
@@ -576,16 +562,10 @@ namespace MEScanControl
             dataAvailable.Set();
             dataProcessingThread.Join();
         }
+
         private void ProcessData()
         {
-            string timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
-            outputFilePath = $"data/data_{timestamp}.txt";
-
-            
-            
-            using (StreamWriter writer = new StreamWriter(outputFilePath))
-            {
-                while (continueTransfer || dataQueue.Count > 0)
+            while (continueTransfer || dataQueue.Count > 0)
                 {
                     ProfileData profile = null;
                     lock (dataQueue)
@@ -655,9 +635,7 @@ namespace MEScanControl
                                 List<double> pair = new List<double> { DisplayX[i], DisplayZ[i] };
                                 LIDARdat.Add(pair);
                             }
-                             // In ra số lượng phần tử để kiểm tra
-                        }
-                        
+                        }                       
                         
                         pinnArray.Free();
                         pinnX.Free();
@@ -667,22 +645,33 @@ namespace MEScanControl
 
                     dataAvailable.WaitOne();
                 }
-            }
         }
+        // private void ProcessData()
+        // {
+        //     string timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
+        //     outputFilePath = $"data/data_{timestamp}.txt";
 
-        private void SaveProfileData(StreamWriter writer, double[] x, double[] z, uint counter, double timeOpen, double timeClose)
-        {
             
-            // writer.WriteLine($"Profile Counter: {counter}, Time Open: {timeOpen}, Time Close: {timeClose}");
+            
+        //     using (StreamWriter writer = new StreamWriter(outputFilePath))
+        //     {
+                
+        //     }
+        // }
 
-            for (int i = 0; i < x.Length; i++)
-            {
-                writer.WriteLine($"{x[i]},    {z[i]}"); //4 spacing
-            }
-            writer.WriteLine(); // Add a blank line between profiles
-            // Console.WriteLine("\n----- SAVE PROFILE -----" + x.Length + "\n");
+        // private void SaveProfileData(StreamWriter writer, double[] x, double[] z, uint counter, double timeOpen, double timeClose)
+        // {
+            
+        //     // writer.WriteLine($"Profile Counter: {counter}, Time Open: {timeOpen}, Time Close: {timeClose}");
 
-        }
+        //     for (int i = 0; i < x.Length; i++)
+        //     {
+        //         writer.WriteLine($"{x[i]},    {z[i]}"); //4 spacing
+        //     }
+        //     writer.WriteLine(); // Add a blank line between profiles
+        //     // Console.WriteLine("\n----- SAVE PROFILE -----" + x.Length + "\n");
+
+        // }
 
         private void DisplayProfile(double[] x, double[] z, int resolution, double timeOpen, double timeClose, uint counter)
         {

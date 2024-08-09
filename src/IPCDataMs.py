@@ -134,11 +134,20 @@ class IPCData:
         #     raise ValueError("Row number must be between 0 and 3072")
         total_size = 4 + 4 + 1024 * rownb * struct.calcsize('f')
         # Ensure key and rownb are written first
-        self.shm_coord = mmap.mmap(-1, total_size, tagname="Local\\Coor3DMesh")
-        self.shm_coord.seek(0)
-        self.shm_coord.write(struct.pack('I', key))  # Write key as unsigned int
-        self.shm_coord.write(struct.pack('I', rownb))  # Write rownb as unsigned int
-        
+        i = 0
+        while i<10:
+            i+=1
+            try:
+                self.shm_coord = mmap.mmap(-1, total_size, tagname="Local\\Coor3DMesh")
+                self.shm_coord.seek(0)
+                self.shm_coord.write(struct.pack('I', key))  # Write key as unsigned int
+                self.shm_coord.write(struct.pack('I', rownb))  # Write rownb as unsigned int
+                print ("sended 3Ddata to IPC: ", i)
+                break
+            except:
+                print ('error in send_3Ddata: ', i)
+                continue
+
         # Write the data rows
         for row in data:
             # print(len(row))

@@ -65,16 +65,16 @@ def scan_data(length_weld, result_queue):
     while datetime.now() < end_time2:
         temp, LIDAR_data = IPCData.get_lidar_data()
         if temp != 0:
+            print('Exit')
             break
         time.sleep(0.1)
     
     lidar_data = np.array(LIDAR_data)
-    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    save_lidar_data(lidar_data, f'laser/experimental/Lidar_data_{current_time}.txt')
+    # current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # save_lidar_data(lidar_data, f'laser/experimental/Lidar_data_{current_time}.txt')
 
     result_queue.put(lidar_data)
     
-
 def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     
     laser_data = None
@@ -87,7 +87,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         stop()
 
     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
-        #Băt đầu chạy LaserTrigger() đợi tin hiệu gửi về IPC
+  
         LaserTrigger("start")
         result_queue = Queue()
         target01, target02, thetaLaser, lengthWeld, target01ToCamera, target02ToCamera = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
@@ -115,7 +115,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         LaserTrigger("stop")
     print("Scan data done!")     
 
-    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     target01ToCamera.tolist()
     target02ToCamera.tolist()

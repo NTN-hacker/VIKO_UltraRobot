@@ -76,7 +76,7 @@ PATH_LASER_PROGRAM = 'E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\l
 # Define the azimuth (direction) and altitude (angle) of the light source
 AZIMUTH = 315  # angle between the light source and north, in degrees
 ALTITUDE = 45  # angle above the horizon
-RESOLUTION_Y_LASER = 0.1 #0.1mm
+RESOLUTION_Y_LASER = 0.1 #0.1mm = 100um
 FREQUENCY = 650 #Hz
 RESOLUTION_X_LASER = 1024 #0.05mm = 5um
 

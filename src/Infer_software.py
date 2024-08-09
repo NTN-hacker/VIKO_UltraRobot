@@ -135,8 +135,6 @@ class CameraPanel(wx.Panel):
 
         self.button_thread.daemon = True
         self.button_thread.start()
-
-
        
         
     def update_image(self, img):
