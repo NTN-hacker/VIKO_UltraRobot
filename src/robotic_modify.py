@@ -115,7 +115,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         LaserTrigger("stop")
     print("Scan data done!")     
 
-    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    # VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
     target01ToCamera.tolist()
     target02ToCamera.tolist()
@@ -354,7 +354,13 @@ class VisionRobot:
         # print(f'rf_laser2flange:{self.rf_laser2flange}')
         newFlangePos01, newFlangeRot01 = self.robot_module.rotPos(H_flangeToBase01)
         newFlangePos02, newFlangeRot02 = self.robot_module.rotPos(H_flangeToBase02)
-        print(f'newFlangePos01:{newFlangePos01}, {newFlangeRot01},\n newFlangePos02:{newFlangePos02}, {newFlangeRot02}\n')
+        # print(f'newFlangePos01:{newFlangePos01}, {newFlangeRot01},\n newFlangePos02:{newFlangePos02}, {newFlangeRot02}\n')
+
+        newPos01, newRot01 = self.robot_module.rotPos(H_newTarget01tobase)
+        newPos02, newRot02 = self.robot_module.rotPos(H_newTarget02tobase)
+        print(f'T01:{newPos01}, {newRot01},\n T02:{newPos02}, {newRot02}\n')
+        
+
 
    #####################################################
    #####################################################

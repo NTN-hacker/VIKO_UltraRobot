@@ -390,4 +390,6 @@ Unnamed: 0,Timestamp,ImageName,OutputPath,Label,Confidence,CoordinateStart,Coord
 ,2024-08-09,sample_389.png,runs/segment/result/image\2024-08-09\sample_389.png,0.0,0.9681899547576904,"[1373, 188]","[696, 1520]",1494.1730154168897
 ,2024-08-09,sample_390.png,runs/segment/result/image\2024-08-09\sample_390.png,0.0,0.9667292833328248,"[1385, 188]","[667, 1507]",1501.760633390022
 ,2024-08-09,sample_391.png,runs/segment/result/image\2024-08-09\sample_391.png,0.0,0.9683724641799928,"[1384, 188]","[671, 1507]",1499.3765370980034
-,2024-08-09,sample_392.png,runs/segment/result/image\2024-08-09\sample_392.png,0.0,0.9675681591033936,"[1384, 188]","[667, 1507]",1501.2827848210343
+,2024-08-09,sample_392.png,runs/segment/result/image\2024-08-09\sample_392.png,0.0,0.9675681591033936,"[1384, 188]","[667, 1507]",1501.2827848210345
+,2024-08-09,sample_393.png,runs/segment/result/image\2024-08-09\sample_393.png,0.0,0.9123984575271606,"[937, 99]","[1186, 1577]",1498.8278753746208
+,2024-08-09,sample_394.png,runs/segment/result/image\2024-08-09\sample_394.png,0.0,0.899497926235199,"[939, 99]","[1187, 1577]",1498.662069981088

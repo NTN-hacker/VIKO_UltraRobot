@@ -191,12 +191,7 @@ class CameraPanel(wx.Panel):
                             #send data
                             if self.data_laser:
                                 data = []
-                                # filepath = 'laser/datascan/datascan.txt'
-                                # with open(filepath, 'r') as file:
-                                #     for line in file:
-                                #         row = list(map(float, line.split()))
-                                #         data.append(row)
-                            
+                           
                                 data = self.laser_data.copy()
                                         
                                 self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
