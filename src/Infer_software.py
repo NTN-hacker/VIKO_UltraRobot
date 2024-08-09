@@ -14,7 +14,7 @@ import time
 from pypylon import pylon
 from ultralytics import YOLO
 from datetime import datetime,timedelta
-from laser import Laser
+from library.experimental_src.laser import Laser
 
 from config import config as CFG
 from src import robotic_modify as rm
@@ -40,7 +40,7 @@ def run_inspection(model, img):
 def get_coordinate(model, img):
     return rm.getCoordinates(model, img) 
 
-def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status) -> int:
+def run_robot(coordinate_pixel_list, model_weld_list, _suf_, pos_status):
     return rm.run(coordinate_pixel_list, model_weld_list, _suf_,  pos_status)
 
 def stop_robot():
@@ -181,6 +181,7 @@ class CameraPanel(wx.Panel):
                         global result_image 
                         if self.response_result:
                             #### send result image
+                            result_image = cv2.resize(result_image, (640, 640), cv2.INTER_CUBIC)
                             result_image_np = np.frombuffer(result_image, dtype=np.uint8).reshape((640, 640, 3))
                             self.ipc_data.send_frame_below(idx_below_frame, result_image_np)  
 
@@ -190,13 +191,15 @@ class CameraPanel(wx.Panel):
                             #send data
                             if self.data_laser:
                                 data = []
-                                filepath = 'laser/datascan/datascan.txt'
-                                with open(filepath, 'r') as file:
-                                    for line in file:
-                                        row = list(map(float, line.split()))
-                                        data.append(row)
+                                # filepath = 'laser/datascan/datascan.txt'
+                                # with open(filepath, 'r') as file:
+                                #     for line in file:
+                                #         row = list(map(float, line.split()))
+                                #         data.append(row)
+                            
+                                data = self.laser_data.copy()
                                         
-                                self.ipc_data.send_3Ddata(idx_Coord,3072,data)
+                                self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
                                 self.data_laser = False                            
 
                             #send the information inspection
@@ -266,10 +269,18 @@ class CameraPanel(wx.Panel):
             idx+=1
             status = "Moving..."
             self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status)
-            print("Laser data at the end: ", self.laser_data)
+            print("Laser data at the end: ", type(self.laser_data), self.laser_data)
+
             idx+=1
             idx_Coord+=1
             status = "Completed."
+             
+            self.laser_data, laser_img = vl.convert_to_grayscale_image(self.laser_data)
+            current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)    
+            
+            idx_below_frame+= 1  
+            result_image = laser_img.copy()
             self.data_laser = True 
         elif button_idx == 2:
             idx+=1
@@ -286,7 +297,15 @@ class CameraPanel(wx.Panel):
                         
             idx+=1    
             idx_Coord+=1
-            status = "Completed."        
+            status = "Completed."    
+            
+            self.laser_data, laser_img = vl.convert_to_grayscale_image(self.laser_data)
+            current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img) 
+
+            idx_below_frame+= 1   
+            result_image = laser_img.copy()
+
             self.data_laser = True 
         elif button_idx == 3: 
             idx+=1

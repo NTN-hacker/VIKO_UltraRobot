@@ -130,8 +130,8 @@ class IPCData:
         if not isinstance(key, int) or key < 0:
             raise ValueError("Key must be a non-negative integer")
 
-        if not isinstance(rownb, int) or rownb < 0 or rownb > 3072:
-            raise ValueError("Row number must be between 0 and 3072")
+        # if not isinstance(rownb, int) or rownb < 0 or rownb > 3072:
+        #     raise ValueError("Row number must be between 0 and 3072")
         total_size = 4 + 4 + 1024 * rownb * struct.calcsize('f')
         # Ensure key and rownb are written first
         self.shm_coord = mmap.mmap(-1, total_size, tagname="Local\\Coor3DMesh")
@@ -141,12 +141,13 @@ class IPCData:
         
         # Write the data rows
         for row in data:
+            # print(len(row))
             if len(row) != 1024:
                 raise ValueError("Each row must contain exactly 1024 floats.")
             self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
         
         # Fill the remaining space with -99999.0 if data is less than 3072 rows
-        remaining_rows = 3072 - len(data)
+        remaining_rows = rownb - len(data)
         if remaining_rows > 0:
             filler = [-99999.0] * 1024
             for _ in range(remaining_rows):

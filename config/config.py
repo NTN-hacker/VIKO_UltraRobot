@@ -9,8 +9,8 @@ config file
 
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
-LINEAR_SPEEDS = [30, 30]
-JOINT_SPEEDS = [20, 40] ### Not over 100
+LINEAR_SPEEDS = [30, 30]   ### (MM/SECOND)
+JOINT_SPEEDS = [20, 50]    ### (RAD/SECOND) Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
@@ -76,8 +76,9 @@ PATH_LASER_PROGRAM = 'E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\l
 # Define the azimuth (direction) and altitude (angle) of the light source
 AZIMUTH = 315  # angle between the light source and north, in degrees
 ALTITUDE = 45  # angle above the horizon
-RESOLUTION_Y_LASER = 0.1 #mm
+RESOLUTION_Y_LASER = 0.1 #0.1mm
 FREQUENCY = 650 #Hz
+RESOLUTION_X_LASER = 1024 #0.05mm = 5um
 
 # EXPOSURE_TIME = 1000 #us
 # IDLE_TIME = 3900 #us

@@ -69,9 +69,11 @@ def scan_data(length_weld, result_queue):
         time.sleep(0.1)
     
     lidar_data = np.array(LIDAR_data)
-    save_lidar_data(lidar_data, 'Lidar_data.txt')
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    save_lidar_data(lidar_data, f'laser/experimental/Lidar_data_{current_time}.txt')
 
     result_queue.put(lidar_data)
+    
 
 def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     
@@ -87,7 +89,6 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     for index, coordinate_pixel in enumerate(coordinate_pixel_list):
         #Băt đầu chạy LaserTrigger() đợi tin hiệu gửi về IPC
         LaserTrigger("start")
-        print(f"Weld model {model_weld_list[index]}")
         result_queue = Queue()
         target01, target02, thetaLaser, lengthWeld, target01ToCamera, target02ToCamera = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         time_scan = lengthWeld / CFG.RESOLUTION_Y_LASER / CFG.FREQUENCY
@@ -98,26 +99,23 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
 
         startWeld = VisRob.runMoveJ(target01)
 
-        if startWeld:
-            
+        if startWeld:            
             scan_thread = threading.Thread(target=scan_data, args= (int(round(lengthWeld)), result_queue))
             scan_thread.start()
             time.sleep(1)
-            VisRob.runMoveL(target02, speedScan)
-
+            VisRob.runMoveL(target02, speedScan)            
             scan_thread.join()
-
             if not result_queue.empty():
                 laser_data = result_queue.get()
                 print("Laser data received:", laser_data)
             else:
-                print("No laser data received.")
+                print("No laser data received.")            
         else:
-            print("Error: Failed to reach target01")
+            print("Error: Failed to reach target01")  
         LaserTrigger("stop")
+    print("Scan data done!")     
 
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
-
 
     target01ToCamera.tolist()
     target02ToCamera.tolist()
@@ -128,9 +126,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         "t2": target02ToCamera,
     }
 
-    rob.RobotModule.export_csv(data_export)
-    # NGỪNG CHẠY LaserTrigger(), kill chương trình exe LaserTrigger() đang chạy. 
-    
+    rob.RobotModule.export_csv(data_export) 
     
     return laser_data
 
