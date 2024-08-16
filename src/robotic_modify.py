@@ -123,7 +123,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         "theta_laser": thetaLaser,
     }
 
-    rob.RobotModule.export_csv(data_export) 
+    # rob.RobotModule.export_csv(data_export) 
     
     return laser_data
 
