@@ -10,7 +10,7 @@ config file
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
 LINEAR_SPEEDS = [30, 30]   ### (MM/SECOND)
-JOINT_SPEEDS = [20, 50]    ### (RAD/SECOND) Not over 100
+JOINT_SPEEDS = [20, 70]    ### (RAD/SECOND) Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
@@ -50,11 +50,11 @@ MODEL = {
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": "weight\\best.onnx"
+        "WEIGHT": "weight\\best.pt"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "weight\\inspection.onnx"
+        "WEIGHT": "weight\\inspection.pt"
     }
 }
 

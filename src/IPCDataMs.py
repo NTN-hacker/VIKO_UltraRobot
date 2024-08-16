@@ -14,7 +14,7 @@ class IPCData:
         self.shm_status = mmap.mmap(-1, 1024, tagname="Local\\VisionStatus")  
 
         self.robot_position_size = 50 * 6 * struct.calcsize('f') # 50 ros pos
-        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\PosPytoCPP")
+        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\Robpos")
         self.shm_coord = None
 
         
@@ -52,25 +52,23 @@ class IPCData:
 
         self.shm_chart.close()
 
-    def send_robot_positions(self, positions):
-        # print('send_pos')
-
-        if len(positions) > 50:
-            raise ValueError("Too many robot positions to store in shared memory.")
-        
-        self.shm_rospos.seek(0)
+    def send_robot_positions(self, key, robnb, positions):
+        # Ensure positions are valid
         for pos in positions:
             if len(pos) != 6:
-                raise ValueError("Each robot position must contain exactly 6 floats.")
-            self.shm_rospos.write(struct.pack('6f', *pos))
+                print(f"Each robot position must contain exactly 6 floats. Invalid position: {pos}")
         
-        # Fill the remaining space with -99999.0f
-        remaining_positions = 50 - len(positions)
-        if remaining_positions > 0:
-            filler = [-99999.0] * 6
-            for _ in range(remaining_positions):
-                self.shm_rospos.write(struct.pack('6f', *filler))
-        self.shm_rospos.close()
+        self.shm_rospos.seek(0)  # Clean the data
+        
+        # Write key and robnb
+        self.shm_rospos.write(struct.pack('I', key))  # Write key as unsigned int
+        self.shm_rospos.write(struct.pack('I', robnb))  # Write robnb as unsigned int
+        
+        # Write all positions
+        for pos in positions:
+            self.shm_rospos.write(struct.pack('6f', *pos))  # Write each position as 6 floats
+        print ("ROBOT COOR are sended to IPC")
+
     def send_frame_below(self, keyid, img_np, float1=-1, float2=-1):
         # print('send_frame_bl')
         if not isinstance(keyid, int) or keyid < 0:
@@ -147,20 +145,25 @@ class IPCData:
             except:
                 print ('error in send_3Ddata: ', i)
                 continue
-
+            
         # Write the data rows
         for row in data:
             # print(len(row))
-            if len(row) != 1024:
-                raise ValueError("Each row must contain exactly 1024 floats.")
-            self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
-        
-        # Fill the remaining space with -99999.0 if data is less than 3072 rows
-        remaining_rows = rownb - len(data)
-        if remaining_rows > 0:
-            filler = [-99999.0] * 1024
-            for _ in range(remaining_rows):
-                self.shm_coord.write(struct.pack('1024f', *filler))
+            try:
+                if len(row) != 1024:
+                    raise ValueError("Each row must contain exactly 1024 floats.")
+                self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
+                print("Done")
+            except:
+                print ("ERROR while sending 3Ddata to IPC: ", i)
+                return False
+        return True
+        # # Fill the remaining space with -99999.0 if data is less than 3072 rows
+        # remaining_rows = rownb - len(data)
+        # if remaining_rows > 0:
+        #     filler = [-99999.0] * 1024
+        #     for _ in range(remaining_rows):
+        #         self.shm_coord.write(struct.pack('1024f', *filler))
 
     def send_3Ddata_close(self):
         self.shm_coord.close()
@@ -218,3 +221,4 @@ class IPCData:
         self.shm_img.close()
         self.shm_img_below.close()
         self.shm_map.close()
+        self.shm_rospos.close()

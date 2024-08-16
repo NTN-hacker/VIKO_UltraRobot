@@ -96,7 +96,8 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         print('The information robotic laser')
         print('Speed scan: ', speedScan)
         print('Length planning ', lengthWeld)
-
+        print('Time scan: ', time_scan)
+  
         startWeld = VisRob.runMoveJ(target01)
 
         if startWeld:            
@@ -117,13 +118,9 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
 
     VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
 
-    target01ToCamera.tolist()
-    target02ToCamera.tolist()
     data_export = {
         "id": str(datetime.now()),
         "theta_laser": thetaLaser,
-        "t1": target01ToCamera,
-        "t2": target02ToCamera,
     }
 
     rob.RobotModule.export_csv(data_export) 
@@ -251,7 +248,6 @@ class VisionRobot:
 
         self.test_rf_laser2rf = test_rf_laser2rf
 
-
     def test_target(self, target_01, target_02, theta_laser, backOx, alpha_rot_Oy):
 
         H_target01ToCamera = self.robot_module.createRef([target_01[0], target_01[1], target_01[2]],[0, 0, np.radians(theta_laser)])
@@ -359,11 +355,9 @@ class VisionRobot:
         newPos01, newRot01 = self.robot_module.rotPos(H_newTarget01tobase)
         newPos02, newRot02 = self.robot_module.rotPos(H_newTarget02tobase)
         print(f'T01:{newPos01}, {newRot01},\n T02:{newPos02}, {newRot02}\n')
+
+        return newFlangePos01, newFlangeRot01
         
-
-
-   #####################################################
-   #####################################################
     def newcreatePoint(self, target_01, target_02, theta_laser, backOx, alpha):
         """
         (new method) Create point with respect to reference frame
@@ -385,7 +379,7 @@ class VisionRobot:
 
         pos1toRf, _ = self.robot_module.rotPos(target01ToRf)
         pos2toRf, _ = self.robot_module.rotPos(target02ToRf)
-        print(f'pos1toRf, pos2toRf:{pos1toRf}, {pos2toRf}')
+        # print(f'pos1toRf, pos2toRf:{pos1toRf}, {pos2toRf}')
 
         pos2ToPos1_rf = pos2toRf - pos1toRf
         pos_target02_oy_rf = sqrt(pos2ToPos1_rf[0] ** 2 + pos2ToPos1_rf[1] ** 2)
@@ -394,7 +388,7 @@ class VisionRobot:
         target01ToBase = np.dot(rfToBase, target01ToRf)
 
         change_OX = CFG.DISTANCE_LASER2OBJECT * tan(np.radians(CFG.ROTATE_OX_LASER))
-        print("changeOx:", change_OX)
+        # print("changeOx:", change_OX)
   
         newPos2 = np.array([0, -pos_target02_oy_rf + change_OX, 0])
         newRef = target01ToBase
@@ -428,18 +422,18 @@ class VisionRobot:
 
         newPos1ToNewRf, newRot1ToNewRf = self.robot_module.rotPos(newT1toNewRf)
         newPos2ToNewRf, newRot2ToNewRf = self.robot_module.rotPos(newT2toNewRf)
-        print(f'backOx:{backOx}')
+        # print(f'backOx:{backOx}')
 
         newPos1ToNewRf[0] += backOx
         newPos2ToNewRf[0] += backOx
-        print(f'newPos1ToNewRf, newRot1ToNewRf:{newPos1ToNewRf}, {newRot1ToNewRf}\n newPos2ToNewRf, newRot2ToNewRf:{newPos2ToNewRf}, {newRot2ToNewRf}')
+        # print(f'newPos1ToNewRf, newRot1ToNewRf:{newPos1ToNewRf}, {newRot1ToNewRf}\n newPos2ToNewRf, newRot2ToNewRf:{newPos2ToNewRf}, {newRot2ToNewRf}')
         
         if alpha != 0:
             newPos1ToNewRf[1] += 0
             newPos2ToNewRf[1] += 0
         else:
-            # pass
-            print(f"Pos1 and Pos2 changed:{newPos1ToNewRf}, {newPos2ToNewRf}")
+            pass
+            # print(f"Pos1 and Pos2 changed:{newPos1ToNewRf}, {newPos2ToNewRf}")
 
         target01_none_mat = np.concatenate((newPos1ToNewRf, newRot1ToNewRf), axis=0)
         target02_none_mat = np.concatenate((newPos2ToNewRf, newRot2ToNewRf), axis=0)
@@ -475,8 +469,6 @@ class VisionRobot:
         xToCamera02, yToCamera02 = self.robot_module.convertCoordinates(CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coorPixel2[0], coorPixel2[1],\
                                                                         self.pixelFocalLength, self.disCameraToObject, theta=180,)  # cfg
         
-        print("xToCamera01, yToCamera01:", xToCamera01, yToCamera01)
-        print("xToCamera02, yToCamera02:", xToCamera02, yToCamera02)
 
         zLaserToObject = CFG.HOME_LASER - CFG.DISTANCE_LASER2OBJECT
         print(f"zLaserToObject:{zLaserToObject}")
@@ -514,7 +506,11 @@ class VisionRobot:
             alpha = backOx = 0
             testTarget01, testTarget02, test_length_weld = self.newcreatePoint(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
 
-            obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+            newFlangePos01, newFlangeRot01 = obj.test_target(target01ToCamera, target02ToCamera, angleLaserToObject, backOx, alpha)
+            target01_none_mat = np.concatenate((newFlangePos01, newFlangeRot01), axis=0)
+            target01 = TxyzRxyz_2_Pose(target01_none_mat)
+            new_joints = obj.robot.SolveIK(target01)
+            print("new_joints:", new_joints)
 
         else:
             stop()

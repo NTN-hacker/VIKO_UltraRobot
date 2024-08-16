@@ -91,7 +91,7 @@ class RobotModule:
 
         angle = math.atan2(pixel_1[1] - pixel_2[1], pixel_1[0] - pixel_2[0])
         theta_laser = math.degrees(angle)
-        print(f"theta_laser_before:{theta_laser}")
+        print(f"previous_theta_laser:{theta_laser}")
         theta_laser = 90 + theta_laser    ### theta_laser always negative      
 
         return theta_laser

@@ -75,17 +75,17 @@ def inspection(model, image):
     return result_image
 
 
-global status, idx, idx_Coord, status_time, result_image, idx_below_frame
+global status, idx, idx_Coord, status_time, result_image, idx_below_frame,idx_rosposition
 global image
 
 class CameraPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        global idx, idx_Coord, idx_Chart, idx_below_frame
+        global idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition
         idx = 0
         idx_Coord = 0
-        idx_Chart = 0
+        idx_Chart = 0; idx_rosposition = 0
         idx_below_frame = 0 
         global status
         status = None
@@ -105,6 +105,7 @@ class CameraPanel(wx.Panel):
         self.running = True  
         self.response_result = False # trigger button
         self.data_laser = False
+        self.rosposition = False
         self.data_inspection = False
         self.lock = threading.Lock()
         self.frame_count = 0
@@ -147,6 +148,7 @@ class CameraPanel(wx.Panel):
 
     def update_camera(self):
         global image
+        global status,idx,idx_rosposition
         while self.running:
             # setting
             self.camera.Open()
@@ -189,9 +191,7 @@ class CameraPanel(wx.Panel):
                             #send data
                             if self.data_laser:
                                 data = []
-                           
                                 data = self.laser_data.copy()
-                                        
                                 self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
                                 self.data_laser = False                            
 
@@ -200,12 +200,17 @@ class CameraPanel(wx.Panel):
                                 global Inpection_Dict
                                 self.ipc_data.send_chart(idx_Chart, Inpection_Dict)
                                 self.data_inspection = False
+                        """For sending Robot Position;"""        
+                        if self.rosposition == True:
+                            self.ipc_data.send_robot_positions(idx_rosposition, 2, [[100, 10, 120, 150, 120, 130],[200, 120, 220, 250, 220, 230]])
+                            self.rosposition = False
 
-                            self.response_result == False                               
-                        
+                        self.response_result == False                        
+
                     grabResult.Release()
             self.camera.StopGrabbing()
             self.camera.Close()
+
     def stop_camera(self):
         self.running = False  
         if self.camera_thread.is_alive():
@@ -234,7 +239,7 @@ class CameraPanel(wx.Panel):
     def process_button(self, button_idx):
         global result_image
         global idx, idx_Coord, idx_Chart, idx_below_frame
-        global status
+        global status,idx_rosposition
         global image
         global Inpection_Dict
     
@@ -313,10 +318,13 @@ class CameraPanel(wx.Panel):
             self.data_inspection = True 
 
         elif button_idx == 4:
-            idx+=1
-            status = "Back Home."
-            move_center()   
-
+            idx_Coord+=1
+            self.data_laser = True  
+        elif button_idx == 5:
+            idx_rosposition += 1
+            self.rosposition = True
+            print(idx_rosposition)
+            
         time.sleep(2)    
 
     def stop_threads(self):
