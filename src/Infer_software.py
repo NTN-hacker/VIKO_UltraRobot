@@ -77,6 +77,7 @@ def inspection(model, image):
 
 global status, idx, idx_Coord, status_time, result_image, idx_below_frame,idx_rosposition
 global image
+global data_robot
 
 class CameraPanel(wx.Panel):
     def __init__(self, parent):
@@ -92,6 +93,8 @@ class CameraPanel(wx.Panel):
 
         global image 
         image = None
+        global data_robot, n_target
+        data_robot = None; n_target= 0
 
         self.ipc_data = IPCData()
 
@@ -149,6 +152,7 @@ class CameraPanel(wx.Panel):
     def update_camera(self):
         global image
         global status,idx,idx_rosposition
+        global data_robot, n_target
         while self.running:
             # setting
             self.camera.Open()
@@ -202,7 +206,8 @@ class CameraPanel(wx.Panel):
                                 self.data_inspection = False
                         """For sending Robot Position;"""        
                         if self.rosposition == True:
-                            self.ipc_data.send_robot_positions(idx_rosposition, 2, [[100, 10, 120, 150, 120, 130],[200, 120, 220, 250, 220, 230]])
+                            print('send robpos-will del',data_robot)
+                            self.ipc_data.send_robot_positions(idx_rosposition, n_target, data_robot)
                             self.rosposition = False
 
                         self.response_result == False                        
@@ -242,6 +247,8 @@ class CameraPanel(wx.Panel):
         global status,idx_rosposition
         global image
         global Inpection_Dict
+        global n_target
+        global data_robot
     
         self.result_image = None
         if  button_idx == 0:
@@ -321,10 +328,12 @@ class CameraPanel(wx.Panel):
             idx_Coord+=1
             self.data_laser = True  
         elif button_idx == 5:
+            while True:
+                data_robot, n_target = rm.data_robot()
+                if data_robot is not None:
+                    break
             idx_rosposition += 1
             self.rosposition = True
-            print(idx_rosposition)
-            
         time.sleep(2)    
 
     def stop_threads(self):

@@ -13,8 +13,8 @@ class IPCData:
         self.shm_map = mmap.mmap(-1, 1024, tagname="Local\\TriggerVision")  
         self.shm_status = mmap.mmap(-1, 1024, tagname="Local\\VisionStatus")  
 
-        self.robot_position_size = 50 * 6 * struct.calcsize('f') # 50 ros pos
-        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\Robpos")
+        self.robot_position_size = None
+        self.shm_rospos = None
         self.shm_coord = None
 
         
@@ -53,8 +53,16 @@ class IPCData:
         self.shm_chart.close()
 
     def send_robot_positions(self, key, robnb, positions):
+        robnb +=1
+        self.robot_position_size = robnb * 6 * struct.calcsize('f') # 50 ros pos
+        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\Robpos")
         # Ensure positions are valid
+        id = 0
         for pos in positions:
+            id+=1
+            if type(pos) == None:
+                print('nontype',pos, '-', id)
+                break
             if len(pos) != 6:
                 print(f"Each robot position must contain exactly 6 floats. Invalid position: {pos}")
         
@@ -65,7 +73,7 @@ class IPCData:
         self.shm_rospos.write(struct.pack('I', robnb))  # Write robnb as unsigned int
         
         # Write all positions
-        for pos in positions:
+        for pos in positions:            
             self.shm_rospos.write(struct.pack('6f', *pos))  # Write each position as 6 floats
         print ("ROBOT COOR are sended to IPC")
 
