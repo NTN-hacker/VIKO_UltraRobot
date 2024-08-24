@@ -3,8 +3,7 @@ import io
 sys.path.append(
     "E:\\Quan\\AutoRoboticInspection-V1\VIKO_UltraRobot"
 )
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-# sys.stdin = io.TextIOWrapper(sys.stdin.buffer,'utf-8')
+
 
 import wx
 import numpy as np
@@ -55,28 +54,29 @@ def inspection(model, image):
     global Inpection_Dict
     print('Inpection Result')
     current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
+    
     img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     dict_re = model.predict(img_cvt)
-    result_image = cv2.resize(dict_re[0].plot(), (640, 640), cv2.INTER_CUBIC)
-    cv2.imwrite(f'laser/inspection/inspection_{current_time}.png', result_image)
+    # result_image = cv2.resize(dict_re[0].plot(), (640, 640), cv2.INTER_CUBIC)
+    predict_img = dict_re[0].plot()
+    cv2.imwrite(f'laser/inspection/inspection_{current_time}.png', predict_img)
     
-    out_labels = vl.getLabels(dict_re)
+    # out_labels = vl.getLabels(dict_re)
 
-    ref_label = [CFG.MODEL_INSPECTION[label] for label in out_labels]
+    # ref_label = [CFG.MODEL_INSPECTION[label] for label in out_labels]
 
-    defects = np.array(ref_label)
-    Inpection_Dict =  vl.count_defects(defects)
+    # defects = np.array(ref_label)
+    # Inpection_Dict =  vl.count_defects(defects)
 
-    total = sum(Inpection_Dict.values())
-    for key in Inpection_Dict:
-        Inpection_Dict[key] = (Inpection_Dict[key] / total) * 100
+    # total = sum(Inpection_Dict.values())
+    # for key in Inpection_Dict:
+    #     Inpection_Dict[key] = (Inpection_Dict[key] / total) * 100
 
-    return result_image
+    return predict_img
 
 
-global status, idx, idx_Coord, status_time, result_image, idx_below_frame,idx_rosposition
-global image
+global status, idx, idx_Coord,result_image, idx_below_frame,idx_rosposition
+global image, laser_img
 
 class CameraPanel(wx.Panel):
     def __init__(self, parent):
@@ -87,6 +87,7 @@ class CameraPanel(wx.Panel):
         idx_Coord = 0
         idx_Chart = 0; idx_rosposition = 0
         idx_below_frame = 0 
+
         global status
         status = None
 
@@ -110,9 +111,11 @@ class CameraPanel(wx.Panel):
         self.lock = threading.Lock()
         self.frame_count = 0
         self.laser_data = None
+        global laser_img
+        laser_img = None
+  
         # model   
         self.model = YOLO(CFG.MODEL['YOLOV9']['WEIGHT'], task= 'segment')
-
 
         # model inspection
         self.model_inspection = load_model(CFG.MODEL['INSPECTION']['WEIGHT'])
@@ -196,10 +199,10 @@ class CameraPanel(wx.Panel):
                                 self.data_laser = False                            
 
                             #send the information inspection
-                            if self.data_inspection:
-                                global Inpection_Dict
-                                self.ipc_data.send_chart(idx_Chart, Inpection_Dict)
-                                self.data_inspection = False
+                            # if self.data_inspection:
+                            #     global Inpection_Dict
+                            #     self.ipc_data.send_chart(idx_Chart, Inpection_Dict)
+                            #     self.data_inspection = False
                         """For sending Robot Position;"""        
                         if self.rosposition == True:
                             self.ipc_data.send_robot_positions(idx_rosposition, 2, [[100, 10, 120, 150, 120, 130],[200, 120, 220, 250, 220, 230]])
@@ -242,6 +245,7 @@ class CameraPanel(wx.Panel):
         global status,idx_rosposition
         global image
         global Inpection_Dict
+        global laser_img
     
         self.result_image = None
         if  button_idx == 0:
@@ -291,8 +295,7 @@ class CameraPanel(wx.Panel):
             idx+=1
             status = "Moving..."
             self.laser_data = run_robot(coordinate_pixel_list, model_weld_list, self._suf_right_, self.pos_status)
-            print("Laser data at the end: ", self.laser_data)
-                        
+                       
             idx+=1    
             idx_Coord+=1
             status = "Completed."    
@@ -301,18 +304,29 @@ class CameraPanel(wx.Panel):
             current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img) 
 
-            idx_below_frame+= 1   
-            result_image = laser_img.copy()
-
+            # idx_below_frame+= 1   
+            # result_image = laser_img.copy()
+            
+            status = "Inpection Processing..."            
+            
+            inspection_result = inspection(self.model_inspection, laser_img)
+            cv2.imshow('Inspection Result', inspection_result)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            idx_below_frame+= 1
+            result_image = inspection_result.copy()
             self.data_laser = True 
+
         elif button_idx == 3: 
             idx+=1
-            status = "Inpection Processing."
-
-            path_img = 'laser/depthmap/datascan-python.png'
-            image = cv2.imread(path_img, cv2.IMREAD_COLOR)
+            self.response_result = True
+            status = "Inpection Processing..."            
             idx_below_frame+= 1
-            result_image = inspection(self.model_inspection, image)
+            inspection_result = inspection(self.model_inspection, laser_img)
+            result_image = inspection_result.copy()
+            print(inspection_result.shape)
+            idx+=1
+            status = "Inpection Done."  
 
             idx_Chart += 1
             self.data_inspection = True 

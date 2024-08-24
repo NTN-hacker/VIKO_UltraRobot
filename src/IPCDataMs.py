@@ -153,7 +153,6 @@ class IPCData:
                 if len(row) != 1024:
                     raise ValueError("Each row must contain exactly 1024 floats.")
                 self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
-                print("Done")
             except:
                 print ("ERROR while sending 3Ddata to IPC: ", i)
                 return False

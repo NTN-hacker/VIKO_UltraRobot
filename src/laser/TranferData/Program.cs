@@ -112,7 +112,7 @@ namespace MEScanControl
                         startTime = DateTime.Now;
                     }
                     // check if Lidardat size = 1024*2016
-                    if (LIDARdat.Count > 1024*iLength*10 && iLength > 0)
+                    if (LIDARdat.Count > 1024*iLength*10 && iLength > 0) // nhan 10 de doi don vi cm -> mm
                     {
                         Console.WriteLine("Start sending {0} profiles", iLength);
                         SendMatrixData(mmres);

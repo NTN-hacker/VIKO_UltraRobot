@@ -588,7 +588,12 @@ def convert_to_grayscale_image(z):
         image_rgb = (gray_image * 255).astype(np.uint8)
         image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_BGR2RGB)
 
-        return Z_processed, apply_shading(image_rgb)
+        laser_img = apply_shading(image_rgb)
+
+        current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
+
+        return Z_processed, laser_img
 
 def apply_shading(image_rgb):
         grad_x, grad_y, _ = np.gradient(image_rgb)
@@ -608,10 +613,18 @@ def apply_shading(image_rgb):
 
         shaded = (shaded - shaded.min()) / (shaded.max() - shaded.min())
         img_shaded = (shaded * 255).astype(np.uint8)
-        image_rgb_shaded = cv2.cvtColor(img_shaded, cv2.COLOR_BGR2RGB)
+        # image_rgb_shaded = cv2.cvtColor(img_shaded, cv2.COLOR_BGR2RGB)
 
-        print('shape ', image_rgb_shaded.shape)
+        # print('shape ', image_rgb_shaded.shape)
 
-        return image_rgb_shaded
+        return img_shaded
+
+def run_inspection(model, img, conf):
+    import gc
+    results = model.predict(source=img, conf=conf) #CFG.CONF_ACC    
+    plot = results[0].plot()
+    del model, img, results
+    gc.collect() 
+
 
 
