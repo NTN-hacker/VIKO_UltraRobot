@@ -18,3 +18,12 @@
 *.csv
 *.exe
 library/_pycache_/*.*
+/.vs
+/config/__pycache__
+/src/laser
+/src/laser/TranferData
+
+/src/laser/TranferData/bin
+src/laser/TranferData/bin/Debug/net8.0/TranferData.dll
+
+/config/__pycache__

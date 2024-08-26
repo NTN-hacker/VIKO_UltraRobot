@@ -2,6 +2,8 @@ import mmap
 import struct
 import cv2
 import numpy as np
+import json
+import sys, time
 class IPCData:
     def __init__(self, img_size=(480, 640)):
         self.img_size = img_size
@@ -12,8 +14,10 @@ class IPCData:
         self.shm_status = mmap.mmap(-1, 1024, tagname="Local\\VisionStatus")  
 
         self.robot_position_size = 50 * 6 * struct.calcsize('f') # 50 ros pos
-        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\PosPytoCPP")
+        self.shm_rospos = mmap.mmap(-1, self.robot_position_size, tagname="Local\\Robpos")
         self.shm_coord = None
+
+        
 
 
     def send_frame(self, img_np, float1=-1, float2=-1):
@@ -48,25 +52,23 @@ class IPCData:
 
         self.shm_chart.close()
 
-    def send_robot_positions(self, positions):
-        # print('send_pos')
-
-        if len(positions) > 50:
-            raise ValueError("Too many robot positions to store in shared memory.")
-        
-        self.shm_rospos.seek(0)
+    def send_robot_positions(self, key, robnb, positions):
+        # Ensure positions are valid
         for pos in positions:
             if len(pos) != 6:
-                raise ValueError("Each robot position must contain exactly 6 floats.")
-            self.shm_rospos.write(struct.pack('6f', *pos))
+                print(f"Each robot position must contain exactly 6 floats. Invalid position: {pos}")
         
-        # Fill the remaining space with -99999.0f
-        remaining_positions = 50 - len(positions)
-        if remaining_positions > 0:
-            filler = [-99999.0] * 6
-            for _ in range(remaining_positions):
-                self.shm_rospos.write(struct.pack('6f', *filler))
-        self.shm_rospos.close()
+        self.shm_rospos.seek(0)  # Clean the data
+        
+        # Write key and robnb
+        self.shm_rospos.write(struct.pack('I', key))  # Write key as unsigned int
+        self.shm_rospos.write(struct.pack('I', robnb))  # Write robnb as unsigned int
+        
+        # Write all positions
+        for pos in positions:
+            self.shm_rospos.write(struct.pack('6f', *pos))  # Write each position as 6 floats
+        print ("ROBOT COOR are sended to IPC")
+
     def send_frame_below(self, keyid, img_np, float1=-1, float2=-1):
         # print('send_frame_bl')
         if not isinstance(keyid, int) or keyid < 0:
@@ -126,30 +128,90 @@ class IPCData:
         if not isinstance(key, int) or key < 0:
             raise ValueError("Key must be a non-negative integer")
 
-        if not isinstance(rownb, int) or rownb < 0 or rownb > 3072:
-            raise ValueError("Row number must be between 0 and 3072")
+        # if not isinstance(rownb, int) or rownb < 0 or rownb > 3072:
+        #     raise ValueError("Row number must be between 0 and 3072")
         total_size = 4 + 4 + 1024 * rownb * struct.calcsize('f')
         # Ensure key and rownb are written first
-        self.shm_coord = mmap.mmap(-1, total_size, tagname="Local\\Coor3DMesh")
-        self.shm_coord.seek(0)
-        self.shm_coord.write(struct.pack('I', key))  # Write key as unsigned int
-        self.shm_coord.write(struct.pack('I', rownb))  # Write rownb as unsigned int
-        
+        i = 0
+        while i<10:
+            i+=1
+            try:
+                self.shm_coord = mmap.mmap(-1, total_size, tagname="Local\\Coor3DMesh")
+                self.shm_coord.seek(0)
+                self.shm_coord.write(struct.pack('I', key))  # Write key as unsigned int
+                self.shm_coord.write(struct.pack('I', rownb))  # Write rownb as unsigned int
+                print ("sended 3Ddata to IPC: ", i)
+                break
+            except:
+                print ('error in send_3Ddata: ', i)
+                continue
+            
         # Write the data rows
         for row in data:
-            if len(row) != 1024:
-                raise ValueError("Each row must contain exactly 1024 floats.")
-            self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
-        
-        # Fill the remaining space with -99999.0 if data is less than 3072 rows
-        remaining_rows = 3072 - len(data)
-        if remaining_rows > 0:
-            filler = [-99999.0] * 1024
-            for _ in range(remaining_rows):
-                self.shm_coord.write(struct.pack('1024f', *filler))
+            # print(len(row))
+            try:
+                if len(row) != 1024:
+                    raise ValueError("Each row must contain exactly 1024 floats.")
+                self.shm_coord.write(struct.pack(f'{len(row)}f', *row))
+            except:
+                print ("ERROR while sending 3Ddata to IPC: ", i)
+                return False
+        return True
+        # # Fill the remaining space with -99999.0 if data is less than 3072 rows
+        # remaining_rows = rownb - len(data)
+        # if remaining_rows > 0:
+        #     filler = [-99999.0] * 1024
+        #     for _ in range(remaining_rows):
+        #         self.shm_coord.write(struct.pack('1024f', *filler))
 
     def send_3Ddata_close(self):
         self.shm_coord.close()
+
+    def sendLIDARcs(tlength: int):
+        # Create a memory-mapped file with 4 bytes size
+        shm_lidarcs = mmap.mmap(-1, 4, tagname="Local\\LIDAR_LASER_START")  
+        
+        # Encode the integer tlength into 4 bytes
+        tlength_encoded = struct.pack('I', tlength)
+        
+        # Write the encoded integer to the memory-mapped file
+        shm_lidarcs.seek(0)
+        shm_lidarcs.write(tlength_encoded) 
+        
+        if tlength:
+            sys.stdout.write("sended tlength to c#")
+            sys.stdout.flush()
+            sys.stdout.write('\r')
+        else:
+            print("stop sending tlength")
+
+    def get_lidar_data():
+        map_name = "Local\\LIDAR_LAEER_RESULT"  # Tên IPC của bộ nhớ ánh xạ
+        map_size = 1024 * 2016 * 8 * 10  # Kích thước bộ nhớ ánh xạ, điều chỉnh cho phù hợp với dữ liệu thực tế
+
+        while True:
+            with mmap.mmap(-1, map_size, tagname=map_name) as mm:
+                data_bytes = mm[:].rstrip(b'\x00')  # Bỏ các byte \x00 dư thừa
+                if data_bytes:
+                    lidar_data = json.loads(data_bytes.decode('utf-8'))                    
+                    # Làm sạch nội dung của bộ nhớ ánh xạ
+                    try:
+                        mm.seek(0)  # Di chuyển con trỏ về đầu bộ nhớ
+                        mm.write(b'\x00' * map_size)  # Ghi các byte mặc định vào bộ nhớ
+                    except Exception as e:
+                        print(f"Error cleaning memory-mapped object: {e}")
+                    return True,lidar_data
+                else:
+                    # In "loading..." trên cùng một dòng
+                    sys.stdout.write("loading...")
+                    sys.stdout.flush()
+                    time.sleep(1)  # Đợi 1 giây trước khi kiểm tra lại
+                    sys.stdout.write('\r')  # Di chuyển con trỏ về đầu dòng
+                    return False,None
+
+
+
+
 
     def close(self):
         """
@@ -158,3 +220,4 @@ class IPCData:
         self.shm_img.close()
         self.shm_img_below.close()
         self.shm_map.close()
+        self.shm_rospos.close()

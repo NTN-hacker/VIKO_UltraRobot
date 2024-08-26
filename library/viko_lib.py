@@ -341,7 +341,7 @@ def transform_coordinates(dict_re) -> list:
     #View image all weld
     current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     img_re = draw_coordinates_on_image(dict_re[0].orig_img, listCoordinateView)    
-    cv2.imwrite(f'laser/image_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.jpg', img_re)
+    # cv2.imwrite(f'laser/image_{current_time}_{CFG.CONTAINER_SIZE}l-{CFG.EXPOSURE_TIME}e-{CFG.IDLE_TIME}i.jpg', img_re)
     # cv2.imwrite('result_temp.png', img_re)
     # cv2.imshow('Image Re', img_re)
     # cv2.waitKey(0)
@@ -565,92 +565,81 @@ def findContainingPairs(data):
 
     return containing_pairs
 
-def process_data_laser(data_path: str):
-
-    dataraw =  np.loadtxt(data_path)
-
-    count_lines = dataraw.shape[0]//1024
-
-    data_z = dataraw.T[2]
-
-    non_zero_values = data_z[data_z > 0]
-    min_non_zero_value = non_zero_values.min() if non_zero_values.size > 0 else 0
-    data_z[data_z == 0] = min_non_zero_value
-
-    subarr_z = np.split(data_z, indices_or_sections= count_lines)
-
-    def hillshade(array, azimuth, angle_altitude):
-        azimuth = 360.0 - azimuth
-
-        x, y = np.gradient(array)
-        slope = np.pi/2. - np.arctan(np.sqrt(x*x + y*y))
-        aspect = np.arctan2(-x, y)
-        
-        azimuthrad = azimuth*np.pi/180.
-        altituderad = angle_altitude*np.pi/180.
-        
-        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(altituderad) * np.cos(slope) * np.cos((azimuthrad - np.pi/2.) - aspect)
-        return 255*(shaded + 1)/2
-
-    raw_data = subarr_z
-
-    # Remove zeros
-    height_map = np.ma.masked_where(raw_data == 0, raw_data)
-
-    # Normalize the data to 0-255 range
-    height_map_normalized = ((height_map - np.min(height_map)) / (np.max(height_map) - np.min(height_map)) * 255).astype(np.uint8)
-
-    normalized_height_map = height_map_normalized
-
-
-    azimuth = 200
-    angle_altitude = 45  
-    hillshade_image = hillshade(normalized_height_map, azimuth, angle_altitude)
-
-
-    blended = 0.6 * normalized_height_map + 0.4 * hillshade_image
-
-    # blended =  cv2.resize(blended, (100, 1024))
-
-    cv2.imwrite('result_laser.png', blended)
-
-def process_temp(data_path):
-    dataraw = np.loadtxt(data_path)
-
-    def hillshade(array, azimuth, angle_altitude):
-        azimuth = 360.0 - azimuth
-
-        x, y = np.gradient(array)
-        slope = np.pi/2. - np.arctan(np.sqrt(x*x + y*y))
-        aspect = np.arctan2(-x, y)
-        
-        azimuthrad = azimuth*np.pi/180.
-        altituderad = angle_altitude*np.pi/180.
-        
-        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(altituderad) * np.cos(slope) * np.cos((azimuthrad - np.pi/2.) - aspect)
-        return 255*(shaded + 1)/2
-
-    raw_data = dataraw
-
-    # Remove zeros
-    height_map = np.ma.masked_where(raw_data == 0, raw_data)
-
-    # Normalize the data to 0-255 range
-    height_map_normalized = ((height_map - np.min(height_map)) / (np.max(height_map) - np.min(height_map)) * 255).astype(np.uint8)
-
-    normalized_height_map = height_map_normalized
-
-
-    azimuth = 200
-    angle_altitude = 45  
-    hillshade_image = hillshade(normalized_height_map, azimuth, angle_altitude)
-
-
-    blended = 0.6 * normalized_height_map + 0.4 * hillshade_image
-
-    cv2.imwrite('laser/laser_shader-.png', blended)
-
 def count_defects(defects):
     return dict(Counter(defects))
+
+def save_lidar_data(lidar_data, filename):
+    with open(filename, 'w') as file:
+        for point in lidar_data:
+            x, z = point
+            file.write(f"{x}, {z}\n")
+
+def convert_to_grayscale_image(z):
+        Z_processed = list()
+        for value in z:
+            Z_processed.append(value[1])
+        Z_processed = np.array(Z_processed).reshape(-1, CFG.RESOLUTION_X_LASER)
+
+        non_zero_values = Z_processed[Z_processed != 0]
+        mean_value = np.mean(non_zero_values)
+
+        # Thay thế các giá trị 0 bằng giá trị trung bình
+        Z_processed[Z_processed == 0] = mean_value
+        min_val = np.min(Z_processed)
+        max_val = np.max(Z_processed)
+
+        normalized_Z = (Z_processed - min_val) / (max_val - min_val)
+        gray_image = np.stack((normalized_Z), axis=-1)
+        # gray_image = cv2.resize(gray_image, (640, 640), cv2.INTER_CUBIC)
+        image_rgb = (gray_image * 255).astype(np.uint8)
+        image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_BGR2RGB)
+
+        laser_img = apply_shading(image_rgb)
+
+        # Path to the directory
+        data_dir = 'C:/Robdata'
+
+        # Delete all files in the target directory
+        for filename in os.listdir(data_dir):
+            file_path = os.path.join(data_dir, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+        current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+        cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
+        # Trước khi lưu dữ liệu vào C:/Robdata, chương trình sẽ xóa tất cả các file có trong thư mục trước rồi mới lưu file mới
+        np.savetxt(f'C:/Robdata/data_{current_time}.txt', Z_processed, fmt='%0.3f')
+
+        return Z_processed, laser_img
+
+def apply_shading(image_rgb):
+        grad_x, grad_y, _ = np.gradient(image_rgb)
+        slope = np.pi / 2. - np.arctan(np.sqrt(grad_x ** 2 + grad_y ** 2))
+        aspect = np.arctan2(-grad_y, grad_x)
+
+        #     azimuth = CFG.AZIMUTH
+        #     altitude = CFG.ALTITUDE
+        azimuth = 315  # angle between the light source and north, in degrees
+        altitude = 45
+
+        azimuth_rad = np.radians(azimuth)
+        altitude_rad = np.radians(altitude)
+
+        shaded = (np.sin(altitude_rad) * np.sin(slope) +
+        np.cos(altitude_rad) * np.cos(slope) * np.cos(azimuth_rad - np.pi / 2. - aspect))
+
+        shaded = (shaded - shaded.min()) / (shaded.max() - shaded.min())
+        img_shaded = (shaded * 255).astype(np.uint8)
+        # image_rgb_shaded = cv2.cvtColor(img_shaded, cv2.COLOR_BGR2RGB)
+
+        # print('shape ', image_rgb_shaded.shape)
+
+        return img_shaded
+
+def run_inspection(model, img, conf):
+    results = model.predict(source=img, conf=conf) #CFG.CONF_ACC    
+    plot = results[0].plot()
+    return plot
+
 
 

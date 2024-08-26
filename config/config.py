@@ -9,8 +9,8 @@ config file
 
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
-LINEAR_SPEEDS = [30, 30]
-JOINT_SPEEDS = [20, 40] ### Not over 100
+LINEAR_SPEEDS = [30, 30]   ### (MM/SECOND)
+JOINT_SPEEDS = [20, 70]    ### (RAD/SECOND) Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
@@ -18,7 +18,7 @@ HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
 SAFE_DISTANCE = 565
 ROTATE_OY_LASER = 40
-ROTATE_OX_LASER = 10  ### Negative degrees
+ROTATE_OX_LASER = 0  ### Negative degrees
 ERROR_POS = 3
 
 HOME_LASER = 611
@@ -50,11 +50,11 @@ MODEL = {
         "MODEL_TYPE": "vit_tiny",
     },
     "YOLOV9": {
-        "WEIGHT": "weight\\best.onnx"
+        "WEIGHT": "weight\\best.pt"
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "weight\\inspection.onnx"
+        "WEIGHT": "weight\\inspection_segmentation.pt"
     }
 }
 
@@ -65,37 +65,19 @@ Y_RATIO = 2448 / 640
 
 ######################################################### LABEL #############################################################################
 MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degree"}
-MODEL_INSPECTION = {0: 'air-hole', 1: 'bite-edge', 2: 'broken-arc', 3: 'crack', 4: 'hollow-bead', 5: 'overlap', 6: 'slag-inclusion', 7: 'unfused'}
+MODEL_INSPECTION = {0: 'weld', 1: 'crack', 2: 'overlap', 3: 'hole', 4: 'porosity', 5: 'spatter'}
 
 
 CONF_MODEL_WELD = 0.6
 PIXEL_UNION = 5 #Chấp nhận lệch 5 pixel khi xác định hai obj trùng. Sử dụng trong trường hợp mối hàn nằm trên khung obj
 
 ######################################################### LASER #############################################################################
+PATH_LASER_PROGRAM = 'E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\laser\\TranferData\\bin\Release\\net8.0\\win-x64\\publish\\TranferData.exe'
 # Define the azimuth (direction) and altitude (angle) of the light source
 AZIMUTH = 315  # angle between the light source and north, in degrees
 ALTITUDE = 45  # angle above the horizon
+RESOLUTION_Y_LASER = 0.1 #0.1mm = 100um
+FREQUENCY = 650 #Hz
+RESOLUTION_X_LASER = 1024 #0.05mm = 5um
 
-EXPOSURE_TIME = 1000 #us
-IDLE_TIME = 3900 #us
-SLEEP = 0.1
-CONTAINER_SIZE = 2000 #lines
-TIME_SCAN = (EXPOSURE_TIME + IDLE_TIME) * CONTAINER_SIZE / 185000 #s
-
-
-
-
-###### optimize speed #######
-
-# # Define the azimuth (direction) and altitude (angle) of the light source
-# AZIMUTH = 315  # angle between the light source and north, in degrees
-# ALTITUDE = 45  # angle above the horizon
-
-# EXPOSURE_TIME = 1000 #us
-# IDLE_TIME = 3900 #us
-# SLEEP = 0.1
-# NO_PROFILES = 650
-# RESOLUTION_LASER_Y = 100 #(um)
-# TIME_SCAN = 200000/100/650
-# CONTAINER_SIZE = 2000 # to save
 

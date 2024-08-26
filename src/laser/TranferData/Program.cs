@@ -6,6 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.IO.MemoryMappedFiles;
+using System.Text.Json;
+using System.Threading.Tasks.Dataflow;
+
 // using DevExpress.Mvvm;
 // using SciChart.Charting.Model.DataSeries;
 
@@ -19,12 +23,9 @@ namespace MEScanControl
 
         public class ScanControl    
     {
-        public double dLengthWeld {get; set;}
+        public int dLengthWeld {get; set;}
         public double dResolutionY  {get; set;}
-
-
-
-        
+       
         public const int MAX_INTERFACE_COUNT = 5;
         public const int MAX_RESOULUTIONS = 6;
 
@@ -66,27 +67,107 @@ namespace MEScanControl
         private Queue<ProfileData> dataQueue = new Queue<ProfileData>();
         private Thread dataProcessingThread;
         private ManualResetEvent dataAvailable = new ManualResetEvent(false);
+        static public List<List<Double>> LIDARdat = new List<List<double>>();
 
         private string outputFilePath = null;
-
-        static void Main(string[] args)
+        static public void AllSettings(int glenth)
         {
-            Console.WriteLine("Hello");
+            int lengthWeld = glenth;
             double resolutionY = 0.1; // 100 micromet = 1 profile -> convert to mm or 50 micromet = 1 profile and resY * len(weld) = total profiles
-            double lengthWeld = 200;
-            ScanControl scancontrol = new ScanControl(resolutionY, lengthWeld);
+            
+            ScanControl scancontrol = new ScanControl(lengthWeld, resolutionY);
             scancontrol.SetRoi();
             scancontrol.GetRasterResolution();
             // scancontrol.Config();
             // scancontrol.LoadProfile(3);
             scancontrol.TransferData();
             scancontrol.StopTransfer();
+        }
+        static void Main(string[] args)
+        {
 
-            Console.WriteLine("Done");
+            // AllSettings();
+
+            const string mapName = "LIDAR_LASER_START";
+            const string mapRes = "LIDAR_LAEER_RESULT";
+            const long mapSizeRes = 1024 * 2016 * sizeof(double)*10;
+            const uint mapSize = 4;
+            DateTime startTime = DateTime.Now;
+            using (var mmf = MemoryMappedFile.CreateOrOpen(mapName, mapSize))
+            {
+                int iLength = 0;
+                while (true)
+                {
+                    int getLength = CheckLidarLaserStart(mmf);
+                    
+                    DateTime currentTime = DateTime.Now;
+                    TimeSpan durTime = currentTime - startTime;
+                    var mmres = MemoryMappedFile.CreateOrOpen(mapRes, mapSizeRes);
+                    if (getLength != 0 && durTime.TotalSeconds > 2)
+                    {
+                        iLength = getLength;
+                        Console.WriteLine("Laser weld from IPC {0}", getLength);
+                        LIDARdat.Clear();
+                        AllSettings(getLength);
+                        startTime = DateTime.Now;
+                    }
+                    // check if Lidardat size = 1024*2016
+                    if (LIDARdat.Count > 1024*iLength*10 && iLength > 0) // nhan 10 de doi don vi cm -> mm
+                    {
+                        Console.WriteLine("Start sending {0} profiles", iLength);
+                        SendMatrixData(mmres);
+
+                    }
+                    Thread.Sleep(3); // nghỉ 33ms ~ 30 lần một giây
+                }
+            }
 
         }
+        static int CheckLidarLaserStart(MemoryMappedFile mmf)
+        {
+            using (var accessor = mmf.CreateViewAccessor(0, 4))
+            {
+                // Read the integer value from the buffer
+                byte[] buffer = new byte[4];
+                accessor.ReadArray(0, buffer, 0, 4);
+                
+                // Convert the byte array to an integer
+                int tlength = BitConverter.ToInt32(buffer, 0);
+                
+                return tlength;
+            }
+        }
 
-        public ScanControl(double LengthWeld, double ResolutionY)
+        static void SendMatrixData(MemoryMappedFile mmf)
+        {
+            byte[] data = SerializeLIDARData(LIDARdat);
+            const long mapSize = 1024 * 2016 * sizeof(double) * 10; // Kích thước bộ nhớ được tạo
+
+            using (var accessor = mmf.CreateViewAccessor(0, mapSize, MemoryMappedFileAccess.Write))
+            {
+                for (int i = 0; i < 100; i++)  // Gửi dữ liệu lên IPC liên tục trong vòng 5 giây
+                {
+                    accessor.WriteArray(0, data, 0, data.Length);
+                    System.Threading.Thread.Sleep(100); // Nghỉ 0,1 giây
+                }
+            }
+
+            // Clear LIDARdat and reset its size to 1
+            LIDARdat.Clear();
+            LIDARdat.Add(new List<double>());
+        }
+
+       static byte[] SerializeLIDARData(List<List<double>> data)
+        {
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = false
+            };
+            return JsonSerializer.SerializeToUtf8Bytes(data, options);
+        }
+
+
+        public ScanControl(int LengthWeld, double ResolutionY)
         {
             dLengthWeld = LengthWeld;
             dResolutionY = ResolutionY;
@@ -189,11 +270,15 @@ namespace MEScanControl
                             bOK = false;
                         }
                         // test: 6 - 1000mm/s - 100 us; 5-800mm/s - 500 us
-                        uint uiWorkingUserMode = 3;
+                        uint uiWorkingUserMode = 2;
                         if ((iRetValue = CLLTI.ReadWriteUserModes(hLLT, 0, uiWorkingUserMode)) < CLLTI.GENERAL_FUNCTION_OK)
                         {
                             OnError("Error during loading UM 4", iRetValue);
                             bOK = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Working UM: " + uiWorkingUserMode);
                         }
                     }           
                 }
@@ -414,13 +499,13 @@ namespace MEScanControl
             int counter = 0;
             Console.WriteLine("Start Transfer Data");
 
-            while (continueTransfer && count_data <= (dResolutionY / dLengthWeld / (double)uiProfileCount))
+            while (continueTransfer && count_data <= ((double)dLengthWeld /  dResolutionY / (double)uiProfileCount) + 1)
             {
                 noContainerReceived = true;
                 byte[] abyContainerBuffer = new byte[uiResolution * 2 * uiFieldCount * uiProfileCount]; // 2* because 1 value has 2 bytes
                 byte[] abyTimestamp = new byte[16];
                 uint size_container_buffer = uiResolution * 2 * uiFieldCount * uiProfileCount;
-                Console.WriteLine("Length container Buffer {0}", abyContainerBuffer.Length);
+                // Console.WriteLine("Length container Buffer {0}", abyContainerBuffer.Length);
                 count_data += 1;
 
                 while (noContainerReceived && continueTransfer)
@@ -477,16 +562,10 @@ namespace MEScanControl
             dataAvailable.Set();
             dataProcessingThread.Join();
         }
+
         private void ProcessData()
         {
-            string timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
-            outputFilePath = $"data/data_{timestamp}.txt";
-
-            
-            
-            using (StreamWriter writer = new StreamWriter(outputFilePath))
-            {
-                while (continueTransfer || dataQueue.Count > 0)
+            while (continueTransfer || dataQueue.Count > 0)
                 {
                     ProfileData profile = null;
                     lock (dataQueue)
@@ -542,19 +621,22 @@ namespace MEScanControl
                         // Console.WriteLine("No Profiles {0}", count_data);
 
                         // Console.WriteLine("----Extract the X/Z data and Timestamp information from container ----");
+                        // Console.WriteLine("Start to write: ");
+
                         for (int iProfile = 0; iProfile < uiProfileCount; iProfile++)
                         {
-                            Console.WriteLine(iProfile);
-                            // count_data += 1;
                             Buffer.BlockCopy(profile.ContainerBuffer, (int)(2 * (iProfile + 1) * uiResolution * uiFieldCount - 16), abyTimestamp, 0, 16);
                             Buffer.BlockCopy(adValueX, (int)(uiResolution * iProfile * 8), DisplayX, 0, DisplayX.Length * 8);
                             Buffer.BlockCopy(adValueZ, (int)(uiResolution * iProfile * 8), DisplayZ, 0, DisplayZ.Length * 8);
                             CLLTI.Timestamp2TimeAndCount(abyTimestamp, ref dTimeShutterOpen, ref dTimeShutterClose, ref uiProfileCounter);
                             // DisplayProfile(DisplayX, DisplayZ, 1, dTimeShutterOpen, dTimeShutterClose, uiProfileCounter);
-                            // Save X and Z values to file
-                            SaveProfileData(writer, DisplayX, DisplayZ, uiProfileCounter, dTimeShutterOpen, dTimeShutterClose);
-                        }
-
+                            for (int i = 0; i < DisplayX.Length; i++)
+                            {
+                                List<double> pair = new List<double> { DisplayX[i], DisplayZ[i] };
+                                LIDARdat.Add(pair);
+                            }
+                        }                       
+                        
                         pinnArray.Free();
                         pinnX.Free();
                         pinnZ.Free();
@@ -563,19 +645,33 @@ namespace MEScanControl
 
                     dataAvailable.WaitOne();
                 }
-            }
         }
+        // private void ProcessData()
+        // {
+        //     string timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
+        //     outputFilePath = $"data/data_{timestamp}.txt";
 
-        private void SaveProfileData(StreamWriter writer, double[] x, double[] z, uint counter, double timeOpen, double timeClose)
-        {
             
-            // writer.WriteLine($"Profile Counter: {counter}, Time Open: {timeOpen}, Time Close: {timeClose}");
-            for (int i = 0; i < x.Length; i++)
-            {
-                writer.WriteLine($"{x[i]},    {z[i]}"); //4 spacing
-            }
-            writer.WriteLine(); // Add a blank line between profiles
-        }
+            
+        //     using (StreamWriter writer = new StreamWriter(outputFilePath))
+        //     {
+                
+        //     }
+        // }
+
+        // private void SaveProfileData(StreamWriter writer, double[] x, double[] z, uint counter, double timeOpen, double timeClose)
+        // {
+            
+        //     // writer.WriteLine($"Profile Counter: {counter}, Time Open: {timeOpen}, Time Close: {timeClose}");
+
+        //     for (int i = 0; i < x.Length; i++)
+        //     {
+        //         writer.WriteLine($"{x[i]},    {z[i]}"); //4 spacing
+        //     }
+        //     writer.WriteLine(); // Add a blank line between profiles
+        //     // Console.WriteLine("\n----- SAVE PROFILE -----" + x.Length + "\n");
+
+        // }
 
         private void DisplayProfile(double[] x, double[] z, int resolution, double timeOpen, double timeClose, uint counter)
         {
