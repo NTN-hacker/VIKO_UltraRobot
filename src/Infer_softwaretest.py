@@ -1,11 +1,7 @@
 import sys
-import io
 sys.path.append(
     "E:\\Quan\\AutoRoboticInspection-V1\VIKO_UltraRobot"
 )
-
-
-import wx
 import numpy as np
 import cv2
 import threading
@@ -13,16 +9,12 @@ import time
 from pypylon import pylon
 from ultralytics import YOLO
 from datetime import datetime
-import tracemalloc
-import gc
 
 from library.experimental_src.laser import Laser
 from config import config as CFG
 from src import robotic_modify as rm
 from library import viko_lib as vl
 from IPCDataMs import IPCData
-
-
 
 global status
 global idx, idx_Coord, idx_below_frame,idx_rosposition
@@ -73,8 +65,6 @@ class CameraPanel():
         # Init the camera
         self.h, self.w = 640, 640
         self.frame_count = 0
-        # self.bitmap = wx.Bitmap(self.w, self.h)
-        # self.SetDoubleBuffered(True)
         tl_factory = pylon.TlFactory.GetInstance()
         devices = tl_factory.EnumerateDevices()
         for device in devices:
@@ -108,11 +98,11 @@ class CameraPanel():
         global image, result_image
         global status
         global idx, idx_rosposition   
-        count = 0  
+  
         try: 
             # Khởi tạo chương trình thì sẽ chạy running = True
             while running:
-                    # Init the converter
+                # Init the converter
                 converter = self.setting_camera()
                 # get image and send data
                 while self.camera.IsGrabbing() and running:
@@ -145,7 +135,8 @@ class CameraPanel():
                                 if self.data_laser:
                                     data = []
                                     data = self.laser_data.copy()
-                                    # self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
+                                    print('Data sent to view 3D ', self.laser_data)
+                                    self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
                                     self.data_laser = False  
                             self.response_result == False                      
                     grabResult.Release()
@@ -185,6 +176,7 @@ class CameraPanel():
         if  button_idx == 0:
             idx += 1
             status = "Skip"
+
         elif button_idx == 1:
 
             # Estimate the planning weld for robot to sample
@@ -210,7 +202,7 @@ class CameraPanel():
             idx_below_frame+= 1
             result_image = inspection_result.copy()
             idx+=1
-            status = "Inspection Completed."
+            status = "Inspection Completed." # will save 3D file .dat
 
             # View 3D from laser data
             idx+=1
@@ -227,7 +219,6 @@ class CameraPanel():
         elif button_idx == 2:
             idx+=1
             status = "Skip"
-            running = False
 
         elif button_idx == 3: 
             idx+=1
@@ -245,15 +236,8 @@ class CameraPanel():
 
 
 if __name__ == "__main__":
-    tracemalloc.start()
     InpectionBackend = CameraPanel()
     InpectionBackend.main()
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-
-    print("[ Top 10 lines ]")
-    for stat in top_stats[:20]:
-        print(stat)
 
 
 

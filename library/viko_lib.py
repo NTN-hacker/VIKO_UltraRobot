@@ -568,6 +568,12 @@ def findContainingPairs(data):
 def count_defects(defects):
     return dict(Counter(defects))
 
+def save_lidar_data(lidar_data, filename):
+    with open(filename, 'w') as file:
+        for point in lidar_data:
+            x, z = point
+            file.write(f"{x}, {z}\n")
+
 def convert_to_grayscale_image(z):
         Z_processed = list()
         for value in z:
@@ -590,8 +596,19 @@ def convert_to_grayscale_image(z):
 
         laser_img = apply_shading(image_rgb)
 
-        current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        # Path to the directory
+        data_dir = 'C:/Robdata'
+
+        # Delete all files in the target directory
+        for filename in os.listdir(data_dir):
+            file_path = os.path.join(data_dir, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+        current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
         cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
+        # Trước khi lưu dữ liệu vào C:/Robdata, chương trình sẽ xóa tất cả các file có trong thư mục trước rồi mới lưu file mới
+        np.savetxt(f'C:/Robdata/data_{current_time}.txt', Z_processed, fmt='%0.3f')
 
         return Z_processed, laser_img
 
@@ -620,11 +637,9 @@ def apply_shading(image_rgb):
         return img_shaded
 
 def run_inspection(model, img, conf):
-    import gc
     results = model.predict(source=img, conf=conf) #CFG.CONF_ACC    
     plot = results[0].plot()
-    del model, img, results
-    gc.collect() 
+    return plot
 
 
 
