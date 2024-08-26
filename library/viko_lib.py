@@ -597,7 +597,7 @@ def convert_to_grayscale_image(z):
         laser_img = apply_shading(image_rgb)
 
         # Path to the directory
-        data_dir = 'C:/Robdata'
+        data_dir = 'C:/Robdat'
 
         # Delete all files in the target directory
         for filename in os.listdir(data_dir):
@@ -608,7 +608,7 @@ def convert_to_grayscale_image(z):
         current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
         cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
         # Trước khi lưu dữ liệu vào C:/Robdata, chương trình sẽ xóa tất cả các file có trong thư mục trước rồi mới lưu file mới
-        np.savetxt(f'C:/Robdata/data_{current_time}.txt', Z_processed, fmt='%0.3f')
+        np.savetxt(f'C:/Robdat/data_{current_time}.dat', Z_processed, fmt='%0.3f')
 
         return Z_processed, laser_img
 

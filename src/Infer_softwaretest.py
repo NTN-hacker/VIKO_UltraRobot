@@ -173,11 +173,11 @@ class CameraPanel():
         global running
     
         self.result_image = None
-        if  button_idx == 0:
+        if  button_idx == 1:
             idx += 1
             status = "Skip"
 
-        elif button_idx == 1:
+        elif button_idx == 0:
 
             # Estimate the planning weld for robot to sample
             idx+=1
