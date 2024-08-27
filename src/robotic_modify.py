@@ -70,8 +70,8 @@ def scan_data(length_weld, result_queue):
         time.sleep(0.1)
     
     lidar_data = np.array(LIDAR_data)
-    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    save_lidar_data(lidar_data, f'laser/experimental/Lidar_data_{current_time}.txt')
+    # current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # save_lidar_data(lidar_data, f'laser/experimental/Lidar_data_{current_time}.txt')
 
     result_queue.put(lidar_data)
     
