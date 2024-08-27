@@ -80,7 +80,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     laser_data = None
     
     VisRob = VisionRobot()      
-    
+    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
     if pos_status == "home":
         VisRob.fixedRef(0)
     else:
@@ -90,7 +90,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
   
         LaserTrigger("start")
         result_queue = Queue()
-        target01, target02, thetaLaser, lengthWeld, target01ToCamera, target02ToCamera = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
+        target01, target02, thetaLaser, lengthWeld = VisRob.getTarget(coordinate_pixel, model_weld_list[index], _suf_)
         time_scan = lengthWeld / CFG.RESOLUTION_Y_LASER / CFG.FREQUENCY
         speedScan = lengthWeld / time_scan
         print('The information robotic laser')
@@ -114,16 +114,16 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
         else:
             print("Error: Failed to reach target01")  
         LaserTrigger("stop")
-    print("Scan data done!")     
-
-    VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
-
+        VisRob.homePos(CFG.LINEAR_SPEEDS[0], CFG.JOINT_SPEEDS[1])
+    print("Scan data done!")   
     data_export = {
         "id": str(datetime.now()),
-        "theta_laser": thetaLaser,
+        "distance_camera2object": CFG.DISTANCE_CAMERA2OBJECT,
+        "lengthWeld": lengthWeld,
+        "thetaLaser": thetaLaser,
     }
 
-    # rob.RobotModule.export_csv(data_export) 
+    rob.RobotModule.export_csv(data_export) 
     
     return laser_data
 
@@ -262,9 +262,6 @@ class VisionRobot:
         H_newTargetToLaser01 = self.robot_module.createRef(pos_targetToLaser01, rot_targetToLaser01)
         H_newTargetToLaser02 = self.robot_module.createRef(pos_targetToLaser02, rot_targetToLaser02)
 
-        refTarget = self.robot_module.createRef([0, 0, 0], [0, 0, 0])
-        # R_refTarget = np.dot(np.dot(refTarget, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
-
         R_targetToLaser01 = np.dot(np.dot(H_newTargetToLaser01, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
         R_targetToLaser02 = np.dot(np.dot(H_newTargetToLaser02, roty(np.radians(alpha_rot_Oy))), rotx(np.radians(-CFG.ROTATE_OX_LASER)))
 
@@ -284,7 +281,7 @@ class VisionRobot:
         newPos02, newRot02 = self.robot_module.rotPos(H_newTarget02tobase)
         print(f'T01:{newPos01}, {newRot01},\n T02:{newPos02}, {newRot02}\n')
 
-        return [newPos01, newRot01], [newPos02, newRot02]
+        return [newFlangePos01, newFlangeRot01], [newFlangePos02, newFlangeRot02]
         
     def newcreatePoint(self, target_01, target_02, theta_laser, backOx, alpha):
         """
@@ -386,7 +383,8 @@ class VisionRobot:
         xToCamera02, yToCamera02 = self.robot_module.convertCoordinates(CFG.RESOLUTION_X, CFG.RESOLUTION_Y, coorPixel2[0], coorPixel2[1],\
                                                                         self.pixelFocalLength, self.disCameraToObject, theta=180,)  # cfg
         
-
+        T1T2_camera = np.sqrt((xToCamera01 - xToCamera02) ** 2 + (yToCamera01 - yToCamera02) ** 2)
+        print(f"T1T2_camera:{T1T2_camera}")
         zLaserToObject = CFG.HOME_LASER - CFG.DISTANCE_LASER2OBJECT
         print(f"zLaserToObject:{zLaserToObject}")
         if zLaserToObject > CFG.SAFE_DISTANCE:
@@ -429,7 +427,7 @@ class VisionRobot:
         else:
             stop()
     
-        return testTarget01, testTarget02, angleLaserToObject , test_length_weld, target01ToCamera, target02ToCamera
+        return testTarget01, testTarget02, angleLaserToObject , test_length_weld
 
     def runMoveL(self, target, speedScan):
         self.setRobot(speedScan, CFG.JOINT_SPEEDS[0])

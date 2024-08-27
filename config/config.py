@@ -23,7 +23,7 @@ ERROR_POS = 3
 
 HOME_LASER = 611
 DISTANCE_LASER2OBJECT = 135
-DISTANCE_CAMERA2OBJECT = 651
+DISTANCE_CAMERA2OBJECT = 640
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
 ########################################################## AI MODEL ###################################################################
