@@ -607,8 +607,13 @@ def convert_to_grayscale_image(z):
 
         current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
         cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
-        # Trước khi lưu dữ liệu vào C:/Robdata, chương trình sẽ xóa tất cả các file có trong thư mục trước rồi mới lưu file mới
-        np.savetxt(f'C:/Robdat/data_{current_time}.dat', Z_processed, fmt='%0.3f')
+        import struct
+
+        length_weld = len(Z_processed)
+        with open(f'C:/Robdat/data__{length_weld}__{current_time}.dat', 'wb') as bin:
+            for raw in Z_processed:
+                bin_data = struct.pack(f'{len(raw)}f', *raw)
+                bin.write(bin_data)
 
         return Z_processed, laser_img
 

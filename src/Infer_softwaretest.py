@@ -136,7 +136,7 @@ class CameraPanel():
                                     data = []
                                     data = self.laser_data.copy()
                                     print('Data sent to view 3D ', self.laser_data)
-                                    self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
+                                    # self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
                                     self.data_laser = False  
                             self.response_result == False                      
                     grabResult.Release()
@@ -180,25 +180,31 @@ class CameraPanel():
         elif button_idx == 0:
 
             # Estimate the planning weld for robot to sample
+            start_time = datetime.now()
             idx+=1
-            status = "Planning weld..."        
+            status = "Planning weld---"        
             coordinate_pixel_list, model_weld_list, planning_img = rm.getCoordinates(self.model, image)
+            print('Planning time: ', datetime.now() - start_time)
             self.response_result = True
             idx_below_frame += 1
             result_image = planning_img.copy()           
 
             # Robot move to sample to laser scan sample
+            start_time2 = datetime.now()
             idx+=1
-            status = "Moving..."
+            status = "Moving---"
             self.laser_data = rm.run(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status) # default _suf_left_ and will update _suf_right_ with another sample
+            print('Moving and scan laser time: ', datetime.now() - start_time2)
             idx+=1
             status = "Robot Completed."
             
             # Laser data post-processing and Inspection the laser image
+            start_time3 = datetime.now()
             idx+=1
-            status = "Inspection Processing..."
+            status = "Inspection Processing---"
             self.laser_data, laser_img = vl.convert_to_grayscale_image(self.laser_data)         
             inspection_result = vl.run_inspection(self.model_inspection, laser_img, 0.2)
+            print('Inspection time: ', datetime.now() - start_time3)
             idx_below_frame+= 1
             result_image = inspection_result.copy()
             idx+=1
@@ -206,7 +212,7 @@ class CameraPanel():
 
             # View 3D from laser data
             idx+=1
-            status = "Start 3D View..."
+            status = "Start 3D View---"
             idx_Coord += 1
             self.data_laser = True 
             idx+=1
@@ -215,6 +221,8 @@ class CameraPanel():
             # Done
             idx+=1
             status = "Finished."
+
+            print('Total time: ', datetime.now() - start_time)
 
         elif button_idx == 2:
             idx+=1

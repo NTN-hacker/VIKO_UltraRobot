@@ -54,7 +54,7 @@ MODEL = {
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "weight\\inspection_segmentation.pt"
+        "WEIGHT": "weight\\inspection_segmentation_v2.pt"
     }
 }
 
@@ -65,7 +65,7 @@ Y_RATIO = 2448 / 640
 
 ######################################################### LABEL #############################################################################
 MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degree"}
-MODEL_INSPECTION = {0: 'weld', 1: 'crack', 2: 'overlap', 3: 'hole', 4: 'porosity', 5: 'spatter'}
+MODEL_INSPECTION = {0: 'weld', 2: 'crack', 1: 'overlap', 3: 'hole', 4: 'porosity', 5: 'spatter'}
 
 
 CONF_MODEL_WELD = 0.6
