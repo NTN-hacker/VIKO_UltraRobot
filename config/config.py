@@ -23,7 +23,7 @@ ERROR_POS = 3
 
 HOME_LASER = 611
 DISTANCE_LASER2OBJECT = 135
-DISTANCE_CAMERA2OBJECT = 651
+DISTANCE_CAMERA2OBJECT = 640
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
 ########################################################## AI MODEL ###################################################################
@@ -54,7 +54,7 @@ MODEL = {
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "weight\\inspection_segmentation_v2.pt"
+        "WEIGHT": "weight\\inspection_segmentation_v3.pt"
     }
 }
 
@@ -65,7 +65,7 @@ Y_RATIO = 2448 / 640
 
 ######################################################### LABEL #############################################################################
 MODEL_WELD = {0: "0_degree", 1: "weld", 2: "90_degree", 3: "other", 4: "30_degree"}
-MODEL_INSPECTION = {0: 'weld', 2: 'crack', 1: 'overlap', 3: 'hole', 4: 'porosity', 5: 'spatter'}
+MODEL_INSPECTION = {0: 'weld', 1: 'crack', 2: 'porosity', 3: 'hole'}
 
 
 CONF_MODEL_WELD = 0.6

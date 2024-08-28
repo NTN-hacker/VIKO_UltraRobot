@@ -20,6 +20,7 @@ global status
 global idx, idx_Coord, idx_below_frame,idx_rosposition
 global image, laser_img, result_image
 global running
+global inspection_result
 
 class CameraPanel():
     
@@ -27,13 +28,16 @@ class CameraPanel():
          
         # Init the global variables
         global idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition
-        idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition = 0, 0, 0, 0, 0
+        idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition = 0, 0, 0, 1, 0
 
         global status
         status = None
 
         global image, laser_img, result_image
-        image, laser_img, result_image = None, None, None
+        image, laser_img, result_image = None, None, np.ones((640, 640, 3), dtype=np.uint8) * 80
+  
+        global inspection_result
+        inspection_result = None
 
         global running 
         running = True
@@ -76,9 +80,7 @@ class CameraPanel():
         # Start the check button thread
         self.button_thread = threading.Thread(target=self.check_buttons)
         self.button_thread.daemon = True
-        self.button_thread.start()
-
-        
+        self.button_thread.start()       
     
     def setting_camera(self):
         # Setting some parameters for camera
@@ -97,7 +99,7 @@ class CameraPanel():
     def main(self):
         global image, result_image
         global status
-        global idx, idx_rosposition   
+        global idx, idx_rosposition, idx_below_frame 
   
         try: 
             # Khởi tạo chương trình thì sẽ chạy running = True
@@ -120,25 +122,26 @@ class CameraPanel():
                             img_np = np.frombuffer(image, dtype=np.uint8).reshape((640, 640, 3))
                             self.ipc_data.send_frame(img_np)
                             self.frame_count += 1
-                            time.sleep(0.01)    # 10 ms sẽ update ảnh một lần
-                            
-                            if self.response_result:
-                                # send result image
-                                result_image = cv2.resize(result_image, (640, 640), cv2.INTER_CUBIC)
-                                result_image_np = np.frombuffer(result_image, dtype=np.uint8).reshape((640, 640, 3))
-                                self.ipc_data.send_frame_below(idx_below_frame, result_image_np)  
 
-                                # send status
-                                self.ipc_data.send_status(idx,f'Machine Vision: {status}' )   #dict {'index': 'context}
-                                
-                                # send laser data to view 3D
-                                if self.data_laser:
-                                    data = []
-                                    data = self.laser_data.copy()
-                                    print('Data sent to view 3D ', self.laser_data)
-                                    # self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
-                                    self.data_laser = False  
-                            self.response_result == False                      
+                            # send below frame
+                            idx_below_frame+=1
+                            if (idx_below_frame > 300): 
+                                idx_below_frame = 1
+                            result_image = cv2.resize(result_image, (640, 640), cv2.INTER_CUBIC)
+                            result_image_np = np.frombuffer(result_image, dtype=np.uint8).reshape((640, 640, 3))
+                            self.ipc_data.send_frame_below(idx_below_frame, result_image_np)  
+
+                            # send status
+                            self.ipc_data.send_status(idx,f'Machine Vision: {status}' )   #dict {'index': 'context}
+                            
+                            # send laser data to view 3D
+                            if self.data_laser:
+                                data = []
+                                data = self.laser_data.copy()
+                                print('Data sent to view 3D ', self.laser_data)
+                                # self.ipc_data.send_3Ddata(idx_Coord, data.shape[0], data)
+                                self.data_laser = False  
+                            # self.response_result == False                      
                     grabResult.Release()
         except Exception as e:
             idx += 1
@@ -171,14 +174,13 @@ class CameraPanel():
         global idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition 
         global status       
         global running
+        global inspection_result
     
         self.result_image = None
-        if  button_idx == 1:
-            idx += 1
-            status = "Skip"
+                  
 
-        elif button_idx == 0:
-
+        if button_idx == 0:
+            
             # Estimate the planning weld for robot to sample
             start_time = datetime.now()
             idx+=1
@@ -196,19 +198,27 @@ class CameraPanel():
             self.laser_data = rm.run(coordinate_pixel_list, model_weld_list, self._suf_left_, self.pos_status) # default _suf_left_ and will update _suf_right_ with another sample
             print('Moving and scan laser time: ', datetime.now() - start_time2)
             idx+=1
-            status = "Robot Completed."
+            status = f"Robot Completed with {datetime.now() - start_time2} seconds"
             
             # Laser data post-processing and Inspection the laser image
             start_time3 = datetime.now()
             idx+=1
             status = "Inspection Processing---"
-            self.laser_data, laser_img = vl.convert_to_grayscale_image(self.laser_data)         
-            inspection_result = vl.run_inspection(self.model_inspection, laser_img, 0.2)
+            self.laser_data, laser_img = vl.convert_to_grayscale_image(self.laser_data)   
+            inspection_result = vl.run_inspection(self.model_inspection, laser_img, 0.3)
             print('Inspection time: ', datetime.now() - start_time3)
             idx_below_frame+= 1
-            result_image = inspection_result.copy()
+            result_image = inspection_result[0].plot().copy()
             idx+=1
-            status = "Inspection Completed." # will save 3D file .dat
+            status = f"Inspection Completed with {datetime.now() - start_time3} seconds." # will save 3D file .dat
+
+            # Export to Inspection Analysis File
+            idx+=1
+            status = "Start to Analysis Inspection for the sample---"
+            thickness = max(self.laser_data[500]) - min(self.laser_data[500])
+            vl.exportPdf(inspection_result, thickness)
+            idx+=1
+            status = "Export Completed."
 
             # View 3D from laser data
             idx+=1
@@ -220,12 +230,16 @@ class CameraPanel():
 
             # Done
             idx+=1
-            status = "Finished."
+            status = f"Finished with total time is {datetime.now() - start_time} seconds."
 
             print('Total time: ', datetime.now() - start_time)
+        
+        elif  button_idx == 1:
+            idx += 1
+            status = "Skip"
 
         elif button_idx == 2:
-            idx+=1
+            idx += 1
             status = "Skip"
 
         elif button_idx == 3: 
@@ -240,8 +254,6 @@ class CameraPanel():
             idx_rosposition += 1
             self.rosposition = True
             print(idx_rosposition)   
-
-
 
 if __name__ == "__main__":
     InpectionBackend = CameraPanel()

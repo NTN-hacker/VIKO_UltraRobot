@@ -606,7 +606,7 @@ def convert_to_grayscale_image(z):
                 os.remove(file_path)
 
         current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-        cv2.imwrite(f'laser/experimental/laser_{current_time}.png', laser_img)   
+        cv2.imwrite(f'C:/Robdat/ScanData/laser_{current_time}.png', laser_img)   
         import struct
 
         length_weld = len(Z_processed)
@@ -643,8 +643,348 @@ def apply_shading(image_rgb):
 
 def run_inspection(model, img, conf):
     results = model.predict(source=img, conf=conf) #CFG.CONF_ACC    
-    plot = results[0].plot()
-    return plot
+    return results
+
+def exportPdf(dict_re, thickness):
+    # print('exportPdf')
+    import pandas as pd
+    from datetime import datetime
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    plt.switch_backend('agg')
+
+    boxes = None
+    for idx, result in enumerate(dict_re):
+        boxes = result.boxes  
+   
+    # Convert tensors to numpy arrays for easier handling
+    class_ids = boxes.cls.cpu().numpy()
+    xyxy = boxes.xyxy.cpu().numpy()
+    class_ids = np.array(class_ids)
+    # need test if have problem
+    if len(class_ids[class_ids == 0]) > 0:
+        indices_zero = np.where(class_ids == 0)[0]
+        # If there are multiple objects with class ID 0, keep only the one with the largest area
+        if len(indices_zero) > 1:
+            areas = (xyxy[:, 2] - xyxy[:, 0]) * (xyxy[:, 3] - xyxy[:, 1])
+            max_area_index = indices_zero[np.argmax(areas[indices_zero])]
+        
+            # Keep the largest area box with class ID 0
+            largest_zero_box = (class_ids == 0) & (np.arange(len(class_ids)) == max_area_index)
+            
+            # Keep all boxes with class ID other than 0
+            other_boxes = (class_ids != 0)
+            
+            # Combine the masks
+            final_mask = largest_zero_box | other_boxes
+            
+            # Apply the mask to filter boxes
+            boxes = boxes[final_mask]
+            
+            # Update class_ids and xyxy arrays
+            class_ids = class_ids[final_mask]
+            xyxy = xyxy[final_mask]
+     
+        # Map class IDs to defect names
+        defect_types = [dict_re[0].names.get(int(cls_id), 'unknown') for cls_id in class_ids if cls_id != 0]
+
+        # Calculate areas (for each bounding box in xyxy format)
+        areas = (xyxy[:, 2] - xyxy[:, 0]) * (xyxy[:, 3] - xyxy[:, 1])
+        areas = [(value / max(areas)) * 100 for value in areas]
+        areas = [value for value in areas if value != 100]
+        
+        # nếu sl file >20 thì xóa file cũ 
+        # Create a PDF to save the plots and tables
+        current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+        pdf_path = f'C:/Robdat/InspectionAnalysis/Inspection_Defect_Analysis_{current_time}.pdf'
+        
+        with PdfPages(pdf_path) as pdf:
+            # Add the title page
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.text(0.5, 0.5, 'REPORT INSPECTION RESULT\n' + f'Date: {datetime.now().strftime("%d-%m-%Y")}', 
+                    fontsize=20, fontweight='bold', color='black',
+                    ha='center', va='center')
+            ax.axis('off')
+            plt.tight_layout()
+            pdf.savefig(fig)
+            plt.close(fig)
+
+            # Add the prediction image to the PDF
+            fig, ax = plt.subplots(figsize=(10, 6))
+            img = dict_re[0][0].orig_img
+            ax.imshow(img)
+            ax.axis('off')
+            plt.title('Laser Results')
+            plt.tight_layout()
+            pdf.savefig(fig)
+            plt.close(fig)
+
+            if len(defect_types) != 0:    
+                # Create a figure with the bar plot
+                fig, ax1 = plt.subplots(figsize=(10, 6))
+                ax1.pie(areas, labels=defect_types, autopct='%1.1f%%', startangle=140)
+                ax1.set_title('The area ratio by Defect Type')
+                plt.tight_layout()
+                pdf.savefig(fig)
+                plt.close(fig)
+
+                # Create a DataFrame for the defect data
+                defect_df = pd.DataFrame({
+                    'Defect Type': defect_types,
+                    'Area (%)': areas
+                })
+
+                # Create a new figure for the defect data table
+                fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+                ax.set_title("The information of defects")
+                ax.axis('tight')
+                ax.axis('off')
+                
+                # Create table plot for defect data
+                table = ax.table(cellText=defect_df.values,
+                                colLabels=defect_df.columns,
+                                cellLoc='center',
+                                loc='center',
+                                bbox=[0, 0, 1, 1])
+                
+                # Save the defect data table to the PDF
+                pdf.savefig(fig)
+                plt.close(fig)
+
+                # Create a DataFrame for the summary statistics
+                summary_stats = pd.DataFrame({
+                    'Item': ['Total defects detected (types)', 'Total defect area (%)', 'Total length of weld (mm)', 'Average the thickness of the weld (mm)'],
+                    'Content': [int(len(defect_types)), np.sum(areas), img.shape[1]/10, thickness]
+                })
+                
+                # Create a new figure for the summary statistics table
+                fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+                ax.axis('tight')
+                ax.axis('off')
+                ax.set_title("Summary information of the current inspection results")
+                
+                # Create table plot for summary statistics
+                table = ax.table(cellText=summary_stats.values,
+                                colLabels=summary_stats.columns,
+                                cellLoc='center',
+                                loc='center',
+                                bbox=[0, 0, 1, 1])
+                
+                # Save the summary statistics table to the PDF
+                pdf.savefig(fig)
+                plt.close(fig)
+
+                print(f"PDF file '{pdf_path}' created successfully.")
+            else:
+                # If no defects detected, add a pass message to the PDF
+                fig, ax = plt.subplots(figsize=(10, 6))
+                message = 'PASS! GOOD WELD - NO DEFECT DETECTED'
+                ax.text(0.5, 0.5, message, 
+                        fontsize=20, fontweight='bold', color='green',
+                        ha='center', va='center')
+                ax.set_title("Summary information of the current inspection results")
+                ax.axis('off')
+                plt.tight_layout()
+                pdf.savefig(fig)
+                plt.close(fig)
+
+                # Create a DataFrame for the summary statistics
+                summary_stats = pd.DataFrame({
+                    'Item': ['Total defects detected (types)', 'Total defect area (%)', 'Total length of weld (mm)', 'Average the thickness of the weld (mm)'],
+                    'Content': [0, 0.00, img.shape[1]/10, thickness]
+                })
+                
+                # Create a new figure for the summary statistics table
+                fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+                ax.axis('tight')
+                ax.axis('off')
+                ax.set_title("Summary information of the current inspection results")
+                
+                # Create table plot for summary statistics
+                table = ax.table(cellText=summary_stats.values,
+                                colLabels=summary_stats.columns,
+                                cellLoc='center',
+                                loc='center',
+                                bbox=[0, 0, 1, 1])
+                
+                # Save the summary statistics table to the PDF
+                pdf.savefig(fig)
+                plt.close(fig)
+
+                print(f"PDF file '{pdf_path}' created successfully.")
+
+                print(f"No defects detected. PDF file '{pdf_path}' created successfully with PASS message.")
+    else:
+        print("Error: No weld object detected.")
+
+# def exportPdf(dict_re, thickness):
+#     # print('exportPdf')
+#     import pandas as pd
+#     from datetime import datetime
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+#     from matplotlib.backends.backend_pdf import PdfPages
+
+#     plt.switch_backend('agg')
+
+#     boxes = None
+#     for idx, result in enumerate(dict_re):
+#         boxes = result.boxes  
+   
+#     # Convert tensors to numpy arrays for easier handling
+#     class_ids = boxes.cls.cpu().numpy()
+#     xyxy = boxes.xyxy.cpu().numpy()
+#     class_ids = np.array(class_ids)
+#     print(class_ids)
+#     # need test if have problem
+#     if len(class_ids[class_ids == 0]) > 0:
+#         indices_zero = np.where(class_ids == 0)[0]
+#         print(indices_zero)
+#         # If there are multiple objects with class ID 0, keep only the one with the largest area
+#         if len(indices_zero) > 1:
+#             areas = (xyxy[:, 2] - xyxy[:, 0]) * (xyxy[:, 3] - xyxy[:, 1])
+#             max_area_index = indices_zero[np.argmax(areas[indices_zero])]
+        
+#             # Keep the largest area box with class ID 0
+#             largest_zero_box = (class_ids == 0) & (np.arange(len(class_ids)) == max_area_index)
+            
+#             # Keep all boxes with class ID other than 0
+#             other_boxes = (class_ids != 0)
+            
+#             # Combine the masks
+#             final_mask = largest_zero_box | other_boxes
+            
+#             # Apply the mask to filter boxes
+#             boxes = boxes[final_mask]
+            
+#             # Update class_ids and xyxy arrays
+#             class_ids = class_ids[final_mask]
+#             xyxy = xyxy[final_mask]
+     
+#         # Map class IDs to defect names
+#         defect_types = [dict_re[0].names.get(int(cls_id), 'unknown') for cls_id in class_ids if cls_id != 0]
+
+#         # Calculate areas (for each bounding box in xyxy format)
+#         areas = (xyxy[:, 2] - xyxy[:, 0]) * (xyxy[:, 3] - xyxy[:, 1])
+#         areas = [(value / max(areas)) * 100 for value in areas]
+#         areas = [value for value in areas if value != 100]
+        
+#         # nếu sl file >20 thì xóa file cũ 
+#         # Create a PDF to save the plots and tables
+#         current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+#         pdf_path = f'C:/Robdat/InspectionAnalysis/Inspection_Defect_Analysis_{current_time}.pdf'
+        
+#         with PdfPages(pdf_path) as pdf:
+#             # Add the prediction image to the PDF
+#             fig, ax = plt.subplots(figsize=(10, 6))
+#             img = dict_re[0][0].orig_img
+#             ax.imshow(img)
+#             ax.axis('off')
+#             plt.title('Laser Results')
+#             plt.tight_layout()
+#             pdf.savefig(fig)
+#             plt.close(fig)
+
+#             if len(defect_types) != 0:    
+#                 # Create a figure with the bar plot
+#                 fig, ax1 = plt.subplots(figsize=(10, 6))
+#                 ax1.pie(areas, labels=defect_types, autopct='%1.1f%%', startangle=140)
+#                 ax1.set_title('The area ratio by Defect Type')
+#                 plt.tight_layout()
+#                 pdf.savefig(fig)
+#                 plt.close(fig)
+
+#                 # Create a DataFrame for the defect data
+#                 defect_df = pd.DataFrame({
+#                     'Defect Type': defect_types,
+#                     'Area (%)': areas
+#                 })
+
+#                 # Create a new figure for the defect data table
+#                 fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+#                 ax.set_title("The information of defects")
+#                 ax.axis('tight')
+#                 ax.axis('off')
+                
+#                 # Create table plot for defect data
+#                 table = ax.table(cellText=defect_df.values,
+#                                 colLabels=defect_df.columns,
+#                                 cellLoc='center',
+#                                 loc='center',
+#                                 bbox=[0, 0, 1, 1])
+                
+#                 # Save the defect data table to the PDF
+#                 pdf.savefig(fig)
+#                 plt.close(fig)
+
+#                 # Create a DataFrame for the summary statistics
+#                 summary_stats = pd.DataFrame({
+#                     'Item': ['Total defects detected (types)', 'Total defect area (%)', 'Total length of weld (mm)', 'Average the thickness of the weld (mm)'],
+#                     'Content': [int(len(defect_types)), np.sum(areas), img.shape[1]/10, thickness]
+#                 })
+                
+#                 # Create a new figure for the summary statistics table
+#                 fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+#                 ax.axis('tight')
+#                 ax.axis('off')
+#                 ax.set_title("Summary information of the current inspection results")
+                
+#                 # Create table plot for summary statistics
+#                 table = ax.table(cellText=summary_stats.values,
+#                                 colLabels=summary_stats.columns,
+#                                 cellLoc='center',
+#                                 loc='center',
+#                                 bbox=[0, 0, 1, 1])
+                
+#                 # Save the summary statistics table to the PDF
+#                 pdf.savefig(fig)
+#                 plt.close(fig)
+
+#                 print(f"PDF file '{pdf_path}' created successfully.")
+#             else:
+#                 # If no defects detected, add a pass message to the PDF
+#                 fig, ax = plt.subplots(figsize=(10, 6))
+#                 message = 'PASS! GOOD WELD - NO DEFECT DETECTED'
+#                 ax.text(0.5, 0.5, message, 
+#                         fontsize=20, fontweight='bold', color='green',
+#                         ha='center', va='center')
+#                 ax.set_title("Summary information of the current inspection results")
+#                 ax.axis('off')
+#                 plt.tight_layout()
+#                 pdf.savefig(fig)
+#                 plt.close(fig)
+
+#                 # Create a DataFrame for the summary statistics
+#                 summary_stats = pd.DataFrame({
+#                     'Item': ['Total defects detected (types)', 'Total defect area (%)', 'Total length of weld (mm)', 'Average the thickness of the weld (mm)'],
+#                     'Content': [0, 0.00, img.shape[1]/10, thickness]
+#                 })
+                
+#                 # Create a new figure for the summary statistics table
+#                 fig, ax = plt.subplots(figsize=(10, 4))  # Adjust size as needed
+#                 ax.axis('tight')
+#                 ax.axis('off')
+#                 ax.set_title("Summary information of the current inspection results")
+                
+#                 # Create table plot for summary statistics
+#                 table = ax.table(cellText=summary_stats.values,
+#                                 colLabels=summary_stats.columns,
+#                                 cellLoc='center',
+#                                 loc='center',
+#                                 bbox=[0, 0, 1, 1])
+                
+#                 # Save the summary statistics table to the PDF
+#                 pdf.savefig(fig)
+#                 plt.close(fig)
+
+#                 print(f"PDF file '{pdf_path}' created successfully.")
+
+#                 print(f"No defects detected. PDF file '{pdf_path}' created successfully with PASS message.")
+#     else:
+#         print("Error: No weld object detected.")
+
 
 
 

@@ -6,7 +6,7 @@ from robodk.robomath import *  # basic matrix operations
 import sys
 
 
-sys.path.append("E:\Quan\AutoRoboticInspection-V1\VIKO_UltraRobot") # config path
+sys.path.append("E:\Quan\AutoRoboticInspection-v1\VIKO_UltraRobot") # config path
 from config import config as CFG
 
 
@@ -99,24 +99,26 @@ class RobotModule:
     @staticmethod
     def export_csv(data: dict):
         """
-        Export to excel or csv
+        Export data to CSV.
         """
+        # Get current time and format filename
         time = str(datetime.now())
         filename = f"data/Robotic/Test_{time[:10]}.csv"
 
+        # Ensure directory exists
         directory = os.path.dirname(filename)
         if not os.path.exists(directory):
-            os.mkdir(directory)
+            os.makedirs(directory)
 
         try:
-            # Read the existing CSV file into a DataFrame
+            # Read existing CSV file into a DataFrame
             existing_dataframe = pd.read_csv(filename)
         except FileNotFoundError:
             # If the file doesn't exist, create a new DataFrame
             existing_dataframe = pd.DataFrame()
 
-        # Create a DataFrame from the new data
-        new_dataframe = pd.DataFrame(data)
+        # Create a DataFrame from the new data (as a single row)
+        new_dataframe = pd.DataFrame([data])
 
         # Concatenate the existing and new dataframes
         updated_dataframe = pd.concat(
