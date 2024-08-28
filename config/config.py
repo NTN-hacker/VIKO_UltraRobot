@@ -10,11 +10,11 @@ config file
 ########################################################### ROBOTIC ###################################################################
 PIXEL_SIZE = 3.45  ## unit: micrometer
 LINEAR_SPEEDS = [30, 30]   ### (MM/SECOND)
-JOINT_SPEEDS = [20, 70]    ### (RAD/SECOND) Not over 100
+JOINT_SPEEDS = [20, 20]    ### (RAD/SECOND) Not over 100
 FOCAL_LENGTH = 16
 RESOLUTION_X = 2448  # DEFAULT RESOLUTION
 RESOLUTION_Y = 2048  # DEFAULT RESOLUTION
-HORIZONTAL_BASELINE = 55  # 65: best value with object is black dot
+HORIZONTAL_BASELINE = 65  # 65: best value with object is black dot
 VERTICAL_BASELINE = 450  # best value with object is black dot
 SAFE_DISTANCE = 565
 ROTATE_OY_LASER = 40

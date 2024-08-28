@@ -146,7 +146,7 @@ def run(coordinate_pixel_list, model_weld_list, _suf_, pos_status="home"):
     VisRob = VisionRobot()      
     
     if pos_status == "home":
-        VisRob.fixedRef(0)
+        VisRob.fixedRef()
     else:
         stop()
 
@@ -244,13 +244,13 @@ class VisionRobot:
             self.robot.Disconnect()
             # print(f"Stop:{self.robot.ConnectedState()}")
 
-    def fixedRef(self, y_flange2rf):
+    def fixedRef(self):
         """
         Fixed refer
         """
 
         # reference frame flange to base
-        pos_flange2rf, rot_flange2rf = self.robot_module.rotPosRef(380, y_flange2rf, -405, 0, 0, 0)
+        pos_flange2rf, rot_flange2rf = self.robot_module.rotPosRef(380, 0, -405, 0, 0, 0)
         self.rf_flange2rf = self.robot_module.createRef(pos_flange2rf, rot_flange2rf)
 
         # reference frame camera to flange
@@ -480,7 +480,7 @@ class VisionRobot:
 
     def homePos(self, linearSpeed, joinSpeed):
         self.setRobot(linearSpeed, joinSpeed)
-        self.fixedRef(0)
+        self.fixedRef()
         self.robot.MoveJ(self.rf_laser2rf_matrix)
 
     def getTarget(self, realTarget01, realTarget02, alphaA, alphaB, shape):
