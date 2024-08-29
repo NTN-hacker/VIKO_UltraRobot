@@ -250,7 +250,7 @@ class VisionRobot:
         """
 
         # reference frame flange to base
-        pos_flange2rf, rot_flange2rf = self.robot_module.rotPosRef(380, 0, -405, 0, 0, 0)
+        pos_flange2rf, rot_flange2rf = self.robot_module.rotPosRef(380, 0, -360, 0, 0, 0)
         self.rf_flange2rf = self.robot_module.createRef(pos_flange2rf, rot_flange2rf)
 
         # reference frame camera to flange
