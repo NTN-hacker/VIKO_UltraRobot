@@ -21,8 +21,6 @@ import sys
 import json
 
 
-
-"hello world"
 IDProcessLaser = None
 
 def LaserTrigger(action):
