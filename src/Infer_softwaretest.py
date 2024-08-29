@@ -114,6 +114,8 @@ class CameraPanel():
                             # Access the image data
                             image1 = converter.Convert(grabResult)
                             image = image1.GetArray()
+                            # save image to test
+                            cv2.imwrite('data/AI/Record_2024-08-29/test.jpg', image)
 
                             # get image from camera and send image
                             img = cv2.resize(image, (self.h, self.w), cv2.INTER_CUBIC)
@@ -121,6 +123,7 @@ class CameraPanel():
                             image = img.copy()
                             img_np = np.frombuffer(image, dtype=np.uint8).reshape((640, 640, 3))
                             self.ipc_data.send_frame(img_np)
+                            
                             self.frame_count += 1
 
                             # send below frame

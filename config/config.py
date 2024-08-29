@@ -21,9 +21,9 @@ ROTATE_OY_LASER = 40
 ROTATE_OX_LASER = 0  ### Negative degrees
 ERROR_POS = 3
 
-HOME_LASER = 611
+HOME_LASER = 592
 DISTANCE_LASER2OBJECT = 135
-DISTANCE_CAMERA2OBJECT = 640
+DISTANCE_CAMERA2OBJECT = 591
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
 ########################################################## AI MODEL ###################################################################
