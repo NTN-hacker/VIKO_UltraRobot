@@ -696,15 +696,34 @@ def exportPdf(dict_re, thickness):
         areas = [value for value in areas if value != 100]
         
         # nếu sl file >20 thì xóa file cũ 
+        import glob
+
+        directory = 'C:/Robdat/InspectionAnalysis/'
+        file_prefix = 'Inspection_Defect_Analysis_'
+        max_files = 20
+
+        # Xóa các file cũ nếu số lượng file vượt quá max_files
+        def cleanup_old_files(directory, file_prefix, max_files):
+            # Tạo danh sách các file PDF có tiền tố nhất định trong thư mục
+            pdf_files = glob.glob(os.path.join(directory, f'{file_prefix}*.pdf'))
+
+            # Sắp xếp theo thời gian tạo file (cũ nhất trước)
+            pdf_files.sort(key=os.path.getmtime)
+
+            # Nếu số lượng file vượt quá max_files, xóa file cũ nhất
+            while len(pdf_files) > max_files:
+                os.remove(pdf_files[0])
+                pdf_files.pop(0)
         # Create a PDF to save the plots and tables
         current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
         pdf_path = f'C:/Robdat/InspectionAnalysis/Inspection_Defect_Analysis_{current_time}.pdf'
+        cleanup_old_files(directory, file_prefix, max_files)
         
         with PdfPages(pdf_path) as pdf:
             # Add the title page
             fig, ax = plt.subplots(figsize=(10, 6))
-            ax.text(0.5, 0.5, 'REPORT INSPECTION RESULT\n' + f'Date: {datetime.now().strftime("%d-%m-%Y")}', 
-                    fontsize=20, fontweight='bold', color='black',
+            ax.text(0.5, 0.5, 'REPORT INSPECTION RESULT\n' + f'Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 
+                    fontsize=15, fontweight='bold', color='blue',
                     ha='center', va='center')
             ax.axis('off')
             plt.tight_layout()
