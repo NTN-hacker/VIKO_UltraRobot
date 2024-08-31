@@ -61,4 +61,4 @@ The Welding Auto Inspection project has achieved significant milestones in devel
 Thanks for all the contributors.
 
 ## Contact
-If you have any question, please email nguyennhan8521@gmail.com
+If you have any question, please email nguyennhan8521@gmail.com/ nguyendinhquan140701@gmail.com/ 
