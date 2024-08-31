@@ -22,7 +22,7 @@ ROTATE_OX_LASER = 0  ### Negative degrees
 ERROR_POS = 3
 
 HOME_LASER = 611
-DISTANCE_LASER2OBJECT = 135
+DISTANCE_LASER2OBJECT = 135 #simple: 135 s14 160 s13 200
 DISTANCE_CAMERA2OBJECT = 640
 
 TEST_TARGET = [[1878, 598], [470, 1162]]
@@ -54,7 +54,7 @@ MODEL = {
         # "WEIGHT": 'D:\\nhan\\viko\src\weight\\Weld_Identification_1.pt'
     },
     "INSPECTION": {
-        "WEIGHT": "weight\\inspection_segmentation_v3.pt"
+        "WEIGHT": "weight\\inspection_segmentation_v4.pt"
     }
 }
 

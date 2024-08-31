@@ -25,7 +25,7 @@ global inspection_result
 class CameraPanel():
     
     def __init__(self):
-         
+        start_time = datetime.now()         
         # Init the global variables
         global idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition
         idx, idx_Coord, idx_Chart, idx_below_frame, idx_rosposition = 0, 0, 0, 1, 0
@@ -76,6 +76,7 @@ class CameraPanel():
             self.model_name = device.GetModelName()
         self.camera = pylon.InstantCamera()
         self.camera.Attach(tl_factory.CreateDevice(devices[0]))
+        print('Setting time ', datetime.now() - start_time)
 
         # Start the check button thread
         self.button_thread = threading.Thread(target=self.check_buttons)
@@ -215,7 +216,7 @@ class CameraPanel():
             # Export to Inspection Analysis File
             idx+=1
             status = "Start to Analysis Inspection for the sample---"
-            thickness = max(self.laser_data[500]) - min(self.laser_data[500])
+            thickness = max(self.laser_data[int(self.laser_data.shape[0]/2)]) - min(self.laser_data[int(self.laser_data.shape[0]/2)])
             vl.exportPdf(inspection_result, thickness)
             idx+=1
             status = "Export Completed."
