@@ -47,7 +47,7 @@ The Welding Auto Inspection project aims to inspect the surface of welds using a
 ## Project Team
 - **Dr. Hung Vo Tan** - Project Leader
 - **Mr. Nhan Nguyen Trong** - Backend - Vision and Laser Module
-- **Mr. Tuan Nguyen Dinh** - FrondEnd - Software and Control Systems Engineer
+- **Mr. Tuan Nguyen Dinh** - FrondEnd and Backend - Software and Control Systems Engineer
 - **Mr. Quan Nguyen Dinh** - Backend - Robotics and Automation Engineer
 - **Mr. Sang Nguyen Huu** - Research - Laser Control
 
