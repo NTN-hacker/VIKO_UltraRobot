@@ -51,5 +51,7 @@ The Welding Auto Inspection project aims to inspect the surface of welds using a
 - **Mr. Quan Nguyen Dinh** - Backend - Robotics and Automation Engineer
 - **Mr. Sang Nguyen Huu** - Research - Laser Control
 
+## Technical
+- Pretrained-weight: [Welding Identification and Welding Inspection](https://drive.google.com/drive/folders/1H2_BYRHt6EowTpSgy4vyFixbaU_DbkCx?usp=drive_link)
 ## Conclusion
 The Welding Auto Inspection project has achieved significant milestones in developing an automated, high-accuracy, and efficient system for inspecting weld surfaces. The integration of laser scanning, real-time control software, and advanced vision systems has resulted in a robust solution that meets industrial inspection needs.
